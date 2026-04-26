@@ -25,6 +25,7 @@
 #include "CoCoA/SparsePolyIter.H"
 #include "CoCoA/degree.H"
 #include "CoCoA/geobucket.H"
+//#include <functional> // for not_fn
 
 
 namespace CoCoA
@@ -89,6 +90,16 @@ namespace CoCoA
   }
 
 
+  bool IsHomog(const std::vector<RingElem>& F)
+  {
+    for (const RingElem& f: F)
+      if (!IsHomog(f))  return false;
+    return true;
+    // C++17
+    //return find_if(F.begin(), F.end(), std::not_fn(CoCoA::IsHomog)) == F.end();
+  }
+
+  
   bool IsHomogPartial(ConstRefRingElem f, long n)  // assumes n >= 0
   {
     CheckElemSparsePolyRing(f, CoCoA_ERROR_CONTEXT);

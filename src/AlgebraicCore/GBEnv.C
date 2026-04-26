@@ -51,36 +51,33 @@ namespace CoCoA
 
 
 
-// Two utilities for GRingInfo ctors
+  namespace // anonymous
+  { // namespace // anonymous ----------------------------------------
 
-  RingHom CreateNewP2OldPRingHom(const SparsePolyRing& theNewSPR,
-                                 const SparsePolyRing& theOldSPR)
-  {
-    if (theNewSPR==theOldSPR)
-      return  IdentityHom(theNewSPR);
-    std::vector<RingElem> images;
-    for (long i=0; i!=NumIndets(theOldSPR); ++i)
-      images.push_back(indet(theOldSPR, i)); // x[i] |-> x[i]
-    for (long i=0; i!=GradingDim(theNewSPR); ++i)
-      images.push_back(one(theOldSPR)); // y[i] |-> 1
-    images.push_back(one(theOldSPR)); // e |-> 1
-    return  PolyRingHom(theNewSPR,theOldSPR,CoeffEmbeddingHom(theOldSPR),images);
-  }//CreateNewP2OldPRingHom
+    RingHom WorkToOrigRingHom(const SparsePolyRing& P_work,
+                              const SparsePolyRing& P_orig)
+    {
+      if (P_work==P_orig)  return  IdentityHom(P_work);
+      std::vector<RingElem> images = indets(P_orig);  // x[i] |-> x[i]
+      for (long i=0; i!=GradingDim(P_work); ++i)
+        images.push_back(one(P_orig));  // y[i] |-> 1
+      images.push_back(one(P_orig));    // e |-> 1
+      return  PolyAlgebraHom(P_work, P_orig, images);
+    }
 
-  RingHom CreateOldP2NewPRingHom(const SparsePolyRing& theNewSPR,
-                                 const SparsePolyRing& theOldSPR)
-  {
-     if (theNewSPR==theOldSPR)
-       return  IdentityHom(theNewSPR);
-     std::vector<RingElem> images;
-     for (long i=0; i < NumIndets(theOldSPR); ++i)
-       images.push_back(indet(theNewSPR, i));       // x[i] |-> x[i]
-     return PolyRingHom(theOldSPR,theNewSPR,CoeffEmbeddingHom(theNewSPR),images);
-  }//CreateOldP2NewPRingHom
-
-
-
-
+    
+    RingHom OrigToWorkRingHom(const SparsePolyRing& P_work,
+                              const SparsePolyRing& P_orig)
+    {
+      if (P_work==P_orig)  return  IdentityHom(P_work);
+      std::vector<RingElem> images;
+      for (long i=0; i < NumIndets(P_orig); ++i)
+        images.push_back(indet(P_work, i));       // x[i] |-> x[i]
+      return PolyAlgebraHom(P_orig, P_work, images);
+    }
+    
+  } // namespace // anonymous ----------------------------------------
+  
 
   //-------------------------------------------------------
   //---------class GRingInfo-------------------------------
@@ -105,125 +102,127 @@ namespace CoCoA
   // ----------------------------------------------------------------------
   // GRingInfo ctors
 
-  void GRingInfo::myCtorAux(const SparsePolyRing& theNewSPR,
+  void GRingInfo::myCtorAux(const SparsePolyRing& P,
                             const bool IsHomog,
                             const bool IsSatAlg)
   {
-    myInputAndGradingValue=DetermineComputationType(GradingDim(theNewSPR),
+    myInputAndGradingValue=DetermineComputationType(GradingDim(P),
                                                     IsHomog,
                                                     IsSatAlg);
-    myGradingPosPlusValue=DetermineIfMyGradingIsPosPlus(theNewSPR);
+    myGradingPosPlusValue=DetermineIfMyGradingIsPosPlus(P);
     mySetCoeffRingType(CoeffEncoding::Field);
   }
   
 
-  GRingInfo::GRingInfo(const SparsePolyRing& theNewSPR,
+  GRingInfo::GRingInfo(const SparsePolyRing& P,
                        const bool IsHomog,
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(theNewSPR),
-    myOldSPRValue(theNewSPR),
-    myPPMValue(NewPPMonoidEv(symbols(PPM(theNewSPR)), ordering(PPM(theNewSPR)))),
-    myFreeModuleValue(NewFreeModule(myNewSPRValue,1)),
-    myOutputFreeModuleValue(NewFreeModule(myNewSPRValue,1)),
-    myNewP2OldPValue(IdentityHom(myNewSPRValue)),
-    myOldP2NewPValue(IdentityHom(myNewSPRValue)),
+    myNewSPRValue(P),
+    myOldSPRValue(P),
+    myPPMValue(NewPPMonoidEv(symbols(PPM(P)), ordering(PPM(P)))),
+    myFreeModuleValue(NewFreeModule(P,1)),
+    myOutputFreeModuleValue(NewFreeModule(P,1)),
+    myNewP2OldPValue(IdentityHom(P)),
+    myOldP2NewPValue(IdentityHom(P)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(false),
     myTimeoutChecker(CheckForTimeout)
   {
-    myCtorAux(theNewSPR, IsHomog, IsSatAlg);
+    myCtorAux(P, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
 
 
-  GRingInfo::GRingInfo(const SparsePolyRing& theNewSPR,
-                       const SparsePolyRing& theOldSPR,
+  GRingInfo::GRingInfo(const SparsePolyRing& P_work,
+                       const SparsePolyRing& P_orig,
                        const FreeModule& theFM,
                        const FreeModule& theOutputFM,
                        const bool IsHomog,
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(theNewSPR),
-    myOldSPRValue(theOldSPR),
-    myPPMValue(NewPPMonoidEv(symbols(PPM(theNewSPR)), ordering(PPM(theNewSPR)))),
+    myNewSPRValue(P_work),
+    myOldSPRValue(P_orig),
+    myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(theFM),
     myOutputFreeModuleValue(theOutputFM),
-    myNewP2OldPValue(CreateNewP2OldPRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(CreateOldP2NewPRingHom(myNewSPRValue,myOldSPRValue)),
+    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
+    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(theNewSPR!=theOldSPR),
+    IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
   {
-    //    if (!IsField(CoeffRing(theOldSPR)))
-    //      CoCoA_THROW_ERROR1(ERR::ReqField);
-    std::vector<RingElem> Y; // The grading vars
+    // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
+    std::vector<RingElem> Y; // The grading indets
     const std::vector<RingElem>& x = indets(myNewSPRValue);
     // Fill Y
     for (long i=0; i < GradingDim(myNewSPRValue); ++i)
-       Y.push_back(x[i+NumIndets(theOldSPR)]);
+      Y.push_back(x[i+NumIndets(P_orig)]);
 
-    const std::vector<degree> S=shifts(myFreeModuleValue);
-    RingElem tmp(myNewSPRValue);
+    const std::vector<degree> Sh=shifts(myFreeModuleValue);
+    //RingElem tmp(myNewSPRValue);
     for (long i=0; i < NumCompts(myFreeModuleValue); ++i)
-    {
-      tmp=power(myE(),this->myComponent(i));
-      for (long j=0; j < GradingDim(myNewSPRValue); ++j)
-        tmp*=power(Y[j],S[i][j]);
-      myEYValue.push_back(tmp);
-    }
-    myCtorAux(theNewSPR, IsHomog, IsSatAlg);
+      myEYValue.push_back(myE(i) * myY(Sh[i]));
+    //{
+    //  tmp=power(myE(),this->myComponent(i));
+    //  for (long j=0; j < GradingDim(myNewSPRValue); ++j)
+    //    tmp*=power(Y[j],Sh[i][j]);
+    //  myEYValue.push_back(tmp);
+    //}
+    myCtorAux(P_work, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
   
 
-  GRingInfo::GRingInfo(const SparsePolyRing& theNewSPR,
-                       const SparsePolyRing& theOldSPR,
+  GRingInfo::GRingInfo(const SparsePolyRing& P_work,
+                       const SparsePolyRing& P_orig,
                        const FreeModule& theOutputFM,
                        const bool IsHomog,
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(theNewSPR),
-    myOldSPRValue(theOldSPR),
-    myPPMValue(NewPPMonoidEv(symbols(PPM(theNewSPR)), ordering(PPM(theNewSPR)))),
-    myFreeModuleValue(NewFreeModule(theNewSPR,1)),
+    myNewSPRValue(P_work),
+    myOldSPRValue(P_orig),
+    myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
+    myFreeModuleValue(NewFreeModule(P_work,1)),
     myOutputFreeModuleValue(theOutputFM),
-    myNewP2OldPValue(CreateNewP2OldPRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(CreateOldP2NewPRingHom(myNewSPRValue,myOldSPRValue)),
+    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
+    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(theNewSPR!=theOldSPR),
+    IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
   {
-    //    if (!IsField(CoeffRing(theOldSPR)))
+    //    if (!IsField(CoeffRing(P_orig)))
     //      CoCoA_THROW_ERROR1(ERR::ReqField);
-    myCtorAux(theNewSPR, IsHomog, IsSatAlg);
+    myCtorAux(P_work, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
 
 
-  GRingInfo::GRingInfo(const SparsePolyRing& theNewSPR,
-                       const SparsePolyRing& theOldSPR,
+  GRingInfo::GRingInfo(const SparsePolyRing& P_work,
+                       const SparsePolyRing& P_orig,
                        const bool IsHomog,
+                       //const bool IsForModule,
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(theNewSPR),
-    myOldSPRValue(theOldSPR),
-    myPPMValue(NewPPMonoidEv(symbols(PPM(theNewSPR)), ordering(PPM(theNewSPR)))),
-    myFreeModuleValue(NewFreeModule(theNewSPR,1)),
-    myOutputFreeModuleValue(NewFreeModule(theNewSPR,1)),
-    myNewP2OldPValue(CreateNewP2OldPRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(CreateOldP2NewPRingHom(myNewSPRValue,myOldSPRValue)),
+    myNewSPRValue(P_work),
+    myOldSPRValue(P_orig),
+    myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
+    myFreeModuleValue(NewFreeModule(P_work,1)),
+    myOutputFreeModuleValue(NewFreeModule(P_work,1)),
+    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
+    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(theNewSPR!=theOldSPR),
+    //    IamModuleValue(IsForModule),
+    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
   {
-    //    if (!IsField(CoeffRing(theOldSPR)))
+    //    if (!IsField(CoeffRing(P_orig)))
     //      CoCoA_THROW_ERROR1(ERR::ReqField);
-    myCtorAux(theNewSPR, IsHomog, IsSatAlg);
+    myCtorAux(P_work, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
 
@@ -249,28 +248,48 @@ namespace CoCoA
 
 
 
-long GRingInfo::myComponent(ConstRefPPMonoidElem T)const
-{
-  if (!IamModule()) return 0;// True Ring
-  return exponent(T,ModuleVarIndex(myNewSPRValue));
-}
+  long GRingInfo::myCompt_work(ConstRefPPMonoidElem T)const
+  {
+    if (!IamModule()) return 0;// True Ring
+    return exponent(T,ModuleVarIndex(myNewSPRValue));
+  }
 
-long GRingInfo::myPhonyComponent(ConstRefPPMonoidElem T)const
-{
-  if (!IamModule()) return 0;// True Ring
-  return myComponent(exponent(T,ModuleVarIndex(myNewSPRValue)));
-}
 
-RingElem GRingInfo::myY(const degree& the_d)const
+  long GRingInfo::myCompt_orig(ConstRefPPMonoidElem T) const
+  {
+    CoCoA_ASSERT(IamModule());
+    return myMaxComponentIndex - myCompt_work(T);
+  }
+
+
+// long GRingInfo::myPhonyComponent(ConstRefPPMonoidElem T)const
+// {
+//   if (!IamModule()) return 0;// True Ring
+//   return myComponent(exponent(T,ModuleVarIndex(myNewSPRValue)));
+// }
+
+
+  long GRingInfo::myCompt_OrigToWork(const long i) const
+  { return myMaxComponentIndex-i; }  // was inline AMB 2026-04-18
+
+  
+RingElem GRingInfo::myY(const degree& d) const
 {
    RingElem result(one(myNewSPR()));
+   const long YFirstIdx = NumIndets(myNewSPRValue) -GradingDim(myNewSPRValue) -1;
    for (long j=0; j < GradingDim(myNewSPR()); ++j)
-      result*=power(myY(j),the_d[j]);
+     result *= IndetPower(myNewSPR(), YFirstIdx+j, d[j]); // Y(j)^d[j]
    return result;
-}//myY
+}
 
 
-  SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
+  RingElem GRingInfo::myE(long i) const
+  { // was inline
+    return IndetPower(myNewSPR(), ModuleVarIndex(myNewSPR()), myCompt_OrigToWork(i));
+  }
+
+
+SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
   {
     switch (myInputAndGrading())
     {
@@ -311,64 +330,60 @@ RingElem GRingInfo::myY(const degree& the_d)const
 ostream& operator<<(ostream& out, const GRingInfo& theGRI)
 {
   if (!out) return out;  // short-cut for bad ostreams
-  out<<"the ring is "<<theGRI.myNewSPR()<<endl
-     <<" the old ring is "<<theGRI.myOldSPR()<<endl
+  out<<"the working ring is "<<theGRI.myNewSPR()<<endl
+     <<" the original ring is "<<theGRI.myOldSPR()<<endl
      //<<" Input Free Module "<<theGRI.myFreeModule()<<endl
      //<<" Output Free Module "<<theGRI.myOutputFreeModule()<<endl
      <<" IamModule "<<theGRI.IamModule()<<endl
      <<" myInputAndGrading = "<<theGRI.myInputAndGrading()<<endl
      <<" myGradingPosPlusValue = "<<theGRI.IsMyGradingPosPlus()<<endl
      <<" embedding grading "
-     <<" EY=\n";
-  for (const RingElem& f: theGRI.myEYValue)
-  { out<<f<<endl; }
-  out<<endl;
+     <<" EY=" << theGRI.myEYValue << endl;
+  //  for (const RingElem& f: theGRI.myEYValue)  out << f << endl;
+  out << endl;
   return out;
 }
 
 
 long ModuleVarIndex(const SparsePolyRing& P)
 {
-  long tmp = NumIndets(P);
-  if (tmp!=0)
-    return tmp-1;
-  else
-    return tmp;
-}//ModuleVarIndex
+//long tmp = NumIndets(P);
+//if (tmp!=0)
+//  return tmp-1;
+//else
+//  return tmp;
+  return NumIndets(P)-1;
+}
 
 
-bool AreCompatible(const GRingInfo& theGRI1,const GRingInfo& theGRI2)
+bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 {
-  if (theGRI1.myNewSPRValue==theGRI2.myNewSPRValue
-        &&
-      theGRI1.myOldSPRValue==theGRI2.myOldSPRValue
-        &&
-      theGRI1.myPPMValue==theGRI2.myPPMValue
-      )
+  return (GRI1.myNewSPRValue == GRI2.myNewSPRValue &&
+          GRI1.myOldSPRValue == GRI2.myOldSPRValue &&
+          GRI1.myPPMValue == GRI2.myPPMValue);
        //&& // I want to do this, the == operator is not there
-         //theGRI1.myDivMaskRuleValue==theGRI2.myDivMaskRuleValue
-    return true;
-  else
-    return false;
-}//AreCompatible
+         //GRI1.myDivMaskRuleValue==GRI2.myDivMaskRuleValue
+}
 
 
 // A member field?
-std::vector<RingElem> GRingInfo::myY()const
-{
-  vector<RingElem> Y;
-  for (long i=0; i < GradingDim(myNewSPRValue); ++i)
-    Y.push_back(indet(myNewSPRValue,i+NumIndets(myOldSPRValue)));
-  return Y;
-}//myY()
+// std::vector<RingElem> GRingInfo::myY()const
+// {
+//   vector<RingElem> Y;
+//   for (long i=0; i < GradingDim(myNewSPRValue); ++i)
+//     Y.push_back(indet(myNewSPRValue, i+NumIndets(myOldSPRValue)));
+//   return Y;
+// }//myY()
 
+
+ // AMB 2026-02-05: This function only returns false.  ???
  // Grdim>=2, order matrix first row is 0,..,0,1
  bool GRingInfo::DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
  {
    // This checks if indeed the order is a PosPlus.
    // Another option is to SET this field at the right time.
    // Slightly more efficient, but more risky.
-   return false;
+   return false; // <---- return false  ??? always ???
    if (GradingDim(theSPR)<1)
      return false;
    ConstMatrixView OrdM = OrdMat(ordering(PPM(theSPR)));

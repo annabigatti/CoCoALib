@@ -57,9 +57,6 @@
 //using std::max;     // for MaxExponent, StdDeg
 using std::remove;  // for myColon
 using std::sort;    // for AreGoodIndetNames
-//#include <functional>
-//using std::not1;    // for AreLPPSqFree
-//using std::ptr_fun; // for AreLPPSqFree
 #include <iostream>
 // using std::ostream in SparsePolyRingBase::myOutput
 //#include <iterator>
@@ -202,10 +199,8 @@ namespace CoCoA
     if (!IsSparsePolyRing(RingOf(I)))  CoCoA_THROW_ERROR1(ERR::ReqSparsePolyRing);
     if (AreGensMonomial(I)) return I;
     if (IsZero(I)) return I;
-    std::vector<RingElem> HomogIdealGens;
     std::vector<RingElem> v(1,x);
-    ComputeHomogenization(HomogIdealGens, gens(I), v);
-    return ideal(HomogIdealGens);
+    return ideal(ComputeHomogenization(gens(I), v));
   }
 
 
@@ -327,8 +322,8 @@ namespace CoCoA
 
   bool SparsePolyRingBase::IdealImpl::IamZero() const
   {
-    for (long i=0; i<len(myGens()); ++i)
-      if (!IsZero(myGens()[i])) return false;
+    for (const auto& f: myGens())
+      if (!IsZero(f)) return false;
     return true;
   }
 
@@ -336,20 +331,13 @@ namespace CoCoA
   
   namespace // anonymous --------------------------------
   {
-    bool AreLPPSqFree(const std::vector<RingElem>& v)
+    bool AreLPPSqFree(const std::vector<RingElem>& F)
     {
-      const long n = len(v);
-      for (long i=0; i < n; ++i)
-        if (!IsSqFree(LPP(v[i]))) return false;
+      for (const auto& f: F)
+        if (!IsSqFree(LPP(f))) return false;
       return true;
-//   We *DO NOT USE* STL algorithm because std::ptr_fun does not work if the fn has formal params which are of reference type
-//       return find_if(v.begin(), v.end(),
-//                      not1(ptr_fun(CoCoA::IsSqFreeLPP)))
-// 	//                     not1(ptr_fun(static_cast<bool(*)(ConstRefRingElem)>(CoCoA::IsRadLPP))))
-//         == v.end();
     }
-
-    } // anonymous end ----------------------------------
+  } // anonymous end ----------------------------------
 
 
   bool SparsePolyRingBase::IdealImpl::IhaveGBasis() const
@@ -469,17 +457,17 @@ namespace CoCoA
   bool SparsePolyRingBase::IdealImpl::IamZeroDim() const
   {
     const vector<RingElem>& GB = myTidyGens(NoCpuTimeLimit());
-    const long GBlen = len(GB);
-    const int nvars = NumIndets(myRing());
-    vector<bool> AlreadySeen(nvars);
+    const int n = NumIndets(myRing());
+    if (len(GB) < n) return false;
+    vector<bool> AlreadySeen(n);
     int NumIndetPowers = 0;
     long index; BigInt IgnoreExp; // for rtn vals from IsIndetPosPower
-    for (long i=0; i < GBlen; ++i)
+    for (const auto& g: GB)
     {
-      if (IsIndetPosPower(index, IgnoreExp, LPP(GB[i])) && !AlreadySeen[index])
+      if (IsIndetPosPower(index, IgnoreExp, LPP(g)) && !AlreadySeen[index])
       {
         AlreadySeen[index] = true;
-        if (++NumIndetPowers == nvars) return true;
+        if (++NumIndetPowers == n) return true;
       }
     }
     return false;
@@ -561,8 +549,9 @@ namespace CoCoA
       return;
     }
     if (!OverField)  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
-    ComputeIntersection(myGensValue, myGensValue, gens(J));
+    std::vector<RingElem> IntGens = ComputeIntersection(myGensValue, gens(J));
     myReset(); // can we recover some info?
+    swap(myGensValue, IntGens);
   }
 
 
@@ -582,7 +571,7 @@ namespace CoCoA
       const RingElem Z(zero(myRing()));
       myGensValue.erase(remove(myGensValue.begin(), myGensValue.end(),Z),
                         myGensValue.end());
-      ComputeColon(myGensValue, myGensValue, gens(J));
+      myGensValue = ComputeColon(myGensValue, gens(J));
     }
     myReset(); // can we recover some info?
   }
@@ -594,7 +583,7 @@ namespace CoCoA
     if (IsZero(J))
       myGensValue = vector<RingElem>{one(myRing())};
     else
-      ComputeSaturation(myGensValue, myGensValue, gens(J));
+      myGensValue = ComputeSaturation(myGensValue, gens(J));
     myReset();
   }
 
@@ -628,8 +617,7 @@ namespace CoCoA
       if (!IsIndet(x))  CoCoA_THROW_ERROR1(ERR::ReqIndet);
       ElimIndetsProd *= LPP(x);
     }
-    std::vector<RingElem> ElimGens;
-    ComputeElim(ElimGens, gens(I), ElimIndetsProd);
+    std::vector<RingElem> ElimGens = ComputeElim(gens(I), ElimIndetsProd);
     myReset(); // can we recover some info from I?
     swap(myGensValue, ElimGens);
   }
@@ -730,7 +718,7 @@ namespace CoCoA
     myGBasis_EasyCases();
     if (IhaveGBasis()) return myGBasisValue;
     vector<RingElem> MinGens;
-    ComputeGBasis(myGBasisValue, MinGens, myGensValue, CheckForTimeout);
+    ComputeGBasis2(myGBasisValue, MinGens, myGensValue, CheckForTimeout);
     if (!MinGens.empty()) // non-trivial MinGens is non-empty only if ideal is homog
       myMinGensValue = MinGens;
     IhaveGBasisValue = true;
@@ -751,7 +739,7 @@ namespace CoCoA
     if (TruncDeg < 0) CoCoA_THROW_ERROR1(ERR::ReqNonNegative); 
     vector<RingElem> MinGens;
     vector<RingElem> GB;
-    ComputeGBasisTrunc(GB, MinGens, TruncDeg, myGensValue, CheckForTimeout);
+    ComputeGBasisTrunc2(GB, MinGens, TruncDeg, myGensValue, CheckForTimeout);
     if (!MinGens.empty()) // MinGens is non-empty only if ideal is homog
       myMinGensValue = MinGens;
     if (TruncDeg != GReductor::ourNoTruncValue)  // 20251213 AMB
@@ -825,27 +813,25 @@ namespace CoCoA
     const RingHom phi =PolyAlgebraHom(P,Ph,vector<RingElem>(X.begin(),X.begin()+n));
     std::vector<RingElem> v = indets(P);  v.push_back(one(P));
     const RingHom dehom = PolyAlgebraHom(Ph,P,v);
-    const std::vector<RingElem>& g = myGens();
     std::vector<RingElem> gh; // use transform here???
-    for (long i=0; i<len(g); ++i)
-      if (!IsZero(g[i]))
-        gh.push_back(homog(phi(g[i]), h));
+    for (const auto& f: myGens())
+      if (!IsZero(f))
+        gh.push_back(homog(phi(f), h));
     std::vector<RingElem> GB = dehom( GBasis(ideal(gh),CheckForTimeout) );
     gh.clear();
     // interreduce GB
     std::vector<RingElem> GBaux;
     sort(GB.begin(), GB.end(), LPPLessThan);
     //    PPVector LT_GB(PPM(P), NewDivMaskEvenPowers());
-    PPWithMask LT_GBi(one(PPM(P)), NewDivMaskEvenPowers());
+    PPWithMask LT_g(one(PPM(P)), NewDivMaskEvenPowers());
     PPVector LT_GB_min(PPM(P), NewDivMaskEvenPowers());
-    for (long i=0; i<len(GB); ++i)
+    for (const auto& g: GB)
     {
-      //      PushBack(LT_GB, LPP(GB[i]));
-      LT_GBi = LPP(GB[i]);
-      if (!IsDivisible(LT_GBi, LT_GB_min))
+      LT_g = LPP(g);
+      if (!IsDivisible(LT_g, LT_GB_min))
       {
-        PushBack(LT_GB_min, LT_GBi);
-        GBaux.push_back(monic(NR(GB[i], GBaux)));
+        PushBack(LT_GB_min, LT_g);
+        GBaux.push_back(monic(NR(g, GBaux)));
       }
     }
     swap(myGBasisValue, GBaux);
@@ -861,22 +847,18 @@ namespace CoCoA
     if (OverField && IhaveMonomialGens()) return myGBasis_MonId();
     CoCoA_ASSERT(myGBasisValue.empty());
     if (IamZero()) return myGBasisValue;
-    vector<RingElem> GBSelfSat;
-    ComputeGBasisSelfSatCore(GBSelfSat, myGensValue);
-    return GBSelfSat;
+    return ComputeGBasisSelfSatCore(myGensValue);
   }
 
 
   std::vector<RingElem> SparsePolyRingBase::IdealImpl::myGBasisRealSolve() const
   {
     if (IamZero()) return myGBasisValue;
-    vector<RingElem> GBRealSolve;
-    ComputeGBasisRealSolve(GBRealSolve, myGensValue);
-    return GBRealSolve;
+    return ComputeGBasisRealSolve(myGensValue);
   }
 
 
-  namespace 
+  namespace // anonymous --------------------------------
   {
     long MaxDeg(const std::vector<RingElem>& F)
     {
@@ -884,7 +866,7 @@ namespace CoCoA
       for (const auto& f:F)  if ( (d=ConvertTo<long>(wdeg(f)[0])) > D)  D = d;
       return D;
     }
-  }
+  } // namespace // anonymous --------------------------------
   
   
   const std::vector<RingElem>& SparsePolyRingBase::IdealImpl::myMinGens() const
@@ -907,14 +889,6 @@ namespace CoCoA
       CoCoA_THROW_ERROR2(ERR::ReqSparsePolyRing, "ring of I");
     if (IsZero(I) || IsOne(I)) return false;
     // Now we know I is non-trivial.
-//     const SparsePolyRing P = RingOf(I);
-//     const vector<RingElem>& GB = TidyGens(I);
-//     const long GBlen = len(GB); // MUST BE A REDUCED GBASIS !!!
-//     long NumIndetPowers = 0;
-//     for (long i=0; i < GBlen; ++i)
-//       if (IsIndetPosPower(LPP(GB[i])))
-//         ++NumIndetPowers;
-//     return (NumIndetPowers == NumIndets(P));
     return SparsePolyRingBase::IdealImpl::ourGetPtr(I)->IamZeroDim();
   }
 

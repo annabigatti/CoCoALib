@@ -69,7 +69,7 @@ namespace CoCoA
     myMinimalGenLevel = -1;
     myAge = age;
     myNumTerms = NumTerms(the_p);
-    myComponent = theGRI.myComponent(myLPPForDiv());
+    myComponent = theGRI.myCompt_work(myLPPForDiv());
    }//ctor
 
 
@@ -93,7 +93,7 @@ namespace CoCoA
     myMinimalGenLevel = -1;
     myAge = age;
     myNumTerms = NumTerms(the_p);
-    myComponent = theGRI.myComponent(myLPPForDiv());
+    myComponent = theGRI.myCompt_work(myLPPForDiv());
    }//ctor
 
   // This ctor destroys the_p
@@ -118,7 +118,7 @@ namespace CoCoA
     myMinimalGenLevel = -1;
     myAge = age;
     myNumTerms = NumTerms(myPolyValue);
-    myComponent = theGRI.myComponent(myLPPForDiv());
+    myComponent = theGRI.myCompt_work(myLPPForDiv());
   }//ctor
 
 // This ctor destroys the_p
@@ -141,7 +141,7 @@ namespace CoCoA
     myMinimalGenLevel = -1;
     myAge = age;
     myNumTerms = NumTerms(myPolyValue);
-    myComponent = theGRI.myComponent(myLPPForDiv());
+    myComponent = theGRI.myCompt_work(myLPPForDiv());
   }//ctor
 
 
@@ -271,7 +271,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
     myLPPForDivwMask = exponents(myLPPForOrd);
     myLCValue=LC(myPoly());//DYN here the new LC will be computed
     myWDeg = wdeg(myLPPForOrd);
-    myComponent = myGRingInfoValue.myComponent(myLPPForDiv());
+    myComponent = myGRingInfoValue.myCompt_work(myLPPForDiv());
   }
 }//myUpdateLenLPPLCDegComp
 
@@ -298,18 +298,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
     mySugar = sugar(the_gp);
    }//myAssignSPoly
 
- /*
-//???  This does not work, I don't understand why.
- void GPoly::myAppendClear(RingElem& p)
- {
-   SparsePolyRing P=owner(*this);
-clog << "operator+=: myPoly " <<myPoly<< endl;
-clog << "operator+=: p " <<p<< endl;
-   P->myAppendClear(raw(myPoly), raw(p));
-clog << "operator+=: result " <<myPoly<< endl;
-   myNumTerms = NumTerms(myPoly);
- }//_myAppendClear
- */
 
 // TEMPORARY - Dangerous, does not adjust all the fields of *this
  void GPoly::myAppendClear(RingElem& p)
@@ -552,14 +540,9 @@ clog << "operator+=: result " <<myPoly<< endl;
 
   const PPMonoid& PPM(const Reductors& red)
   {
-    return PPM(owner(red));
+    return PPM(red.myGRingInfo().myNewSPR());
   }
 
-
-  const SparsePolyRing& owner(const Reductors& red)
-  {
-    return red.myGRingInfo().myNewSPR();
-  }
 
   void Reductors::Insert(GPoly* p, const long count)
   {
@@ -646,80 +629,6 @@ clog << "operator+=: result " <<myPoly<< endl;
     // myBorelGPolys.clear();
   }//clean
 
-//   void swap(Reductors& R1,Reductors& R2)
-//   {
-//     // TODO NEW if (R1.myPolyRing!=R2.myPolyRing) return;
-//     swap(R1.myReductors,R2.myReductors);
-//   }
-
-
-// This function prepares the Borel Reductors for the next degree
-//   void Reductors::myBorelReductorsUpdateInNextDegree()
-//   {
-//     for (ReductorData& R: myBorelReductors)
-// //    for (vector<ReductorData>::const_iterator it = myBorelReductors.begin();
-// //         it != myBorelReductors.end();
-// //         ++it)
-//       R.IamBorelUpdated = false;
-//   }
-
-
-  // // forward declaration of class GPoly needed.
-  // void MakeMonic(std::list<GPoly>& GPL)
-  // {
-  //   if (GPL.empty())  return;
-  //   const SparsePolyRing P(owner(GPL));
-  //   for (GPoly& g: GPL)
-  //   {
-  //     g.myPolyValue= monic(g.myPolyValue);
-  //     g.myLCValue = one(P);
-  //   }
-  // } // MakeMonic
-
-
-  SparsePolyRing owner(const PolyList& thePL)
-  {
-    CoCoA_ASSERT(!thePL.empty());
-    return owner(*thePL.begin());
-  }//owner
-
-  SparsePolyRing owner(const GPolyList& theGPL)
-  {
-    CoCoA_ASSERT(!theGPL.empty());
-    return owner(*theGPL.begin());
-  }//owner
-
-//  SparsePolyRing owner(const  std::vector<RingElem>& thePV)
-//   {
-//     CoCoA_ASSERT(!thePV.empty());
-//     return owner(*thePV.begin());
-//   }//owner
-
-  void PolyList2PolyVectorClear(PolyList& thePL,std::vector<RingElem>& thePV)
-  {
-    thePV.clear();
-    if (thePL.empty())
-      return;
-    const SparsePolyRing P(owner(thePL));
-    for (RingElem& g: thePL)
-    {
-      thePV.push_back(one(P));
-      swap(thePV.back(),g);
-    }
-  }//PolyList2PolyVector
-
-  void PolyVector2PolyListClear(std::vector<RingElem>& thePV,PolyList& thePL)
-  {
-    thePL.clear();
-    if (thePV.empty())
-      return;
-    const SparsePolyRing P(owner(thePV));
-    for (RingElem& g: thePV)
-    {
-      thePL.push_back(one(P));
-      swap(thePL.back(),g);
-    }
-  }//PolyVector2PolyList
 
   // // power(y_1y_2..y_k,d_1d_2..d_k)=y_1^d_1y_2^d_2..y_k^d_k
   // void power(RingElem& theResult,

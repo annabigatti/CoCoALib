@@ -172,11 +172,6 @@ typedef std::list<GPoly> GPolyList;
     friend GPoly* FindReducer(const GPoly&, const Reductors& theReductors);
     //@}
 
-    // these functions need to access myPoly(). See if they can be pared down/put here
-    // they are located in GReductor.C
-    friend void DeEmbedPoly(ModuleElem&,const GPoly&,long);
-    friend void IntEmbedGPolyList(GPolyList&, GPolyList&);
-    friend void DeEmbedPoly(RingElem&, const GPoly&);
   };//class GPoly
 
   // These are only for internal use
@@ -191,12 +186,6 @@ typedef std::list<GPoly> GPolyList;
 
   //  std::vector<GPoly*>::const_iterator FindReducer(const geobucket&, const std::vector<GPoly*>& G);
 
-
-  //  void MakeMonic(PolyList&);
-  //  void MakeMonic(GPolyList&);
-  // void power(RingElem& theResult,   /// 20251212 is this really used?
-  //              const std::vector<RingElem>& theV,
-  //              const degree& the_d);
 
   // -------------------- inline functions -------------------- //
 
@@ -226,7 +215,6 @@ typedef std::list<GPoly> GPolyList;
     bool operator<(const ReductorData& RD) const {return myKey<RD.myKey;};
     friend std::ostream& operator<<(std::ostream&, const ReductorData&);
     //inline friend long Deg(const ReductorData& RD) {return Deg(*myGPoly);};
-    friend const SparsePolyRing& owner(const Reductors&);
     friend const PPMonoid& PPM(const Reductors&);
     friend long component(const ReductorData& RD) { return component(*(RD.myGPolyPtr)); }
     bool IamNotToBeUsed() const { return myIamNotToBeUsedValue; }
@@ -270,7 +258,6 @@ typedef std::list<GPoly> GPolyList;
     void OrderedInterreduce(const GPoly&);
     void SuperInterreduce(const GPoly&);
 
-    friend const SparsePolyRing& owner(const Reductors&);
     friend const PPMonoid& PPM(const Reductors&);
     friend void interreduce(Reductors&, GPoly);
     friend void OrderedInterreduce(Reductors&, GPoly);
@@ -306,13 +293,6 @@ typedef std::list<GPoly> GPolyList;
 
   };// End class Reductors
 
-
-  SparsePolyRing owner(const PolyList& thePL);
-  SparsePolyRing owner(const std::vector<RingElem>& thePV);
-  SparsePolyRing owner(const GPolyList& theGPL);
-
-  void PolyList2PolyVectorClear(PolyList&,std::vector<RingElem>&);
-  void PolyVector2PolyListClear(std::vector<RingElem>&,PolyList&);
 
 }// end namespace cocoa
 
