@@ -115,148 +115,110 @@ namespace CoCoA
     // from TmpGReductor 2026-04-10
     ////////////////////////////////////
     
-    enum ModOrdTypeForcing {NoForcing, PosWDegTO, WDegTOPos, WDegPosTO};
+    enum ModOrdLabel {PosWDegTO, WDegTOPos, WDegPosTO};
 
 
-    ModOrdTypeForcing ModuleOrderType(const FreeModule& M)
+    ModOrdLabel ModuleOrderLabel(const FreeModule& M)
     {
       if (IsOrdPosn(ordering(M))) return WDegTOPos;
       if (IsWDegPosnOrd(ordering(M))) return WDegPosTO;
       return PosWDegTO;
-    } // ModOrdType
+    }
 
-  
+
+    void CopyRow(matrix& DestM, long D_i, ConstMatrixView M, long i)
+    {
+      for (long j=0; j < NumCols(M); ++j) SetEntry(DestM, D_i, j, M(i,j));
+    }
+
+
     // This is OK for the non-homogeneous case
     // For the homogenous case, PosTo this is inefficient, since
     // the Deg rows in the To part are useless.
-    SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM,
-                                          ModOrdTypeForcing MOType)
+    SparsePolyRing MakeModuleAsRing(const SparsePolyRing& P,
+                                          ModOrdLabel MOLabel)
     {
-      const ModuleOrdering MTO = ordering(FM);
-      const SparsePolyRing OldP=RingOf(FM);
-      const long NumOldInds=NumIndets(OldP);
       long GrDim;
-      if (MOType==PosWDegTO)
-        GrDim=0;// Set simple sugar on
+      if (MOLabel==PosWDegTO)
+        GrDim=0; // Set simple sugar on
       else
-        GrDim=GradingDim(OldP);
-      const long NumNewInds=NumOldInds+GrDim+1;
-
-      ConstMatrixView OldOrdOMat = OrdMat(OldP);
-
-      matrix NewOrdMat(NewDenseMat(RingZZ(), NumNewInds, NumNewInds));
-      ////std::clog<<"NewOrdMat starts as "<<NewOrdMat<<std::endl;
-      if (MOType == NoForcing)  MOType = ModuleOrderType(FM);
-
-      switch (MOType)
+        GrDim=GradingDim(P);
+      const long N = NumIndets(P);
+      const long NewN = N+GrDim+1;
+      ConstMatrixView M = OrdMat(P);
+      matrix NewOrdMat(NewDenseMat(RingZZ(), NewN, NewN));
+      switch (MOLabel) // fill rows 0 to N (incl.)
       {
       case PosWDegTO:
-        // Setting the module component ordering
-        SetEntry(NewOrdMat, 0, NumNewInds-1, 1); 	
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim+1; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-        // Setting the Grading: the NewGrading		
-        for (long i=1; i < GrDim+1; ++i)			
-          SetEntry(NewOrdMat, i, i+NumOldInds-1, 1); 	
-        // Setting the TO ordering
-        for (long i=GrDim; i < NumOldInds; ++i)
-          for (long j=0; j < NumOldInds; ++j)
-            SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-        break;
-
+        SetEntry(NewOrdMat, 0, NewN-1, 1); // posn
+        for (long i=0; i<GrDim; ++i)
+        {
+          CopyRow(NewOrdMat, i+1,  M, i);  // wdeg[i]
+          SetEntry(NewOrdMat, i+1,i+N, 1); // shift[i]
+        }
+        for (long i=GrDim; i<N; ++i)       // ord
+          CopyRow(NewOrdMat, i+1,  M, i);
+        break; //-----------------------------------
       case WDegTOPos:
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-        // Setting the Grading: the NewGrading		
-        for (long i=0; i < GrDim; ++i)			
-          SetEntry(NewOrdMat, i, i+NumOldInds, 1);
-        // Setting the TO	
-        for (long i=GrDim; i < NumOldInds; ++i)
-          for (long j=0; j < NumOldInds; ++j)
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-        // Setting the module component ordering
-        SetEntry(NewOrdMat, NumNewInds-1-GrDim, NumNewInds-1, 1); 	
-        break;
-
-      case WDegPosTO:; // This is the default
+        for (long i=0; i<GrDim; ++i)			
+        {
+          CopyRow(NewOrdMat, i,  M, i);   // wdeg[i]
+          SetEntry(NewOrdMat, i,i+N, 1);  // shift[i]
+        }
+        for (long i=GrDim; i < N; ++i)    // ord
+          CopyRow(NewOrdMat, i,  M, i);
+        SetEntry(NewOrdMat, N,NewN-1, 1); // posn
+        break; //-----------------------------------
+      case WDegPosTO: // This is the default
       default:
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-      // Setting the Grading: the NewGrading		
-      for (long i=0; i < GrDim; ++i)			
-        SetEntry(NewOrdMat, i, i+NumOldInds, 1); 	
-      // Setting the module component ordering
-      SetEntry(NewOrdMat, GrDim, NumNewInds-1, 1);
-      // Setting the TO ordering
-      for (long i=GrDim; i < NumOldInds; ++i)
-        for (long j=0; j < NumOldInds; ++j)
-          SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-      break;
+        for (long i=0; i<GrDim; ++i)
+        {
+          CopyRow(NewOrdMat, i,  M, i);  // wdeg[i]
+          SetEntry(NewOrdMat, i,i+N, 1); // shift[i]
+        }
+        SetEntry(NewOrdMat, GrDim,NewN-1, 1); // posn
+        for (long i=GrDim; i<N; ++i)          // ord
+          CopyRow(NewOrdMat, i+1,  M, i);
+        break; //-----------------------------------
       }
-      // Filling the matrix
-      for (long i=0; i < GrDim; ++i)
-        for (long j=0; j < NumOldInds; ++j)
-          SetEntry(NewOrdMat, NumOldInds+i+1, j, OldOrdOMat(i,j));
+      for (long i=0; i<GrDim; ++i)       // again:
+        CopyRow(NewOrdMat, i+N+1, M, i); // wdeg[i]
 
-      const PPOrdering MatNewOrd = NewMatrixOrdering(NewOrdMat, GrDim);
-
-      const std::vector<symbol> IndetNames = NewSymbols(NumOldInds + GrDim + 1);
-      //---> for DEBUGGING choose these IndetNames:
-      //   std::vector<symbol> IndetNames = SymbolRange("x", 0, NumOldInds-1);
-      //   if ( GrDim==1 ) IndetNames.push_back(symbol("s"));  // indet representing shift
-      //   else
-      //     for ( long i=0 ; i<GrDim ; ++i )
-      //       IndetNames.push_back(symbol("s",i));  // indet representing shift
-      //   IndetNames.push_back(symbol("e"));  // indet representing module component
-      //---> for DEBUGGING
-      SparsePolyRing NewP(NewPolyRing(CoeffRing(OldP),IndetNames,MatNewOrd));
-      return NewP;
-    } // MakeNewPRingFromModule
+      const PPOrdering PPO = NewMatrixOrdering(NewOrdMat, GrDim);
+      // if possible, use "sh" and "e" (when using verbosity)
+      std::vector<symbol> IndetNames = symbols(PPM(P));
+      if ( GrDim==1 ) IndetNames.push_back(symbol("sh"));  // for shift
+      else
+        for (long i=0 ; i<GrDim ; ++i )
+          IndetNames.push_back(symbol("sh",i));  // for shifts
+      IndetNames.push_back(symbol("e"));  // for module component
+      try
+      {
+        return NewPolyRing(CoeffRing(P), IndetNames, PPO);
+      }
+      catch (const CoCoA::ErrorInfo& err) {if (err!=ERR::BadIndetNames) throw;}
+      IndetNames = symbols(PPM(P));
+      for (const auto& sym: NewSymbols(GradingDim(P)+1) )
+        IndetNames.push_back(sym);
+      return NewPolyRing(CoeffRing(P), IndetNames, PPO);
+    } // MakeModuleAsRing  anna
 
 
     // Called by syz, indirectly by intersection, colonbyprincipal (ideal)
-    SparsePolyRing MakeNewPRingForP2(const SparsePolyRing& OldP,
-                                     ModOrdTypeForcing MOType)
-    {
-      std::vector<degree> InputShifts;
-      degree tmp(GradingDim(OldP));
-      InputShifts.push_back(tmp);
-      InputShifts.push_back(tmp);
-      const FreeModule FM=NewFreeModule(OldP, InputShifts, WDegPosnOrd);
-      return MakeNewPRingFromModule(FM, MOType);
-    }
 
-
-    // returns the poly ring equivalent with OldP^2, same grading
-    // The ordering is WDegPosnOrd if MOType==NoForcing or MOType
     // Called by intersection, colonbyprincipal
-    SparsePolyRing MakeNewPRingForP2_PosTO(const SparsePolyRing& OldP,
-                                           bool HomogInput)
-    {
-      if (HomogInput) return MakeNewPRingForP2(OldP, WDegPosTO);
-      else return MakeNewPRingForP2(OldP, PosWDegTO);
-    }
 
     // Called by ComputeGBasis2 (module), ComputeSyz (module), ComputeColonByPrincipal (module)
-    SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM)
-    { return MakeNewPRingFromModule(FM, NoForcing); }
+    SparsePolyRing MakeModuleAsRing(const FreeModule& FM)
+    { return MakeModuleAsRing(RingOf(FM), ModuleOrderLabel(FM)); }
 
 
     // Called by ComputeIntersection (module)
-    SparsePolyRing MakeNewPRingFromModule_PosTO(const FreeModule& FM,
-                                                bool HomogInput)
+    SparsePolyRing MakeModuleAsRing_PosTO(const SparsePolyRing& P,
+                                          bool HomogInput)
     {
-      if (HomogInput) return MakeNewPRingFromModule(FM, WDegPosTO);
-      else            return MakeNewPRingFromModule(FM, PosWDegTO);
+      if (HomogInput) return MakeModuleAsRing(P, WDegPosTO);
+      else            return MakeModuleAsRing(P, PosWDegTO);
     }
 
 
@@ -616,7 +578,7 @@ namespace CoCoA
       return;
     }
     const FreeModule FM=owner(G_in[0]);
-    const SparsePolyRing P_work(MakeNewPRingFromModule(FM));
+    const SparsePolyRing P_work(MakeModuleAsRing(FM));
     const SparsePolyRing P(RingOf(FM));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     bool IsSatAlg=false;
@@ -919,10 +881,11 @@ namespace CoCoA
       CoCoA_THROW_ERROR2(ERR::NYI, "Not Yet Tested for non-homog input");
     if (G.empty())  return G;
     bool IsSatAlg=false;
-    ModOrdTypeForcing MOType = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
+    ModOrdLabel MOLabel = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
     const FreeModule FM = owner(G[0]);
     const SparsePolyRing P(RingOf(FM));
-    const SparsePolyRing P_work(MakeNewPRingFromModule(FM,MOType));
+    //    const SparsePolyRing P_work(MakeModuleAsRing(FM,MOLabel));
+    const SparsePolyRing P_work(MakeModuleAsRing(P, MOLabel));
     // Note: the GRI should build itself SyzFM and P_work from the data and deduce FM and P.
     //       All the embedding/deembedding functions should be members of GRI.
     GRingInfo GRI(P_work,P,FM,SyzFM,IsHomogGrD0(G),IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
@@ -937,9 +900,9 @@ namespace CoCoA
   {
     if (G.empty()) return VectorList{zero(SyzFM)};
     bool IsSatAlg=false;
-    ModOrdTypeForcing MOType = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
+    ModOrdLabel MOLabel = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
     const SparsePolyRing P(owner(G[0]));
-    const SparsePolyRing P_work(MakeNewPRingForP2(P,MOType));
+    const SparsePolyRing P_work(MakeModuleAsRing(P, MOLabel));
     GRingInfo GRI(P_work, P, SyzFM, IsHomogGrD0(G),
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, SyzEmbedPolyList(G,GRI));
@@ -956,7 +919,7 @@ namespace CoCoA
     bool IsSatAlg=false;
     const FreeModule FM = owner(G1[0]);
     bool HomogInput = IsHomogGrD0(G1) && IsHomogGrD0(G2);
-    const SparsePolyRing P_work(MakeNewPRingFromModule_PosTO(FM,HomogInput));
+    const SparsePolyRing P_work(MakeModuleAsRing_PosTO(RingOf(FM), HomogInput));
     GRingInfo GRI(P_work, RingOf(FM), FM, FM, HomogInput,
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, IntEmbedVectorLists(G1, G2, GRI));
@@ -972,7 +935,7 @@ namespace CoCoA
     if (G1.empty())  return G1;
     const SparsePolyRing P(owner(G1[0]));
     const bool HomogInput = IsHomogGrD0(G1) && IsHomogGrD0(G2);
-    const SparsePolyRing P_work(MakeNewPRingForP2_PosTO(P, HomogInput));
+    const SparsePolyRing P_work(MakeModuleAsRing_PosTO(P, HomogInput));
     GRingInfo GRI(P_work, P, HomogInput,
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, IntEmbedPolyLists(G1, G2, GRI));
@@ -994,7 +957,7 @@ namespace CoCoA
       if (!IsHomogGrD0(G1))  CoCoA_THROW_ERROR2(ERR::NYI, "non-homog");
       if (!IsHomogGrD0(v))  CoCoA_THROW_ERROR2(ERR::NYI, "non-homog");
       const FreeModule FM = owner(G1[0]);
-      const SparsePolyRing P_work(MakeNewPRingFromModule(FM, WDegPosTO));
+      const SparsePolyRing P_work(MakeModuleAsRing(RingOf(FM), WDegPosTO));
       GRingInfo GRI(P_work, RingOf(FM), FM, FM, IsHomogGrD0(G1)&&IsHomogGrD0(v),
                     IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, ColonEmbedVectorLists(G1, v, GRI));
@@ -1011,7 +974,7 @@ namespace CoCoA
       if (IsZero(f))  return std::vector<RingElem>{one(owner(f))};
       bool IsSatAlg=false;
       const SparsePolyRing P(owner(G[0]));
-      const SparsePolyRing P_work(MakeNewPRingForP2_PosTO(P,IsHomogGrD0(G)&&IsHomogGrD0(f)));
+      const SparsePolyRing P_work(MakeModuleAsRing_PosTO(P,IsHomogGrD0(G)&&IsHomogGrD0(f)));
       GRingInfo GRI(P_work, P, IsHomogGrD0(G) && IsHomogGrD0(f),
                     IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, ColonEmbedPolyLists(G, f, GRI));
