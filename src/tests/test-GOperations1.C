@@ -39,6 +39,7 @@
 #include "CoCoA/matrix.H"
 #include "CoCoA/submodule.H"
 #include "CoCoA/symbol.H"
+#include "CoCoA/verbose.H"
 
 #include <iostream>
 using std::cout;
@@ -295,24 +296,36 @@ namespace CoCoA
   }
 
 
+  void title(const std::string s)
+  {
+    VerboseLog VERBOSE("test-GOperations1");
+    VERBOSE(10) << endl
+                << " ------------------" << s
+                << "------------------" << endl;
+  }
+
+
   void program()
   {
     GlobalManager CoCoAFoundations;
-  
-    test1();
-    test2();
-    test3();
+    
+    SetVerbosityLevel(0); // 100
+    
+    //SetVerbosityLevel(120); // 100, 120
+    title("test1"); test1();
+    title("test2"); test2();
+    title("test3"); test3();
     //test4();
     //test5();
     //test6();
-    test7();  // elim
-    test8();  // intersect
+    title("test7"); test7();  // elim
+    title("test8"); test8();  // intersect
     //test9(); // intersect module NYI
     //test10();
-    test11();
+    title("test11"); test11();
     //test26(); // homog
-    test28(); // homog
-    test30();
+    title("test28"); test28(); // homog
+    title("test30"); test30();
   }
 
 } // end of namespace CoCoA
