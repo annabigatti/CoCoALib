@@ -115,14 +115,14 @@ namespace CoCoA
     // from TmpGReductor 2026-04-10
     ////////////////////////////////////
     
-    enum ModOrdLabel {PosWDegTO, WDegTOPos, WDegPosTO};
+    enum ModOrdLabel {P_W_O, W_O_P, W_P_O};
 
 
     ModOrdLabel ModuleOrderLabel(const FreeModule& M)
     {
-      if (IsOrdPosn(ordering(M))) return WDegTOPos;
-      if (IsWDegPosnOrd(ordering(M))) return WDegPosTO;
-      return PosWDegTO;
+      if (IsOrdPosn(ordering(M))) return W_O_P;
+      if (IsWDegPosnOrd(ordering(M))) return W_P_O;
+      return P_W_O;
     }
 
 
@@ -135,11 +135,11 @@ namespace CoCoA
     // This is OK for the non-homogeneous case
     // For the homogenous case, PosTo this is inefficient, since
     // the Deg rows in the To part are useless.
-    SparsePolyRing MakeModuleAsRing(const SparsePolyRing& P,
-                                          ModOrdLabel MOLabel)
+    SparsePolyRing MakeModuleAsRing_aux(const SparsePolyRing& P,
+                                        ModOrdLabel MOLabel)
     {
       long GrDim;
-      if (MOLabel==PosWDegTO)
+      if (MOLabel==P_W_O)
         GrDim=0; // Set simple sugar on
       else
         GrDim=GradingDim(P);
@@ -149,7 +149,7 @@ namespace CoCoA
       matrix NewOrdMat(NewDenseMat(RingZZ(), NewN, NewN));
       switch (MOLabel) // fill rows 0 to N (incl.)
       {
-      case PosWDegTO:
+      case P_W_O:
         SetEntry(NewOrdMat, 0, NewN-1, 1); // posn
         for (long i=0; i<GrDim; ++i)
         {
@@ -159,7 +159,7 @@ namespace CoCoA
         for (long i=GrDim; i<N; ++i)       // ord
           CopyRow(NewOrdMat, i+1,  M, i);
         break; //-----------------------------------
-      case WDegTOPos:
+      case W_O_P:
         for (long i=0; i<GrDim; ++i)			
         {
           CopyRow(NewOrdMat, i,  M, i);   // wdeg[i]
@@ -169,7 +169,7 @@ namespace CoCoA
           CopyRow(NewOrdMat, i,  M, i);
         SetEntry(NewOrdMat, N,NewN-1, 1); // posn
         break; //-----------------------------------
-      case WDegPosTO: // This is the default
+      case W_P_O: // This is the default
       default:
         for (long i=0; i<GrDim; ++i)
         {
@@ -201,7 +201,7 @@ namespace CoCoA
       for (const auto& sym: NewSymbols(GradingDim(P)+1) )
         IndetNames.push_back(sym);
       return NewPolyRing(CoeffRing(P), IndetNames, PPO);
-    } // MakeModuleAsRing
+    } // MakeModuleAsRing_aux
 
 
     // Called by syz, indirectly by intersection, colonbyprincipal (ideal)
@@ -210,15 +210,15 @@ namespace CoCoA
 
     // Called by ComputeGBasis2 (module), ComputeSyz (module), ComputeColonByPrincipal (module)
     SparsePolyRing MakeModuleAsRing(const FreeModule& FM)
-    { return MakeModuleAsRing(RingOf(FM), ModuleOrderLabel(FM)); }
+    { return MakeModuleAsRing_aux(RingOf(FM), ModuleOrderLabel(FM)); }
 
 
     // Called by ComputeIntersection (module)
     SparsePolyRing MakeModulePosnOrdAsRing(const SparsePolyRing& P,
                                            bool HasHomogInput)
     {
-      if (HasHomogInput) return MakeModuleAsRing(P, WDegPosTO);
-      else               return MakeModuleAsRing(P, PosWDegTO);
+      if (HasHomogInput) return MakeModuleAsRing_aux(P, W_P_O);
+      else               return MakeModuleAsRing_aux(P, P_W_O);
     }
 
 
