@@ -27,13 +27,13 @@
 #include "CoCoA/ModuleOrdering.H" // for WDegPosnOrd
 #include "CoCoA/RingDistrMPolyInlFpPP.H"
 #include "CoCoA/RingDistrMPolyInlPP.H"
-#include "CoCoA/RingQQ.H" // for IsQQ in ComputeSaturationByPrincipal
+#include "CoCoA/RingQQ.H" // for IsQQ in ComputeSatByPoly
 #include "CoCoA/RingZZ.H" // for RingZZ
 #include "CoCoA/SparsePolyIter.H"
 #include "CoCoA/SparsePolyOps-RingElem.H"
 #include "CoCoA/SparsePolyRing.H" // for GradingMat
 #include "CoCoA/VectorOps.H"
-#include "CoCoA/factor.H" // for factor in ComputeSaturationByPrincipal
+#include "CoCoA/factor.H" // for factor in ComputeSatByPoly
 #include "CoCoA/matrix.H" // for ConstMatrixView
 #include "CoCoA/symbol.H"
 #include "CoCoA/verbose.H"
@@ -819,8 +819,7 @@ namespace CoCoA
         NewGrDim = GradingDim(P);
       }
       const PPOrdering& NewOrd = NewMatrixOrdering(NewOrdMat, NewGrDim);
-      std::vector<symbol> IndetNames = NewSymbols(NumIndets(P));
-      return NewPolyRing(CoeffRing(P), IndetNames, NewOrd);
+      return NewPolyRing(CoeffRing(P), symbols(PPM(P)), NewOrd);
     }
 
   } // namespace // anonymous ----------------------------------------------
@@ -1093,16 +1092,16 @@ namespace CoCoA
     }
 
     
-    PolyList ComputeSaturationByIrred(const PolyList& G, ConstRefRingElem f,
-                                      const CpuTimeLimit& CheckForTimeout)
+    PolyList ComputeSatByIrred(const PolyList& G, ConstRefRingElem f,
+                               const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationByIrred");
+      VerboseLog VERBOSE("ComputeSatByIrred");
       VERBOSE(99) << "-- called --" << std::endl;
       const RingElem h = (indets(owner(f))).back();
       PolyList tmpPL = G;
       tmpPL.push_back(h*f-1);
       return ComputeElim(tmpPL, LPP(h), CheckForTimeout);
-    } // ComputeSaturationByIrred
+    }
 
     
     RingElem SatByIndet(const RingElem& f, long IndetIndex)
@@ -1118,19 +1117,18 @@ namespace CoCoA
     }
 
 
-    PolyList ComputeSaturationHomogByPP(const PolyList& G,
-                                        ConstRefPPMonoidElem t,
-                                        const CpuTimeLimit& CheckForTimeout)
+    PolyList ComputeSatHomogByPP(const PolyList& G,
+                                 ConstRefPPMonoidElem t,
+                                 const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationHomogByPP");
+      VerboseLog VERBOSE("ComputeSatHomogByPP");
       VERBOSE(99) << "-- called --" << std::endl;
       //    if (IsZero(I))  return ideal(zero(Ph));
       const ring& P = owner(G[0]);
       const ring& K = CoeffRing(P); // CoCoA_ASSERT(IsField(k));
       const long GrDim = GradingDim(P);
       const long NumX = NumIndets(P);
-      std::vector<symbol> names;  names.reserve(NumX);
-      for (long i=0; i<NumX; ++i)  names.push_back(IndetSymbol(P,i));
+      std::vector<symbol> names = symbols(PPM(P));
       VERBOSE(90) << "GrDim = " << GrDim << "   W = " << GradingMat(P) << std::endl;
       matrix W0 = NewDenseMat(ConcatVer(GradingMat(P), ZeroMat(RingZZ(), 1, NumIndets(P))));
       PolyList tmpGens = G;
@@ -1157,18 +1155,18 @@ namespace CoCoA
       }
       RingHom psi = PolyAlgebraHom(owner(tmpGens[0]), P, indets(P));
       return psi(tmpGens);
-    } // ComputeSaturationHomogByPP
+    } // ComputeSatHomogByPP
 
-  
-    PolyList ComputeSaturationByPrincipal(const PolyList& G, ConstRefRingElem f,
-                                          const CpuTimeLimit& CheckForTimeout)
+
+    PolyList ComputeSatByPoly(const PolyList& G, ConstRefRingElem f,
+                              const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationByPrincipal");
+      VerboseLog VERBOSE("ComputeSatByPoly");
       VERBOSE(99) << "-- called --" << std::endl;
       // non-homogeneous
       if (IsInvertible(f))  return G;
       if (IsMonomial(f) /*IsPP*/ && IsHomog(G))
-        return ComputeSaturationHomogByPP(G, LPP(f), CheckForTimeout);
+        return ComputeSatHomogByPP(G, LPP(f), CheckForTimeout);
       const SparsePolyRing P = owner(G[0]);
       const SparsePolyRing P_new = NewPolyRing(CoeffRing(P),
                                                NewSymbols(NumIndets(P)+1));
@@ -1184,23 +1182,22 @@ namespace CoCoA
       if (IsQQ(CoeffRing(P)))
       {
         const std::vector<RingElem> F = factor(f).myFactors();//const factorization<RingElem> F=factor(f);
-        tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(F[0]), CheckForTimeout);
+        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[0]), CheckForTimeout);
         for (long i=1; i<len(F); ++i)
-          tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(F[i]), CheckForTimeout);
+          tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[i]), CheckForTimeout);
       }
       else // 2023-05-02: JAA: would be better to use radical(f) below.
-        tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(f), CheckForTimeout);
+        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(f), CheckForTimeout);
       return P_newToP(tmpGens);
-    } // ComputeSaturationByPrincipal
+    } // ComputeSatByPoly
 
 
-    VectorList ComputeSaturationByPrincipal(const VectorList& GensM, const PolyList& /*G_in*/,
-                                            const CpuTimeLimit& /*CheckForTimeout*/)
+    VectorList ComputeSatByPoly(const VectorList& GensM, const PolyList& /*G_in*/,
+                                const CpuTimeLimit& /*CheckForTimeout*/)
     {
       CoCoA_THROW_ERROR2(ERR::NYI, "VectorList");
       return GensM; // just to keep the compiler quiet
     }
-
 
   } // namespace // anonymous ----------------------------------------------
 
@@ -1215,7 +1212,7 @@ namespace CoCoA
     if (G2.empty())  return std::vector<RingElem>{one(owner(G1[0]))};
     if (G1.empty())  return G1;
     if (len(G2)==1)
-      return ComputeSaturationByPrincipal(G1, G2.front(), CheckForTimeout);
+      return ComputeSatByPoly(G1, G2.front(), CheckForTimeout);
     PolyList aux = ComputeColon(G1, G2, CheckForTimeout);
     PolyList tmpGens = ComputeColon(aux, G2, CheckForTimeout);
     while (!AreEqualLPPs(aux, tmpGens))
@@ -1254,18 +1251,18 @@ namespace CoCoA
     std::vector<RingElem> tmpHGens;  tmpHGens.reserve(len(G));
     for (const RingElem& g: G)
       tmpHGens.push_back(homog(g, HomogIndets));
-    return ComputeSaturationByPrincipal(tmpHGens,IndetProd,CheckForTimeout);
+    return ComputeSatByPoly(tmpHGens,IndetProd,CheckForTimeout);
   }
 
 
   // ------- RadicalMembership --------------------------------
 
-  // WARN: it supposes ComputeSaturationByPrincipal returns a GB
+  // WARN: it supposes ComputeSatByPoly returns a GB
   bool RadicalMembership(const PolyList& G, ConstRefRingElem f,
                          const CpuTimeLimit& CheckForTimeout)
   {
     PolyList tmpGens;
-    tmpGens = ComputeSaturationByPrincipal(G, f, CheckForTimeout);
+    tmpGens = ComputeSatByPoly(G, f, CheckForTimeout);
     if (len(tmpGens) != 1) return false;
     return IsInvertible(tmpGens.front());
   }
