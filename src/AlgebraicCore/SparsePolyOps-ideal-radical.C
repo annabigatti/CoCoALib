@@ -970,7 +970,7 @@ namespace CoCoA
     VerboseLog VERBOSE("LeadTerms: ");
     ring Kx = RingOf(ideal(L[0]));
     ring CR = CoeffRing(Kx);
-    ring NewRing = NewPolyRing(CR, symbols(Kx), NewMatrixOrdering(MakeBlockOrder(Inds), 0));
+    ring NewRing = NewPolyRing(CR, symbols(PPM(Kx)), NewMatrixOrdering(MakeBlockOrder(Inds), 0));
     RingHom Old2New = PolyAlgebraHom(Kx, NewRing, indets(NewRing));
     vector<RingElem> image = Old2New(L);
     vector<RingElem> K;
@@ -987,7 +987,7 @@ namespace CoCoA
   vector<RingElem> Extr(vector<RingElem> G, vector<PPMonoidElem> Inds){
     ring Kx = RingOf(ideal(G[0]));
     ring CR = CoeffRing(Kx);
-    ring NewRing = NewPolyRing(CR, symbols(Kx), NewMatrixOrdering(MakeBlockOrder(Inds), 0));
+    ring NewRing = NewPolyRing(CR, symbols(PPM(Kx)), NewMatrixOrdering(MakeBlockOrder(Inds), 0));
     RingHom Old2New = PolyAlgebraHom(Kx, NewRing, indets(NewRing));
     G = Old2New(G);
     //cout << "G in Extr nachher = " << G << endl;
@@ -1041,7 +1041,7 @@ namespace CoCoA
         if(IsIndet(index_tmp, Inds[i])) index.push_back(index_tmp);
       }
       matrix M = ElimHomogMat(index, GradingMat(Kx));
-      PolyRing R_tmp = NewPolyRing(CoeffRing(Kx), symbols(Kx), NewMatrixOrdering(M, GD));
+      PolyRing R_tmp = NewPolyRing(CoeffRing(Kx), symbols(PPM(Kx)), NewMatrixOrdering(M, GD));
 
 
       RingHom phi = PolyAlgebraHom(R_tmp, Kx, indets(Kx));
@@ -1056,7 +1056,7 @@ namespace CoCoA
         if(IsIndet(index_tmp, Inds[i])) index.push_back(index_tmp);
       }
       matrix M = ElimMat(index, GradingMat(Kx));
-      PolyRing R_tmp = NewPolyRing(CoeffRing(Kx), symbols(Kx), NewMatrixOrdering(M, 1));
+      PolyRing R_tmp = NewPolyRing(CoeffRing(Kx), symbols(PPM(Kx)), NewMatrixOrdering(M, 1));
 
 
       RingHom phi = PolyAlgebraHom(R_tmp, Kx, indets(Kx));
@@ -2026,7 +2026,7 @@ namespace CoCoA
     ideal J = ideal(K1);
     
     VERBOSE(30) << "after rad gens and GB" << endl;
-    ring NewRing = NewPolyRing(CoeffRing(Kx), symbols(Kx), NewMatrixOrdering(OrdMat(Kx), GradingDim(Kx)));
+    ring NewRing = NewPolyRing(CoeffRing(Kx), symbols(PPM(Kx)), NewMatrixOrdering(OrdMat(Kx), GradingDim(Kx)));
     RADICAL_BRANCHING = 1;
    
     vector<ideal> E = TrueEquiDec(J, len(gens(J))); //

@@ -27,13 +27,13 @@
 #include "CoCoA/ModuleOrdering.H" // for WDegPosnOrd
 #include "CoCoA/RingDistrMPolyInlFpPP.H"
 #include "CoCoA/RingDistrMPolyInlPP.H"
-#include "CoCoA/RingQQ.H" // for IsQQ in ComputeSaturationByPrincipal
+#include "CoCoA/RingQQ.H" // for IsQQ in ComputeSatByPoly
 #include "CoCoA/RingZZ.H" // for RingZZ
 #include "CoCoA/SparsePolyIter.H"
 #include "CoCoA/SparsePolyOps-RingElem.H"
 #include "CoCoA/SparsePolyRing.H" // for GradingMat
 #include "CoCoA/VectorOps.H"
-#include "CoCoA/factor.H" // for factor in ComputeSaturationByPrincipal
+#include "CoCoA/factor.H" // for factor in ComputeSatByPoly
 #include "CoCoA/matrix.H" // for ConstMatrixView
 #include "CoCoA/symbol.H"
 #include "CoCoA/verbose.H"
@@ -115,148 +115,116 @@ namespace CoCoA
     // from TmpGReductor 2026-04-10
     ////////////////////////////////////
     
-    enum ModOrdTypeForcing {NoForcing, PosWDegTO, WDegTOPos, WDegPosTO};
+    void CopyRow(matrix& DestM, long D_r, ConstMatrixView M, long r)
+    { for (long j=0; j<NumCols(M); ++j) SetEntry(DestM, D_r,j, M(r,j)); }
 
+    void SetWDegFromRow(matrix& DestM, long D_r, ConstMatrixView M, long GrDim)
+    { for (long i=0; i<GrDim; ++i) CopyRow(DestM,D_r+i, M,i); }
 
-    ModOrdTypeForcing ModuleOrderType(const FreeModule& M)
+    void SetOrdFromRow(matrix& DestM, long D_r, ConstMatrixView M, long GrDim)
+    { for (long i=GrDim; i<NumRows(M); ++i) CopyRow(DestM,D_r+i-GrDim, M,i); }
+
+    void SetPosnInRow(matrix& DestM, long D_r)
+    { SetEntry(DestM, D_r,NumCols(DestM)-1, 1); }
+
+    void SetWDegShFromRow(matrix& DestM, long D_r, ConstMatrixView M, long GrDim)
     {
-      if (IsOrdPosn(ordering(M))) return WDegTOPos;
-      if (IsWDegPosnOrd(ordering(M))) return WDegPosTO;
-      return PosWDegTO;
-    } // ModOrdType
+      const long N = NumCols(M);
+      for (long i=0; i<GrDim; ++i)			
+      {
+        CopyRow (DestM, D_r+i,  M, i); // wdeg[i]
+        SetEntry(DestM, D_r+i,N+i, 1); // shift[i]
+      }
+    }
 
-  
-    // This is OK for the non-homogeneous case
+
+    PPOrdering PWO_ord(const SparsePolyRing& P)
+    {
+      ConstMatrixView M = OrdMat(P);
+      const long GrDim = 0; // <-- use simple sugar
+      const long N = NumRows(M);
+      const long NewN = N+GrDim+1;
+      matrix ModOrdMat(NewDenseMat(RingZZ(), NewN, NewN));
+      SetPosnInRow    (ModOrdMat, 0);
+      SetOrdFromRow   (ModOrdMat, 1,   M, GrDim);
+      SetWDegFromRow  (ModOrdMat, N+1, M, GrDim);
+      return NewMatrixOrdering(ModOrdMat, GrDim);
+    }
+    
+
+    PPOrdering WOP_ord(const SparsePolyRing& P)
+    {
+      ConstMatrixView M = OrdMat(P);
+      const long GrDim = GradingDim(P);
+      const long N = NumRows(M);
+      const long NewN = N+GrDim+1;
+      matrix ModOrdMat(NewDenseMat(RingZZ(), NewN, NewN));
+      SetWDegShFromRow(ModOrdMat, 0,     M, GrDim);
+      SetOrdFromRow   (ModOrdMat, GrDim, M, GrDim);
+      SetPosnInRow    (ModOrdMat, N);
+      SetWDegFromRow  (ModOrdMat, N+1,   M, GrDim);
+      return NewMatrixOrdering(ModOrdMat, GrDim);
+    }
+
+
+    PPOrdering WPO_ord(const SparsePolyRing& P)
+    {
+      ConstMatrixView M = OrdMat(P);
+      const long GrDim = GradingDim(P);
+      const long N = NumRows(M);
+      const long NewN = N+GrDim+1;
+      matrix ModOrdMat(NewDenseMat(RingZZ(), NewN, NewN));
+      SetWDegShFromRow(ModOrdMat, 0,       M, GrDim);
+      SetPosnInRow    (ModOrdMat, GrDim);
+      SetOrdFromRow   (ModOrdMat, GrDim+1, M, GrDim);
+      SetWDegFromRow  (ModOrdMat, N+1,     M, GrDim);
+      return NewMatrixOrdering(ModOrdMat, GrDim);
+    }
+    
+
+  // This is OK for the non-homogeneous case
     // For the homogenous case, PosTo this is inefficient, since
     // the Deg rows in the To part are useless.
-    SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM,
-                                          ModOrdTypeForcing MOType)
+    SparsePolyRing MakeModuleAsRing_aux(const SparsePolyRing& P,
+                                        const PPOrdering& PPO)
     {
-      const ModuleOrdering MTO = ordering(FM);
-      const SparsePolyRing OldP=RingOf(FM);
-      const long NumOldInds=NumIndets(OldP);
-      long GrDim;
-      if (MOType==PosWDegTO)
-        GrDim=0;// Set simple sugar on
+      long GrDim = GradingDim(PPO);
+      std::vector<symbol> IndetNames = symbols(PPM(P));
+      if ( GrDim==1 ) IndetNames.push_back(symbol("sh")); // for shift
       else
-        GrDim=GradingDim(OldP);
-      const long NumNewInds=NumOldInds+GrDim+1;
-
-      ConstMatrixView OldOrdOMat = OrdMat(OldP);
-
-      matrix NewOrdMat(NewDenseMat(RingZZ(), NumNewInds, NumNewInds));
-      ////std::clog<<"NewOrdMat starts as "<<NewOrdMat<<std::endl;
-      if (MOType == NoForcing)  MOType = ModuleOrderType(FM);
-
-      switch (MOType)
-      {
-      case PosWDegTO:
-        // Setting the module component ordering
-        SetEntry(NewOrdMat, 0, NumNewInds-1, 1); 	
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim+1; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-        // Setting the Grading: the NewGrading		
-        for (long i=1; i < GrDim+1; ++i)			
-          SetEntry(NewOrdMat, i, i+NumOldInds-1, 1); 	
-        // Setting the TO ordering
-        for (long i=GrDim; i < NumOldInds; ++i)
-          for (long j=0; j < NumOldInds; ++j)
-            SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-        break;
-
-      case WDegTOPos:
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-        // Setting the Grading: the NewGrading		
-        for (long i=0; i < GrDim; ++i)			
-          SetEntry(NewOrdMat, i, i+NumOldInds, 1);
-        // Setting the TO	
-        for (long i=GrDim; i < NumOldInds; ++i)
-          for (long j=0; j < NumOldInds; ++j)
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-        // Setting the module component ordering
-        SetEntry(NewOrdMat, NumNewInds-1-GrDim, NumNewInds-1, 1); 	
-        break;
-
-      case WDegPosTO:; // This is the default
-      default:
-        // Part common to IsWDegPosnOrd and IsOrdPosn
-        // Setting the Grading: the OldGrading		
-        for (long i=0; i < GrDim; ++i)			
-          for (long j=0; j < NumOldInds; ++j)		
-            SetEntry(NewOrdMat, i, j, OldOrdOMat(i,j));
-      // Setting the Grading: the NewGrading		
-      for (long i=0; i < GrDim; ++i)			
-        SetEntry(NewOrdMat, i, i+NumOldInds, 1); 	
-      // Setting the module component ordering
-      SetEntry(NewOrdMat, GrDim, NumNewInds-1, 1);
-      // Setting the TO ordering
-      for (long i=GrDim; i < NumOldInds; ++i)
-        for (long j=0; j < NumOldInds; ++j)
-          SetEntry(NewOrdMat, i+1, j, OldOrdOMat(i,j));
-      break;
+        for (long i=0 ; i<GrDim ; ++i )
+          IndetNames.push_back(symbol("sh",i)); // for shifts
+      IndetNames.push_back(symbol("e"));  // for module component
+      try
+      { // try using "sh" and "e" (for verbosity):
+        return NewPolyRing(CoeffRing(P), IndetNames, PPO);
       }
-      // Filling the matrix
-      for (long i=0; i < GrDim; ++i)
-        for (long j=0; j < NumOldInds; ++j)
-          SetEntry(NewOrdMat, NumOldInds+i+1, j, OldOrdOMat(i,j));
-
-      const PPOrdering MatNewOrd = NewMatrixOrdering(NewOrdMat, GrDim);
-
-      const std::vector<symbol> IndetNames = NewSymbols(NumOldInds + GrDim + 1);
-      //---> for DEBUGGING choose these IndetNames:
-      //   std::vector<symbol> IndetNames = SymbolRange("x", 0, NumOldInds-1);
-      //   if ( GrDim==1 ) IndetNames.push_back(symbol("s"));  // indet representing shift
-      //   else
-      //     for ( long i=0 ; i<GrDim ; ++i )
-      //       IndetNames.push_back(symbol("s",i));  // indet representing shift
-      //   IndetNames.push_back(symbol("e"));  // indet representing module component
-      //---> for DEBUGGING
-      SparsePolyRing NewP(NewPolyRing(CoeffRing(OldP),IndetNames,MatNewOrd));
-      return NewP;
-    } // MakeNewPRingFromModule
-
-
-    // Called by syz, indirectly by intersection, colonbyprincipal (ideal)
-    SparsePolyRing MakeNewPRingForP2(const SparsePolyRing& OldP,
-                                     ModOrdTypeForcing MOType)
-    {
-      std::vector<degree> InputShifts;
-      degree tmp(GradingDim(OldP));
-      InputShifts.push_back(tmp);
-      InputShifts.push_back(tmp);
-      const FreeModule FM=NewFreeModule(OldP, InputShifts, WDegPosnOrd);
-      return MakeNewPRingFromModule(FM, MOType);
+      catch (const CoCoA::ErrorInfo& err) {if (err!=ERR::BadIndetNames) throw;}
+      IndetNames = symbols(PPM(P));
+      for (const auto& sym: NewSymbols(GradingDim(P)+1) )
+        IndetNames.push_back(sym);
+      return NewPolyRing(CoeffRing(P), IndetNames, PPO);
     }
 
 
-    // returns the poly ring equivalent with OldP^2, same grading
-    // The ordering is WDegPosnOrd if MOType==NoForcing or MOType
-    // Called by intersection, colonbyprincipal
-    SparsePolyRing MakeNewPRingForP2_PosTO(const SparsePolyRing& OldP,
-                                           bool HomogInput)
+    // Called by ComputeGBasis2 (module)
+    SparsePolyRing MakeModuleAsRing(const FreeModule& FM)
     {
-      if (HomogInput) return MakeNewPRingForP2(OldP, WDegPosTO);
-      else return MakeNewPRingForP2(OldP, PosWDegTO);
+      const SparsePolyRing& P = RingOf(FM);
+      if (IsOrdPosn(ordering(FM)))
+        return MakeModuleAsRing_aux(P, WOP_ord(P));
+      if (IsWDegPosnOrd(ordering(FM)))
+        return MakeModuleAsRing_aux(P, WPO_ord(P));
+      return   MakeModuleAsRing_aux(P, PWO_ord(P));
     }
 
-    // Called by ComputeGBasis2 (module), ComputeSyz (module), ComputeColonByPrincipal (module)
-    SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM)
-    { return MakeNewPRingFromModule(FM, NoForcing); }
 
-
-    // Called by ComputeIntersection (module)
-    SparsePolyRing MakeNewPRingFromModule_PosTO(const FreeModule& FM,
-                                                bool HomogInput)
+    // Called by syz, intersection, colon
+    SparsePolyRing MakeModulePosnOrdAsRing(const SparsePolyRing& P,
+                                           bool HasHomogInput)
     {
-      if (HomogInput) return MakeNewPRingFromModule(FM, WDegPosTO);
-      else            return MakeNewPRingFromModule(FM, PosWDegTO);
+      if (HasHomogInput) return MakeModuleAsRing_aux(P, WPO_ord(P));
+      else               return MakeModuleAsRing_aux(P, PWO_ord(P));
     }
 
 
@@ -616,12 +584,13 @@ namespace CoCoA
       return;
     }
     const FreeModule FM=owner(G_in[0]);
-    const SparsePolyRing P_work(MakeNewPRingFromModule(FM));
     const SparsePolyRing P(RingOf(FM));
+    const SparsePolyRing P_work(MakeModuleAsRing(FM));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
-    bool IsSatAlg=false;
-    const GRingInfo GRI(P_work,P,FM,FM,IsHomogGrD0(G_in),
-                        IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+    const bool IsHomogIn = IsHomogGrD0(G_in);
+    const bool IsSatAlg = false;
+    const GRingInfo GRI(P_work, P, FM, FM, IsHomogIn,
+                        IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GPolyList EmbeddedPolys = EmbedVectorList(G_in, GRI, 0); // removes 0s
     if (EmbeddedPolys.empty())
     {
@@ -633,7 +602,7 @@ namespace CoCoA
     GBR.myDoGBasis();// homog input standard alg interred
     VectorList GB_tmp = GBR.myExportGBasis_module();
     VectorList MinGens_tmp;
-    if (GradingDim(P)>0 && IsHomog(G_in))
+    if (GradingDim(P)>0 && IsHomogIn)
       MinGens_tmp = GBR.myExportMinGens_module();
     std::swap(GB_out, GB_tmp);
     std::swap(MinGens_out, MinGens_tmp);
@@ -651,28 +620,31 @@ namespace CoCoA
     }
     SparsePolyRing P(owner(G_in[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
-    bool IsSatAlg=false;
+    const bool IsHomogIn = IsHomogGrD0(G_in);
+    const bool IsSatAlg = false;
     std::vector<RingElem> GB_tmp;
     std::vector<RingElem> MinGens_tmp;
     if (IsFractionFieldOfGCDDomain(CoeffRing(P)))
     {
       const ring R = BaseRing(CoeffRing(P));
       SparsePolyRing Rx = NewPolyRing(R, symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogGrD0(G_in),IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(Rx, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
       GReductor GBR(GRI, KxToRx(G_in, Rx));
       GBR.myDoGBasis();// homog input standard alg interred
       GB_tmp = monic(RxToKx(GBR.myExportGBasis(), P)); // 2016-11-22: make monic
-      if (GradingDim(P)>0 && IsHomog(G_in))
+      if (GradingDim(P)>0 && IsHomogIn)
         MinGens_tmp = RxToKx(GBR.myExportMinGens(), P);
     }
     else
     {
-      GRingInfo GRI(P,IsHomogGrD0(G_in),IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(P, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, G_in);
       GBR.myDoGBasis();// homog input standard alg interred
       GB_tmp = GBR.myExportGBasis();
-      if (GradingDim(P)>0 && IsHomog(G_in))
+      if (GradingDim(P)>0 && IsHomogIn)
         MinGens_tmp = GBR.myExportMinGens();
     }
     swap(GB_out, GB_tmp);
@@ -704,15 +676,17 @@ namespace CoCoA
     const SparsePolyRing P(owner(G_in[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     if (GradingDim(P)!=1)  CoCoA_THROW_ERROR1(ERR::ReqGradingDim1);
-    if (!IsHomog(G_in))  CoCoA_THROW_ERROR1(ERR::ReqHomog);
     if (TruncDeg < 0)  CoCoA_THROW_ERROR2(ERR::ReqNonNegative, "user TruncDeg");
-    bool IsSatAlg=false;
+    const bool IsHomogIn = IsHomog(G_in);
+    const bool IsSatAlg = false;
+    if (!IsHomogIn)  CoCoA_THROW_ERROR1(ERR::ReqHomog);
     PolyList GB_tmp;
     PolyList MinGens_tmp;
     if (IsFractionFieldOfGCDDomain(CoeffRing(P)))
     { //---------------------------------------------------
       const SparsePolyRing Rx = NewPolyRing(BaseRing(CoeffRing(P)), symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogGrD0(G_in), IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(Rx, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
       GReductor GBR(GRI, KxToRx(G_in, Rx));
       GBR.mySetTruncDeg(TruncDeg); // input value
@@ -725,7 +699,8 @@ namespace CoCoA
     }
     else
     { //---------------------------------------------------
-      GRingInfo GRI(P, IsHomogGrD0(G_in), IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(P, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, G_in);
       GBR.mySetTruncDeg(TruncDeg); // input value
       //---------------------------------------------------
@@ -761,14 +736,16 @@ namespace CoCoA
   PolyList ComputeGBasisSelfSatCore(const PolyList& G, const CpuTimeLimit& CheckForTimeout)
   {
     if (G.empty()) return G;
-    //    bool IsSatAlg=true;
+    const bool IsHomogIn = IsHomogGrD0(G);
+    const bool IsSatAlg = true; // <--- IsSatAlg is true
     SparsePolyRing P(owner(G[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     if (IsFractionFieldOfGCDDomain(CoeffRing(P)))
     {
       const ring R = BaseRing(CoeffRing(P));
       SparsePolyRing Rx = NewPolyRing(R, symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogGrD0(G), true/*IsSatAlg*/, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(Rx, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
       GReductor GBR(GRI, KxToRx(G, Rx), GReductor::SaturatingAlg);
       GBR.myDoGBasisSelfSatCore();// homog input standard algorithm interred
@@ -776,7 +753,8 @@ namespace CoCoA
     }
     else
     {
-      GRingInfo GRI(P, IsHomogGrD0(G), true/*IsSatAlg*/, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(P, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, G, GReductor::SaturatingAlg);
       GBR.myDoGBasisSelfSatCore();// homog input standard algorithm interred
       return GBR.myExportGBasis();
@@ -787,6 +765,8 @@ namespace CoCoA
   PolyList ComputeGBasisRealSolve(const PolyList& G, const CpuTimeLimit& CheckForTimeout)
   {
     if (G.empty()) return G;
+    const bool IsHomogIn = IsHomogGrD0(G);
+    const bool IsSatAlg = false;
     SparsePolyRing P(owner(G[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     if (characteristic(P)!=0)  CoCoA_THROW_ERROR1(ERR::ReqChar0);
@@ -794,7 +774,8 @@ namespace CoCoA
     {
       const ring R = BaseRing(CoeffRing(P));
       SparsePolyRing Rx = NewPolyRing(R, symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogGrD0(G), false/*IsSatAlg*/,NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(Rx, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
       GReductor GBR(GRI, KxToRx(G, Rx));
       GBR.myDoGBasisRealSolve();// homog input standard alg interred
@@ -802,7 +783,8 @@ namespace CoCoA
     }
     else
     {
-      GRingInfo GRI(P,IsHomogGrD0(G),false/*IsSatAlg*/,NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(P, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, G);
       GBR.myDoGBasisRealSolve();
       return GBR.myExportGBasis();
@@ -826,19 +808,18 @@ namespace CoCoA
 
     SparsePolyRing MakeElimRing(const SparsePolyRing& P,
                                 const std::vector<long>& IndetsToElim,
-                                const bool IsHomog)
+                                const bool HasHomogInput)
     {
       ConstMatrixView weights = GradingMat(P);
       matrix NewOrdMat = ElimMat(IndetsToElim, weights);
       long NewGrDim = 0;
-      if (GradingDim(P) != 0 && IsHomog)
+      if (GradingDim(P) != 0 && HasHomogInput)
       {
         NewOrdMat = ElimHomogMat(IndetsToElim, weights);
         NewGrDim = GradingDim(P);
       }
       const PPOrdering& NewOrd = NewMatrixOrdering(NewOrdMat, NewGrDim);
-      std::vector<symbol> IndetNames = NewSymbols(NumIndets(P));
-      return NewPolyRing(CoeffRing(P), IndetNames, NewOrd);
+      return NewPolyRing(CoeffRing(P), symbols(PPM(P)), NewOrd);
     }
 
   } // namespace // anonymous ----------------------------------------------
@@ -851,8 +832,8 @@ namespace CoCoA
     VERBOSE(99) << "-- called --" << std::endl;
     if (G.empty())  return G;
     const SparsePolyRing P = owner(G[0]);
-    bool HomogInput = (GradingDim(P)!=0 && IsHomog(G));
-    SparsePolyRing P_work=MakeElimRing(P, PPIndices(inds), HomogInput);
+    const bool IsHomogIn = (GradingDim(P)!=0 && IsHomog(G));
+    SparsePolyRing P_work=MakeElimRing(P, PPIndices(inds), IsHomogIn);
     RingHom PToNew = PolyAlgebraHom(P, P_work, indets(P_work));
     RingHom NewToP = PolyAlgebraHom(P_work, P, indets(P));
     std::vector<RingElem> NewGens;  NewGens.reserve(len(G));
@@ -881,10 +862,10 @@ namespace CoCoA
   {
     const SparsePolyRing P = owner(G[0]);
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
-    bool HomogInput = (GradingDim(P)!=0 && IsHomogGrD0(G));
-    if (!HomogInput)  CoCoA_THROW_ERROR1(ERR::ReqHomog);
-    bool IsSatAlg = false;
-    SparsePolyRing P_work = MakeElimRing(P, PPIndices(inds), HomogInput);
+    const bool IsHomogIn = (GradingDim(P)!=0 && IsHomogGrD0(G));
+    const bool IsSatAlg = false;
+    if (!IsHomogIn)  CoCoA_THROW_ERROR1(ERR::ReqHomog);
+    SparsePolyRing P_work = MakeElimRing(P, PPIndices(inds), IsHomogIn);
     RingHom OldToNew = PolyAlgebraHom(P, P_work, indets(P_work));
     RingHom NewToOld = PolyAlgebraHom(P_work, P, indets(P));
     PPMonoidElem ElimIndsProd = LPP(OldToNew(monomial(P,inds)));
@@ -892,7 +873,8 @@ namespace CoCoA
       CoCoA_THROW_ERROR2(ERR::NYI, "Only for FFp");
     else
     {
-      GRingInfo GRI(P_work,IsHomogGrD0(G),IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(P_work, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, OldToNew(G));
       return NewToOld(GBR.myDoGBasisElimFirst(ElimIndsProd));
     }
@@ -915,17 +897,18 @@ namespace CoCoA
   VectorList ComputeSyz(const FreeModule& SyzFM, const VectorList& G,
                         const CpuTimeLimit& CheckForTimeout)
   {
-    if (!IsHomogGrD0(G))
-      CoCoA_THROW_ERROR2(ERR::NYI, "Not Yet Tested for non-homog input");
     if (G.empty())  return G;
-    bool IsSatAlg=false;
-    ModOrdTypeForcing MOType = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
+    const bool IsHomogIn = IsHomogGrD0(G);
+    const bool IsSatAlg = false;
+    if (!IsHomogIn)
+      CoCoA_THROW_ERROR2(ERR::NYI, "Not Yet Tested for non-homog input");
     const FreeModule FM = owner(G[0]);
     const SparsePolyRing P(RingOf(FM));
-    const SparsePolyRing P_work(MakeNewPRingFromModule(FM,MOType));
+    const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
     // Note: the GRI should build itself SyzFM and P_work from the data and deduce FM and P.
     //       All the embedding/deembedding functions should be members of GRI.
-    GRingInfo GRI(P_work,P,FM,SyzFM,IsHomogGrD0(G),IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+    GRingInfo GRI(P_work, P, FM, SyzFM, IsHomogIn,
+                  IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, SyzEmbedVectorList(G,GRI));
     GBR.myDoGBasis();
     return DeEmbedPolyList(GBR.myExportGBasis(), GRI, NumCompts(FM));
@@ -936,11 +919,11 @@ namespace CoCoA
                         const CpuTimeLimit& CheckForTimeout)
   {
     if (G.empty()) return VectorList{zero(SyzFM)};
-    bool IsSatAlg=false;
-    ModOrdTypeForcing MOType = (IsHomogGrD0(G) ? WDegPosTO : PosWDegTO);
+    const bool IsHomogIn = IsHomogGrD0(G);
+    const bool IsSatAlg = false;
     const SparsePolyRing P(owner(G[0]));
-    const SparsePolyRing P_work(MakeNewPRingForP2(P,MOType));
-    GRingInfo GRI(P_work, P, SyzFM, IsHomogGrD0(G),
+    const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
+    GRingInfo GRI(P_work, P, SyzFM, IsHomogIn,
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, SyzEmbedPolyList(G,GRI));
     GBR.myDoGBasis();
@@ -953,11 +936,12 @@ namespace CoCoA
   VectorList ComputeIntersection(const VectorList& G1, const VectorList& G2,
                                  const CpuTimeLimit& CheckForTimeout)
   {
-    bool IsSatAlg=false;
+    const bool IsHomogIn = IsHomogGrD0(G1) && IsHomogGrD0(G2);
+    const bool IsSatAlg = false;
     const FreeModule FM = owner(G1[0]);
-    bool HomogInput = IsHomogGrD0(G1) && IsHomogGrD0(G2);
-    const SparsePolyRing P_work(MakeNewPRingFromModule_PosTO(FM,HomogInput));
-    GRingInfo GRI(P_work, RingOf(FM), FM, FM, HomogInput,
+    const SparsePolyRing P(RingOf(FM));
+    const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
+    GRingInfo GRI(P_work, P, FM, FM, IsHomogIn,
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, IntEmbedVectorLists(G1, G2, GRI));
     GBR.myDoGBasis();// homog input standard alg interred
@@ -968,12 +952,12 @@ namespace CoCoA
   PolyList ComputeIntersection(const PolyList& G1, const PolyList& G2,
                                const CpuTimeLimit& CheckForTimeout)
   {
-    bool IsSatAlg=false;
     if (G1.empty())  return G1;
+    const bool IsHomogIn = IsHomogGrD0(G1) && IsHomogGrD0(G2);
+    const bool IsSatAlg = false;
     const SparsePolyRing P(owner(G1[0]));
-    const bool HomogInput = IsHomogGrD0(G1) && IsHomogGrD0(G2);
-    const SparsePolyRing P_work(MakeNewPRingForP2_PosTO(P, HomogInput));
-    GRingInfo GRI(P_work, P, HomogInput,
+    const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
+    GRingInfo GRI(P_work, P, IsHomogIn,
                   IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
     GReductor GBR(GRI, IntEmbedPolyLists(G1, G2, GRI));
     GBR.myDoGBasis();// homog input standard alg interred
@@ -990,12 +974,13 @@ namespace CoCoA
                                      const CpuTimeLimit& CheckForTimeout)
     {
       CoCoA_ASSERT(!G1.empty()); // guaranteed by ComputeColon
-      bool IsSatAlg=false;
-      if (!IsHomogGrD0(G1))  CoCoA_THROW_ERROR2(ERR::NYI, "non-homog");
-      if (!IsHomogGrD0(v))  CoCoA_THROW_ERROR2(ERR::NYI, "non-homog");
+      const bool IsHomogIn = IsHomogGrD0(G1) && IsHomogGrD0(v);
+      const bool IsSatAlg = false;
+      if (!IsHomogIn)  CoCoA_THROW_ERROR2(ERR::NYI, "non-homog");
       const FreeModule FM = owner(G1[0]);
-      const SparsePolyRing P_work(MakeNewPRingFromModule(FM, WDegPosTO));
-      GRingInfo GRI(P_work, RingOf(FM), FM, FM, IsHomogGrD0(G1)&&IsHomogGrD0(v),
+      const SparsePolyRing P = RingOf(FM);
+      const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
+      GRingInfo GRI(P_work, P, FM, FM, IsHomogIn,
                     IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, ColonEmbedVectorLists(G1, v, GRI));
       GBR.myDoGBasis();// homog input standard alg interred
@@ -1007,13 +992,13 @@ namespace CoCoA
                                      const CpuTimeLimit& CheckForTimeout)
     {
       CoCoA_ASSERT(!G.empty()); // guaranteed by ComputeColon
-      PolyList tmpColonResult;
       if (IsZero(f))  return std::vector<RingElem>{one(owner(f))};
-      bool IsSatAlg=false;
+      const bool IsHomogIn = IsHomogGrD0(G) && IsHomogGrD0(f);
+      const bool IsSatAlg = false;
       const SparsePolyRing P(owner(G[0]));
-      const SparsePolyRing P_work(MakeNewPRingForP2_PosTO(P,IsHomogGrD0(G)&&IsHomogGrD0(f)));
-      GRingInfo GRI(P_work, P, IsHomogGrD0(G) && IsHomogGrD0(f),
-                    IsSatAlg,NewDivMaskEvenPowers(), CheckForTimeout);
+      const SparsePolyRing P_work(MakeModulePosnOrdAsRing(P, IsHomogIn));
+      GRingInfo GRI(P_work, P, IsHomogIn,
+                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
       GReductor GBR(GRI, ColonEmbedPolyLists(G, f, GRI));
       GBR.myDoGBasis();// homog input standard alg interred
       return DeEmbedPolyListToPL(GBR.myExportGBasis(), GRI, 1);
@@ -1107,16 +1092,16 @@ namespace CoCoA
     }
 
     
-    PolyList ComputeSaturationByIrred(const PolyList& G, ConstRefRingElem f,
-                                      const CpuTimeLimit& CheckForTimeout)
+    PolyList ComputeSatByIrred(const PolyList& G, ConstRefRingElem f,
+                               const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationByIrred");
+      VerboseLog VERBOSE("ComputeSatByIrred");
       VERBOSE(99) << "-- called --" << std::endl;
       const RingElem h = (indets(owner(f))).back();
       PolyList tmpPL = G;
       tmpPL.push_back(h*f-1);
       return ComputeElim(tmpPL, LPP(h), CheckForTimeout);
-    } // ComputeSaturationByIrred
+    }
 
     
     RingElem SatByIndet(const RingElem& f, long IndetIndex)
@@ -1132,19 +1117,18 @@ namespace CoCoA
     }
 
 
-    PolyList ComputeSaturationHomogByPP(const PolyList& G,
-                                        ConstRefPPMonoidElem t,
-                                        const CpuTimeLimit& CheckForTimeout)
+    PolyList ComputeSatHomogByPP(const PolyList& G,
+                                 ConstRefPPMonoidElem t,
+                                 const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationHomogByPP");
+      VerboseLog VERBOSE("ComputeSatHomogByPP");
       VERBOSE(99) << "-- called --" << std::endl;
       //    if (IsZero(I))  return ideal(zero(Ph));
       const ring& P = owner(G[0]);
       const ring& K = CoeffRing(P); // CoCoA_ASSERT(IsField(k));
       const long GrDim = GradingDim(P);
       const long NumX = NumIndets(P);
-      std::vector<symbol> names;  names.reserve(NumX);
-      for (long i=0; i<NumX; ++i)  names.push_back(IndetSymbol(P,i));
+      std::vector<symbol> names = symbols(PPM(P));
       VERBOSE(90) << "GrDim = " << GrDim << "   W = " << GradingMat(P) << std::endl;
       matrix W0 = NewDenseMat(ConcatVer(GradingMat(P), ZeroMat(RingZZ(), 1, NumIndets(P))));
       PolyList tmpGens = G;
@@ -1171,18 +1155,18 @@ namespace CoCoA
       }
       RingHom psi = PolyAlgebraHom(owner(tmpGens[0]), P, indets(P));
       return psi(tmpGens);
-    } // ComputeSaturationHomogByPP
+    } // ComputeSatHomogByPP
 
-  
-    PolyList ComputeSaturationByPrincipal(const PolyList& G, ConstRefRingElem f,
-                                          const CpuTimeLimit& CheckForTimeout)
+
+    PolyList ComputeSatByPoly(const PolyList& G, ConstRefRingElem f,
+                              const CpuTimeLimit& CheckForTimeout)
     {
-      VerboseLog VERBOSE("ComputeSaturationByPrincipal");
+      VerboseLog VERBOSE("ComputeSatByPoly");
       VERBOSE(99) << "-- called --" << std::endl;
       // non-homogeneous
       if (IsInvertible(f))  return G;
       if (IsMonomial(f) /*IsPP*/ && IsHomog(G))
-        return ComputeSaturationHomogByPP(G, LPP(f), CheckForTimeout);
+        return ComputeSatHomogByPP(G, LPP(f), CheckForTimeout);
       const SparsePolyRing P = owner(G[0]);
       const SparsePolyRing P_new = NewPolyRing(CoeffRing(P),
                                                NewSymbols(NumIndets(P)+1));
@@ -1198,23 +1182,22 @@ namespace CoCoA
       if (IsQQ(CoeffRing(P)))
       {
         const std::vector<RingElem> F = factor(f).myFactors();//const factorization<RingElem> F=factor(f);
-        tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(F[0]), CheckForTimeout);
+        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[0]), CheckForTimeout);
         for (long i=1; i<len(F); ++i)
-          tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(F[i]), CheckForTimeout);
+          tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[i]), CheckForTimeout);
       }
       else // 2023-05-02: JAA: would be better to use radical(f) below.
-        tmpGens = ComputeSaturationByIrred(tmpGens, PToP_new(f), CheckForTimeout);
+        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(f), CheckForTimeout);
       return P_newToP(tmpGens);
-    } // ComputeSaturationByPrincipal
+    } // ComputeSatByPoly
 
 
-    VectorList ComputeSaturationByPrincipal(const VectorList& GensM, const PolyList& /*G_in*/,
-                                            const CpuTimeLimit& /*CheckForTimeout*/)
+    VectorList ComputeSatByPoly(const VectorList& GensM, const PolyList& /*G_in*/,
+                                const CpuTimeLimit& /*CheckForTimeout*/)
     {
       CoCoA_THROW_ERROR2(ERR::NYI, "VectorList");
       return GensM; // just to keep the compiler quiet
     }
-
 
   } // namespace // anonymous ----------------------------------------------
 
@@ -1229,7 +1212,7 @@ namespace CoCoA
     if (G2.empty())  return std::vector<RingElem>{one(owner(G1[0]))};
     if (G1.empty())  return G1;
     if (len(G2)==1)
-      return ComputeSaturationByPrincipal(G1, G2.front(), CheckForTimeout);
+      return ComputeSatByPoly(G1, G2.front(), CheckForTimeout);
     PolyList aux = ComputeColon(G1, G2, CheckForTimeout);
     PolyList tmpGens = ComputeColon(aux, G2, CheckForTimeout);
     while (!AreEqualLPPs(aux, tmpGens))
@@ -1268,18 +1251,18 @@ namespace CoCoA
     std::vector<RingElem> tmpHGens;  tmpHGens.reserve(len(G));
     for (const RingElem& g: G)
       tmpHGens.push_back(homog(g, HomogIndets));
-    return ComputeSaturationByPrincipal(tmpHGens,IndetProd,CheckForTimeout);
+    return ComputeSatByPoly(tmpHGens,IndetProd,CheckForTimeout);
   }
 
 
   // ------- RadicalMembership --------------------------------
 
-  // WARN: it supposes ComputeSaturationByPrincipal returns a GB
+  // WARN: it supposes ComputeSatByPoly returns a GB
   bool RadicalMembership(const PolyList& G, ConstRefRingElem f,
                          const CpuTimeLimit& CheckForTimeout)
   {
     PolyList tmpGens;
-    tmpGens = ComputeSaturationByPrincipal(G, f, CheckForTimeout);
+    tmpGens = ComputeSatByPoly(G, f, CheckForTimeout);
     if (len(tmpGens) != 1) return false;
     return IsInvertible(tmpGens.front());
   }
