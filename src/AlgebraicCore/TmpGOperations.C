@@ -338,55 +338,22 @@ namespace CoCoA
     } // SyzEmbedVectorList
 
 
-    // Rewritten by AMB 2026/04/14
-    // GPolyList SyzEmbedPolyList(const std::vector<RingElem>& F,
-    //                            const GRingInfo& theGRI)
-    // {
-    //   GPolyList outPL;
-    //   if (F.empty())  return outPL;
-    //   const SparsePolyRing NewP=theGRI.myNewSPR();
-    //   outPL = EmbedPolyList(F, theGRI, 0);
-    //   RingElem SyzPP(NewP); // Gives the right degree to p+E^i
-    //   degree d(GradingDim(NewP));
-    //   long k=1;
-    //   for (GPolyList::iterator it=outPL.begin();it!=outPL.end();++it,++k) // for (auto& g: outPL) BUT MUST ALSO INCREMENT k !!
-    //   {
-    //     SyzPP=one(NewP);
-    //     d=wdeg(*it);
-    //     for (long j=0; j < GradingDim(NewP); ++j)
-    //       SyzPP*=power(theGRI.myY(j),d[j]);
-    //     if (theGRI.myInputAndGrading()==NONHOMOG_GRADING)
-    //     { // Added by JAA 2012/10/11
-    //       RingElem Ek = theGRI.myE(k);
-    //       (*it).myAppendClear(Ek);
-    //     }
-    //     else
-    //     { // Added by JAA 2012/10/11
-    //       RingElem EkSyzPP = theGRI.myE(k)*SyzPP;
-    //       (*it).myAppendClear(EkSyzPP);
-    //     }
-    //   }
-    //   return outPL;
-    // } // SyzEmbedPolyList
-
-
     GPolyList SyzEmbedPolyList(const std::vector<RingElem>& F,
                                const GRingInfo& theGRI)
     {
-      GPolyList outPL;
-      if (F.empty())  return outPL;
-      const SparsePolyRing NewP=theGRI.myNewSPR();
-      outPL = EmbedPolyList(F, theGRI, 0);
+      GPolyList F_gp;
+      if (F.empty())  return F_gp;
+      F_gp = EmbedPolyList(F, theGRI, 0);
       RingElem Ek;
       long k=1;
-      for (GPolyList::iterator it=outPL.begin();it!=outPL.end();++it,++k) // for (auto& g: outPL) BUT MUST ALSO INCREMENT k !!
+      for (auto it=F_gp.begin(); it!=F_gp.end(); ++it,++k)
       {
         Ek = theGRI.myE(k);
         if (theGRI.myInputAndGrading() != NONHOMOG_GRADING)
           Ek *= theGRI.myY(wdeg(*it)); // Gives the right degree to p+E^k
         (*it).myAppendClear(Ek);
       }
-      return outPL;
+      return F_gp;
     }
 
 
