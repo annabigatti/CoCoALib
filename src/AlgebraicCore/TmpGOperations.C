@@ -529,36 +529,57 @@ namespace CoCoA
       return G_out;
     }
 
-    ////////////////////////////////////////////
+    //////////////////////////////////////////////
     // homog....
     // from TmpGReductor 2026-04-10
-    ////////////////////////////////////
+    // homog(f, H) should be moved to SparsePolyOps-RingElem-homog
+    //////////////////////////////////////////////
+
+    // should this be called whomog?
+    // no, because homog works for single weights
+    // multihomog?   strange
+    // ---> I do like  "homog"
 
     // The ordering is supposed to be Deg compatible
-    RingElem homog(ConstRefRingElem the_p, const std::vector<RingElem>& theY)
+    RingElem homog(ConstRefRingElem f, const std::vector<RingElem>& H)
     {
-      const SparsePolyRing SPR=owner(the_p);
-      if (GradingDim(SPR) != len(theY))
-        CoCoA_THROW_ERROR2(ERR::BadArg, "incompatible GradingDim");
-      RingElem the_hp(SPR);
-      RingElem tmp(SPR);
-      degree MaxDeg(GradingDim(SPR));
-      degree TmpDeg(GradingDim(SPR));
+      VerboseLog VERBOSE("homog(f,H)");
+      const SparsePolyRing P = owner(f);
+      // cumbersome sanyty check on H
+      if (GradingDim(P) != len(H))
+        CoCoA_THROW_ERROR2(ERR::BadArg, "GradingDim != len(H)");
+      for (long i=0; i<len(H); ++i)
+      {
+        if (!IsIndet(H[i]))
+          CoCoA_THROW_ERROR2(ERR::ReqIndet, "arg2 must be a vec.of indets");
+        if ( wdeg(H[i])[i]!=1 )
+          CoCoA_THROW_ERROR2(ERR::BadArg, "degree of i-th hom.indet must be 0..1..0");
+        for (long j=0; j<len(H); ++j)
+          if ( i!=j && wdeg(H[i])[j]!=0 )
+            CoCoA_THROW_ERROR2(ERR::BadArg, "degree of i-th hom.indet must be 0..1..0");
+      }
       // Compute the maximum degree
-      for (SparsePolyIter it=BeginIter(the_p);!IsEnded(it);++it)
-        MaxDeg=top(MaxDeg,wdeg(PP(it)));
+      degree TopDeg(GradingDim(P));
+      for (SparsePolyIter it=BeginIter(f); !IsEnded(it); ++it)
+        TopDeg = top(TopDeg, wdeg(PP(it)));
+      VERBOSE(90) << "f = " << f << std::endl;
+      VERBOSE(90) << "TopDeg(f) = " << TopDeg << std::endl;
+      RingElem f_hom(P);
+      RingElem g(P);
+      degree D(GradingDim(P));
       // Homogenizing
-      for (SparsePolyIter it=BeginIter(the_p);!IsEnded(it);++it)
+      for (SparsePolyIter it=BeginIter(f); !IsEnded(it); ++it)
       {
         //std::clog<<"Homogenized:tmp"<<tmp<<endl;
-        tmp = monomial(SPR,coeff(it),PP(it));
-        TmpDeg=wdeg(PP(it));
-        for (long i=0; i != len(theY); ++i)
-          tmp*=power(theY[i],(MaxDeg[i]-TmpDeg[i]));
-        SPR->myAddClear(raw(the_hp), raw(tmp));
+        g = monomial(P, coeff(it), PP(it));
+        D = wdeg(PP(it));
+        for (long i=0; i!=len(H); ++i)
+          g *= power(H[i], TopDeg[i]-D[i]);
+        P->myAddClear(raw(f_hom), raw(g));
       }
-      return the_hp;
-    } // homog (multihomog)
+      VERBOSE(90) << "--> f_hom = " << f_hom << std::endl;
+      return f_hom;
+    }
 
 
     void homogenized(ModuleElem& /*the_hv*/,
@@ -1098,9 +1119,9 @@ namespace CoCoA
       VerboseLog VERBOSE("ComputeSatByIrred");
       VERBOSE(99) << "-- called --" << std::endl;
       const RingElem h = (indets(owner(f))).back();
-      PolyList tmpPL = G;
-      tmpPL.push_back(h*f-1);
-      return ComputeElim(tmpPL, LPP(h), CheckForTimeout);
+      PolyList tmpG = G;
+      tmpG.push_back(h*f-1);
+      return ComputeElim(tmpG, LPP(h), CheckForTimeout);
     }
 
     
@@ -1130,21 +1151,21 @@ namespace CoCoA
       const long NumX = NumIndets(P);
       std::vector<symbol> names = symbols(PPM(P));
       VERBOSE(90) << "GrDim = " << GrDim << "   W = " << GradingMat(P) << std::endl;
-      matrix W0 = NewDenseMat(ConcatVer(GradingMat(P), ZeroMat(RingZZ(), 1, NumIndets(P))));
-      PolyList tmpGens = G;
+      matrix W0 = NewDenseMat(ConcatVer(GradingMat(P), ZeroMat(RingZZ(), 1,NumX)));
+      PolyList tmpG = G;
       std::vector<long> expv = exponents(t);
-      for (long i=0; i<NumIndets(P); ++i)
+      for (long i=0; i<NumX; ++i)
         if (expv[i] != 0)
         {
           VERBOSE(95) << "doing indet " << i << " = " << indet(P,i) << std::endl;
           SetEntry(W0, GrDim,i, -1); // W0[GrDim,i] = -1
           ring PzDegRevLex = NewPolyRing(K, names, NewMatrixOrdering(MakeTermOrdMat(W0), GrDim));
           SetEntry(W0, GrDim,i, 0); // back to W0[GrDim,i] = 0
-          RingHom phi = PolyAlgebraHom(owner(tmpGens[0]), PzDegRevLex, indets(PzDegRevLex));
-          tmpGens = ComputeGBasis(phi(tmpGens), CheckForTimeout);
-          for (RingElem& g: tmpGens)  g = SatByIndet(g,i);
+          RingHom phi = PolyAlgebraHom(owner(tmpG[0]), PzDegRevLex, indets(PzDegRevLex));
+          tmpG = ComputeGBasis(phi(tmpG), CheckForTimeout);
+          for (RingElem& g: tmpG)  g = SatByIndet(g,i);
         }
-      for (auto& g:tmpGens)
+      for (auto& g:tmpG)
       {
         if ( IsZero(g) )  CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
         if ( IsConstant(g) ) // redmine #1647
@@ -1153,8 +1174,8 @@ namespace CoCoA
           return std::vector<RingElem>(1, one(P));
         }
       }
-      RingHom psi = PolyAlgebraHom(owner(tmpGens[0]), P, indets(P));
-      return psi(tmpGens);
+      RingHom psi = PolyAlgebraHom(owner(tmpG[0]), P, indets(P));
+      return psi(tmpG);
     } // ComputeSatHomogByPP
 
 
@@ -1165,30 +1186,30 @@ namespace CoCoA
       VERBOSE(99) << "-- called --" << std::endl;
       // non-homogeneous
       if (IsInvertible(f))  return G;
+      // 2023-05-02: JAA: detect & handle specially when f is monomial:
       if (IsMonomial(f) /*IsPP*/ && IsHomog(G))
         return ComputeSatHomogByPP(G, LPP(f), CheckForTimeout);
       const SparsePolyRing P = owner(G[0]);
-      const SparsePolyRing P_new = NewPolyRing(CoeffRing(P),
-                                               NewSymbols(NumIndets(P)+1));
+      std::vector<symbol> names = symbols(PPM(P));
+      names.push_back(NewSymbol());
+      const SparsePolyRing P_new = NewPolyRing(CoeffRing(P), names);
       const std::vector<RingElem>& x_new = indets(P_new);
       RingHom PToP_new = PolyAlgebraHom(P, P_new, std::vector<RingElem>(x_new.begin(), x_new.end()-1));
       std::vector<RingElem> x = indets(P);
       x.push_back(one(P));
       RingHom P_newToP = PolyAlgebraHom(P_new, P, x);
-      PolyList tmpGens = PToP_new(G);
-      // 2023-05-02: JAA: would be better to detect & handle specially when f is monomial!!
-      // If f is not monomial & we can factorize, do a succession of saturations...
-      //    if (!IsMonomial(f) && IsQQ(CoeffRing(P)))
+      PolyList tmpG = PToP_new(G);
+      // 2023-05-02: JAA: if f is not monomial & we can factorize, do a succession of saturations:
       if (IsQQ(CoeffRing(P)))
       {
         const std::vector<RingElem> F = factor(f).myFactors();//const factorization<RingElem> F=factor(f);
-        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[0]), CheckForTimeout);
+        tmpG = ComputeSatByIrred(tmpG, PToP_new(F[0]), CheckForTimeout);
         for (long i=1; i<len(F); ++i)
-          tmpGens = ComputeSatByIrred(tmpGens, PToP_new(F[i]), CheckForTimeout);
+          tmpG = ComputeSatByIrred(tmpG, PToP_new(F[i]), CheckForTimeout);
       }
       else // 2023-05-02: JAA: would be better to use radical(f) below.
-        tmpGens = ComputeSatByIrred(tmpGens, PToP_new(f), CheckForTimeout);
-      return P_newToP(tmpGens);
+        tmpG = ComputeSatByIrred(tmpG, PToP_new(f), CheckForTimeout);
+      return P_newToP(tmpG);
     } // ComputeSatByPoly
 
 
@@ -1214,13 +1235,13 @@ namespace CoCoA
     if (len(G2)==1)
       return ComputeSatByPoly(G1, G2.front(), CheckForTimeout);
     PolyList aux = ComputeColon(G1, G2, CheckForTimeout);
-    PolyList tmpGens = ComputeColon(aux, G2, CheckForTimeout);
-    while (!AreEqualLPPs(aux, tmpGens))
+    PolyList tmpG = ComputeColon(aux, G2, CheckForTimeout);
+    while (!AreEqualLPPs(aux, tmpG))
     {
-      swap(aux, tmpGens);
-      tmpGens = ComputeColon(aux, G2, CheckForTimeout);
+      swap(aux, tmpG);
+      tmpG = ComputeColon(aux, G2, CheckForTimeout);
     }
-    return tmpGens;
+    return tmpG;
   }//ComputeSaturation
 
 
@@ -1251,7 +1272,7 @@ namespace CoCoA
     std::vector<RingElem> tmpHGens;  tmpHGens.reserve(len(G));
     for (const RingElem& g: G)
       tmpHGens.push_back(homog(g, HomogIndets));
-    return ComputeSatByPoly(tmpHGens,IndetProd,CheckForTimeout);
+    return ComputeSatByPoly(tmpHGens, IndetProd, CheckForTimeout);
   }
 
 
@@ -1261,10 +1282,10 @@ namespace CoCoA
   bool RadicalMembership(const PolyList& G, ConstRefRingElem f,
                          const CpuTimeLimit& CheckForTimeout)
   {
-    PolyList tmpGens;
-    tmpGens = ComputeSatByPoly(G, f, CheckForTimeout);
-    if (len(tmpGens) != 1) return false;
-    return IsInvertible(tmpGens.front());
+    PolyList tmpG;
+    tmpG = ComputeSatByPoly(G, f, CheckForTimeout);
+    if (len(tmpG) != 1) return false;
+    return IsInvertible(tmpG.front());
   }
 
   
