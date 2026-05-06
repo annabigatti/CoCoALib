@@ -70,18 +70,24 @@ namespace CoCoA
     cout << "first(L,2) gives  " << vector<long>(L.begin(), L.begin()+2) << endl;
 
     // This will become easier when CoCoALib jumps to C++20 standard.
-    // last(L,3);  <-- This is even more fiddly.
-    const long n = len(L);
-    cout << "last(L,3) gives  " << vector<long>(L.begin()+(n-3), L.end()) << endl;
+    // last(L,3);  <-- This is a bit fiddly.
+    cout << "last(L,3) gives  " << vector<long>(L.end()-3, L.end()) << endl;
 
+    cout << "-------------------------------------------" << endl;
     // Translating CONCAT into C++ is cumbersome (but also faster).
     // This example modifies L by putting new elements at the end
-    const std::vector<long> L2 = {6,7,8,9};
-    // L := concat(L,L2);  becomes the line below
+    std::vector<long> L2 = {2,3};
+    // L := concat(L,L2);  various ways:
+    cout << "L is " << L << " and L2 is " << L2 << endl;    
     L.insert( L.end(),  L2.begin(),  L2.end() );
-    cout << "  L2 is " << L2 << endl;    
-    cout << "Concatenated with \"L.insert\"  modifies L  --> " << L << endl;
+    cout << "Concatenated with \"L.insert\" (C++)         modifies L  --> " << L << endl;
     cout <<   "             and L2 remains unchanged: L2  is " << L2 << endl;
+    concat_copy(L, L2);
+    cout << "Concatenated with \"concat_copy\" (CoCoALib) modifies L  --> " << L << endl;
+    cout <<   "             and L2 remains unchanged: L2  is " << L2 << endl;
+    // concat_move(L, L2);
+    // cout << "Concatenated with \"concat_move\" (CoCoALib) modifies L  --> " << L << endl;
+    // cout <<   "             and L2 is cleared: L2  is " << L2 << endl;
     cout << "-------------------------------------------" << endl;
     std::list<long> LL  = {1,2};
     std::list<long> LL2 = {7,8};

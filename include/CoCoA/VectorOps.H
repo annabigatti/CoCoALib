@@ -58,20 +58,21 @@ namespace CoCoA
 
 
   template <typename T>
-  void/*std::vector<T>*/ concat_copy(std::vector<T> dest, std::vector<T> src)
+  void/*std::vector<T>*/ concat_copy(std::vector<T>& dest, const std::vector<T>& src)
   {
     dest.insert( dest.end(), src.begin(), src.end() );
   }
 
 
-  template <typename T>
-  void/*std::vector<T>*/ concat_move(std::vector<T> dest, std::vector<T> src) // destroys src!!!
-  {
-    dest.insert(dest.end(),
-                std::make_move_iterator(src.begin()),
-                std::make_move_iterator(src.end())
-                );
-  }
+  // does not destroy src [see ex-c++-vector2.C]
+  // template <typename T>
+  // void/*std::vector<T>*/ concat_move(std::vector<T>& dest, std::vector<T>& src) // destroys src!!!
+  // {
+  //   dest.insert(dest.end(),
+  //               std::make_move_iterator(src.begin()),
+  //               std::make_move_iterator(src.end())
+  //               );
+  // }
 
 
   ///////////////////////////////////////////////////////
