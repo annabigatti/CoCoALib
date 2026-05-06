@@ -717,7 +717,7 @@ namespace CoCoA
       for (long i=0; i < level(VerLev); ++i)
       {
         p = RandomSmallPrime((1UL<<31)-1);
-        if (HasGBasis(I)) 
+        if (HasGBasis(I))
           while (p < 1222333444 and !IsSigmaGoodPrime(p,I))
             p = RandomSmallPrime((1UL<<31)-1);
         else
