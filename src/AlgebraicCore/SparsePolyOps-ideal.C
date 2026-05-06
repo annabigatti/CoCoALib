@@ -204,6 +204,15 @@ namespace CoCoA
   }
 
 
+  ideal homog(const ideal& I, const std::vector<RingElem>& X)
+  {
+    if (!IsSparsePolyRing(RingOf(I)))  CoCoA_THROW_ERROR1(ERR::ReqSparsePolyRing);
+    if (AreGensMonomial(I)) return I;
+    if (IsZero(I)) return I;
+    return ideal(ComputeHomogenization(gens(I), X));
+  }
+
+
   ideal IdealOfGBasis(const ideal& I)
   {
     ideal J(RingOf(I), GBasis(I));
