@@ -245,7 +245,7 @@ namespace CoCoA
 
 
   const symbol& IndetSymbol(const PPMonoid& PPM, long idx)
-  { 
+  {
     if (idx < 0 || idx >= NumIndets(PPM))  CoCoA_THROW_ERROR1(ERR::BadIndex);
     return PPM->myIndetSymbol(idx);
   }
