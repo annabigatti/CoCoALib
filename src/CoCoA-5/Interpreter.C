@@ -1343,7 +1343,7 @@ string VariableNotFoundException::errorMessage(const string &varName, int arity,
 	bool thereIsAnExactMatch=false;
 	env->collectSimilarlyNamedIdentifiers(varName, arity, NearMatches, thereIsAnExactMatch);
 	if (thereIsAnExactMatch)
-		return message+", but there is one in an outside scope.  You're probably missing an import statement";
+		return message+", but there is one in an outside scope.  Perhaps you forgot to assign to it, or you forgot an import statement?";
 	const int size = NearMatches.size();
 	if (size==0)
 		return message;
