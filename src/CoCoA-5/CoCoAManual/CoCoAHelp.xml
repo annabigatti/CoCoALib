@@ -3371,9 +3371,9 @@ CommonDenom(f: <type>RINGELEM</type>): <rtn>RINGELEM</rtn>
 CommonDenom(L: <type>LIST</type> of RINGELEM): <rtn>RINGELEM</rtn>
 </syntax>
 <description>
-This function returns a common denominator for the polynomial <tt>f</tt>.
-The coefficient ring of the polynomial ring to which <tt>f</tt> belongs
-must be a fraction field.
+This function returns a common denominator for the polynomial <tt>f</tt>, or a common
+denominator for all the polynomials in the (non-empty) list <tt>L</tt>.  The polynomials
+must belong to a polynomial ring whose coefficient ring is a fraction field.
 <example>
 /**/  use P ::= QQ[x,y];
 /**/  f := (1/4)*x+(1/6)*y;
