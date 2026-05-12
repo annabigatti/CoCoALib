@@ -61,6 +61,7 @@ public:
 	    const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);       // when you have polynomials only ie GB
+
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
             const FreeModule& theFM,
@@ -69,6 +70,7 @@ public:
  	    const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);       // when you have modules from theFM
+
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
             const FreeModule& theOutputFM,
@@ -87,12 +89,12 @@ public:
                  const bool HomogeneousInput,
                  const bool SaturatingAlgorithm); ///< some assignments in common to all kind of GRingInfo
 
-  const SparsePolyRing& myNewSPR() const {return myNewSPRValue;}
-  const SparsePolyRing& myOldSPR() const {return myOldSPRValue;}
+  const SparsePolyRing& myNewSPR() const {return myPworkValue;}
+  const SparsePolyRing& myOldSPR() const {return myPorigValue;}
   const FreeModule& myFreeModule()  const {return myFreeModuleValue;}
   const FreeModule& myOutputFreeModule() const {return myOutputFreeModuleValue;}
-  const RingHom& myNewP2OldP() const {return myNewP2OldPValue;}
-  const RingHom& myOldP2NewP() const {return myOldP2NewPValue;}
+  const RingHom& myWorkToOrigHom() const {return myWorkToOrigHomValue;}
+  const RingHom& myOrigToWorkHom() const {return myOrigToWorkHomValue;}
   const DivMaskRule& myDivMaskRule() const {return myDivMaskRuleValue;}
   const PPMonoid& myPPM() const {return myPPMValue;}
   CoeffEncoding::type myCoeffRingType() const { return myCoeffRingTypeValue; }
@@ -102,7 +104,7 @@ public:
   long myCompt_work(ConstRefPPMonoidElem T)const;///< the component in work ring
   long myCompt_orig(ConstRefPPMonoidElem T) const;///< the component in orig module
   bool operator==(const GRingInfo&) const;
-  ///< Are equal myNewSPRValue and myDivMaskRuleValue only
+  ///< Are equal myPworkValue and myDivMaskRuleValue only
   friend bool AreCompatible(const GRingInfo&,const GRingInfo&);
   friend std::ostream& operator<<(std::ostream& out, const GRingInfo& theGRI);
   bool IamModule()const{return IamModuleValue;};
@@ -111,7 +113,7 @@ public:
   //  std::vector<RingElem> myEY()const{return myEYValue;};
   //  std::vector<RingElem> myY()const;
   SugarDegree myNewSugar(ConstRefRingElem f) const;
-  //  RingElem myY(long i)const{return indet(myNewSPR(),i+NumIndets(myNewSPRValue)-1-GradingDim(myNewSPRValue));};
+  //  RingElem myY(long i)const{return indet(myNewSPR(),i+NumIndets(myPworkValue)-1-GradingDim(myPworkValue));};
   RingElem myY(const degree& the_d)const;
   ConstRefRingElem myEY(long i)const{return myEYValue[i];};
   RingElem myE(long i) const;
@@ -128,13 +130,13 @@ public:
   void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
 
 private: // member fields
-  const SparsePolyRing myNewSPRValue;///< embedding info
-  const SparsePolyRing myOldSPRValue;
+  const SparsePolyRing myPworkValue;///< embedding info
+  const SparsePolyRing myPorigValue;
   const PPMonoid myPPMValue;  ///< the monoid for storing LPP's and lcm's for divisibility tests
   const FreeModule myFreeModuleValue;
   const FreeModule myOutputFreeModuleValue;
-  RingHom myNewP2OldPValue;///< completely defined by myNewSPR,myOldSPRValue
-  RingHom myOldP2NewPValue;
+  RingHom myWorkToOrigHomValue;///< completely defined by myPworkValue, myPorigValue
+  RingHom myOrigToWorkHomValue;
   const DivMaskRule myDivMaskRuleValue;
   const bool IamModuleValue;
   static const long myMaxComponentIndex; // max num of compts -- depends on type SmallExponent_t (see GBEnv.C)
@@ -150,6 +152,13 @@ private: // member fields
 };// end class GRingInfo
 
 
+  GRingInfo GRing_IinP(const SparsePolyRing& P,
+                       const bool IsHomogIn,
+                       const CpuTimeLimit& CheckForTimeout);
+
+  GRingInfo GRing_IinRx(const SparsePolyRing& Rx,
+                        const bool IsHomogIn,
+                        const CpuTimeLimit& CheckForTimeout);
 
 }
 
