@@ -346,12 +346,13 @@ namespace CoCoA
       F_gp = EmbedPolyList(F, theGRI, 0);
       RingElem Ek;
       long k=1;
-      for (auto it=F_gp.begin(); it!=F_gp.end(); ++it,++k)
+      for (auto& g: F_gp)
       {
         Ek = theGRI.myE(k);
         if (theGRI.myInputAndGrading() != NONHOMOG_GRADING)
-          Ek *= theGRI.myY(wdeg(*it)); // Gives the right degree to p+E^k
-        (*it).myAppendClear(Ek);
+          Ek *= theGRI.myY(wdeg(g)); // Gives the right degree to e^k
+        g.myAppendClear(Ek);
+        ++k;
       }
       return F_gp;
     }
@@ -519,10 +520,8 @@ namespace CoCoA
       {
         if (!IsIndet(H[i]))
           CoCoA_THROW_ERROR2(ERR::ReqIndet, "arg2 must be a vec.of indets");
-        if ( wdeg(H[i])[i]!=1 )
-          CoCoA_THROW_ERROR2(ERR::BadArg, "degree of i-th hom.indet must be 0..1..0");
         for (long j=0; j<len(H); ++j)
-          if ( i!=j && wdeg(H[i])[j]!=0 )
+          if ( wdeg(H[i])[j] != (i==j) )
             CoCoA_THROW_ERROR2(ERR::BadArg, "degree of i-th hom.indet must be 0..1..0");
       }
       // Compute the maximum degree
