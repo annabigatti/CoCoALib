@@ -237,7 +237,7 @@ namespace CoCoA
     //GPoly EmbedPoly(ConstRefRingElem the_p, const GRingInfo& theGRI,
     //                const degree& the_d, const long CompIndex)
     //{
-    //const RingHom& phi=theGRI.myOldP2NewP();
+    //const RingHom& phi=theGRI.myOrigToWorkHom();
     //return GPoly(phi(the_p)*theGRI.myE(CompIndex)*theGRI.myY(the_d), theGRI);
     //}
 
@@ -249,7 +249,7 @@ namespace CoCoA
     GPoly EmbedPoly(ConstRefRingElem p, const GRingInfo& theGRI,
                     const long CompIndex)
     {
-      const RingHom& phi=theGRI.myOldP2NewP();
+      const RingHom& phi=theGRI.myOrigToWorkHom();
       return GPoly(phi(p)*theGRI.myE(CompIndex), theGRI);
     }
 
@@ -285,16 +285,11 @@ namespace CoCoA
                       const long FromCompt)			
     {
       RingElem p(theGRI.myNewSPR());
-      const RingHom& phi=theGRI.myOldP2NewP();
+      const RingHom& phi = theGRI.myOrigToWorkHom();
       for (long i=0; i<NumCompts(owner(v)); ++i)
         p += phi(v[i]) * theGRI.myEY(i+FromCompt);
       return GPoly(p, theGRI);
-    } // EmbedVector
-
-
-    // GPoly EmbedVector(const ModuleElem& v,
-    //                   const GRingInfo& theGRI)			
-    // { return EmbedVector(v, theGRI, 0); }
+    }
 
 
     GPolyList EmbedVectorList(const std::vector<ModuleElem>& VL,
@@ -308,10 +303,6 @@ namespace CoCoA
           outPL.push_back(EmbedVector(v, theGRI, FromCompt));
       return outPL;
     }
-
-
-    // GPolyList EmbedVectorList(const std::vector<ModuleElem>& VL, const GRingInfo& GRI)
-    // { return EmbedVectorList(VL, GRI, 0); }
 
 
     GPolyList SyzEmbedVectorList(const std::vector<ModuleElem>& InputVectorList,
@@ -335,7 +326,7 @@ namespace CoCoA
           p.myAppendClear(EkY);
         }
       return outPL;
-    } // SyzEmbedVectorList
+    }
 
 
     GPolyList SyzEmbedPolyList(const std::vector<RingElem>& F,
@@ -449,7 +440,7 @@ namespace CoCoA
       RingElem tmp(OldP);
       for (SparsePolyIter i=BeginIter(g); !IsEnded(i); ++i)
       {
-        tmp = theGRI.myNewP2OldP()(monomial(NewP,coeff(i),PP(i)));
+        tmp = theGRI.myWorkToOrigHom()(monomial(NewP,coeff(i),PP(i)));
         CoCoA_ASSERT(theGRI.myCompt_orig(PP(i)) - FromCompt >= 0);
         CoCoA_ASSERT(theGRI.myCompt_orig(PP(i)) - FromCompt < NumCompts(FM));
         v += tmp * e[theGRI.myCompt_orig(PP(i)) - FromCompt];
@@ -486,7 +477,7 @@ namespace CoCoA
         if (theGRI.myCompt_work(LPP(g)) <= theGRI.myCompt_OrigToWork(FromCompt))
         {
           VERBOSE(100) << "LPP(g) = " << LPP(g) << std::endl; /////////////////
-          G_out.push_back(theGRI.myNewP2OldP()(g));
+          G_out.push_back(theGRI.myWorkToOrigHom()(g));
           // if ( IsConstant(outPL.last()) ) // redmine #1647 ////' doesn't happen
           // {
           //   outPL.clear();
@@ -608,16 +599,13 @@ namespace CoCoA
     SparsePolyRing P(owner(G_in[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     const bool IsHomogIn = IsHomogGrD0(G_in);
-    const bool IsSatAlg = false;
     std::vector<RingElem> GB_tmp;
     std::vector<RingElem> MinGens_tmp;
     if (IsFractionFieldOfGCDDomain(CoeffRing(P)))
     {
       const ring R = BaseRing(CoeffRing(P));
       SparsePolyRing Rx = NewPolyRing(R, symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
-      GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
+      GRingInfo GRI(GRing_IinRx(Rx, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, KxToRx(G_in, Rx));
       GBR.myDoGBasis();// homog input standard alg interred
       GB_tmp = monic(RxToKx(GBR.myExportGBasis(), P)); // 2016-11-22: make monic
@@ -626,8 +614,7 @@ namespace CoCoA
     }
     else
     {
-      GRingInfo GRI(P, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(GRing_IinP(P, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, G_in);
       GBR.myDoGBasis();// homog input standard alg interred
       GB_tmp = GBR.myExportGBasis();
@@ -665,16 +652,13 @@ namespace CoCoA
     if (GradingDim(P)!=1)  CoCoA_THROW_ERROR1(ERR::ReqGradingDim1);
     if (TruncDeg < 0)  CoCoA_THROW_ERROR2(ERR::ReqNonNegative, "user TruncDeg");
     const bool IsHomogIn = IsHomog(G_in);
-    const bool IsSatAlg = false;
     if (!IsHomogIn)  CoCoA_THROW_ERROR1(ERR::ReqHomog);
     PolyList GB_tmp;
     PolyList MinGens_tmp;
     if (IsFractionFieldOfGCDDomain(CoeffRing(P)))
     { //---------------------------------------------------
       const SparsePolyRing Rx = NewPolyRing(BaseRing(CoeffRing(P)), symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
-      GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
+      GRingInfo GRI(GRing_IinRx(Rx, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, KxToRx(G_in, Rx));
       GBR.mySetTruncDeg(TruncDeg); // input value
       //---------------------------------------------------
@@ -686,8 +670,7 @@ namespace CoCoA
     }
     else
     { //---------------------------------------------------
-      GRingInfo GRI(P, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(GRing_IinP(P, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, G_in);
       GBR.mySetTruncDeg(TruncDeg); // input value
       //---------------------------------------------------
@@ -753,7 +736,6 @@ namespace CoCoA
   {
     if (G.empty()) return G;
     const bool IsHomogIn = IsHomogGrD0(G);
-    const bool IsSatAlg = false;
     SparsePolyRing P(owner(G[0]));
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     if (characteristic(P)!=0)  CoCoA_THROW_ERROR1(ERR::ReqChar0);
@@ -761,17 +743,14 @@ namespace CoCoA
     {
       const ring R = BaseRing(CoeffRing(P));
       SparsePolyRing Rx = NewPolyRing(R, symbols(PPM(P)), ordering(PPM(P)));
-      GRingInfo GRI(Rx, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
-      GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
+      GRingInfo GRI(GRing_IinRx(Rx, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, KxToRx(G, Rx));
       GBR.myDoGBasisRealSolve();// homog input standard alg interred
       return monic(RxToKx(GBR.myExportGBasis(), P)); // 2016-11-22: make monic
     }
     else
     {
-      GRingInfo GRI(P, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(GRing_IinP(P, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, G);
       GBR.myDoGBasisRealSolve();
       return GBR.myExportGBasis();
@@ -850,7 +829,6 @@ namespace CoCoA
     const SparsePolyRing P = owner(G[0]);
     if (!IsField(CoeffRing(P)))  CoCoA_THROW_ERROR1(ERR::ReqCoeffsInField);
     const bool IsHomogIn = (GradingDim(P)!=0 && IsHomogGrD0(G));
-    const bool IsSatAlg = false;
     if (!IsHomogIn)  CoCoA_THROW_ERROR1(ERR::ReqHomog);
     SparsePolyRing P_work = MakeElimRing(P, PPIndices(inds), IsHomogIn);
     RingHom OldToNew = PolyAlgebraHom(P, P_work, indets(P_work));
@@ -860,8 +838,7 @@ namespace CoCoA
       CoCoA_THROW_ERROR2(ERR::NYI, "Only for FFp");
     else
     {
-      GRingInfo GRI(P_work, IsHomogIn,
-                    IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+      GRingInfo GRI(GRing_IinP(P_work, IsHomogIn, CheckForTimeout));
       GReductor GBR(GRI, OldToNew(G));
       return NewToOld(GBR.myDoGBasisElimFirst(ElimIndsProd));
     }
