@@ -112,7 +112,7 @@ namespace CoCoA
     CheckCompatible(f, h, CoCoA_ERROR_CONTEXT);
     const SparsePolyRing P = owner(f);
     if ( GradingDim(P)!=1 )  CoCoA_THROW_ERROR2(ERR::BadArg, "GrDim must be 1");
-    if ( !IsIndet(h) )  CoCoA_THROW_ERROR2(ERR::ReqIndet, "arg 2");
+    if ( !IsIndet(h) )  CoCoA_THROW_ERROR2(ERR::ReqIndet, "2nd arg");
     if ( wdeg(h)[0]!=1 )  CoCoA_THROW_ERROR2(ERR::BadArg, "degree of hom.indet must be 1");
     RingElem fHom(P);
     P->myHomog(raw(fHom), raw(f), raw(h));
@@ -211,7 +211,7 @@ namespace CoCoA
     const ring& P = owner(f);
     if (!IsSparsePolyRing(P))  CoCoA_THROW_ERROR1(ERR::ReqSparsePolyRing);
     if (GradingDim(P) != 1)  CoCoA_THROW_ERROR2(ERR::BadArg, "GradingDim must be 1");
-    if (d < 0)  CoCoA_THROW_ERROR2(ERR::ReqNonNegative, "arg 2");
+    if (d < 0)  CoCoA_THROW_ERROR2(ERR::ReqNonNegative, "2nd arg");
     RingElem form(P);
     for (auto it=BeginIter(f); !IsEnded(it); ++it)
     {

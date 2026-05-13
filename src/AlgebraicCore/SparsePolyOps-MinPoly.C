@@ -716,13 +716,13 @@ namespace CoCoA
       RingElem eval_f;
       for (long i=0; i < level(VerLev); ++i)
       {
-        p = RandomSmallPrime((1UL<<31)-1);
-        if (HasGBasis(I)) 
-          while (p < 1222333444 and !IsSigmaGoodPrime(p,I))
-            p = RandomSmallPrime((1UL<<31)-1);
+        p = RandomNBitPrime(31);
+        if (HasGBasis(I))
+          while (!IsSigmaGoodPrime(p,I))
+            p = RandomNBitPrime(31);
         else
-          while (p < 1222333444 and IsDivisible(CommonDenom(gens(I)), p))
-            p = RandomSmallPrime((1UL<<31)-1);
+          while (IsDivisible(CommonDenom(gens(I)), p))
+            p = RandomNBitPrime(31);
         VERBOSE(80) << "Testing prime "<< p << std::endl;
         SparsePolyRing Pp = NewPolyRing(NewZZmod(p), symbols(PPM(Pg)), ordering(PPM(Pg)));
         RingHom pi = PolyRingHom(Pg, Pp, QQEmbeddingHom(Pp), indets(Pp));

@@ -241,24 +241,30 @@ namespace CoCoA
 
 
 
-  //[Id = "cocoa5-26",Descr = "Homogenized5x "];
+  //[Id = "cocoa5-26", Descr = "Homogenized5x"];
   void test26()
   {
-// M1:=Mat([[2, 1, 1,0],
-//          [1, 2, 0,1],
-//          [0, 1, 0,1],
-//          [1,0,0,0]]);
-// Use Q[x,y,a,b],Ord(M1),PosTo;
-// Info5 := Record();
-// Info5.GradingDim := 2;
-// Info5.OrdMat :=M1;
-// I := Ideal(x+1,y^2+x);
-// X := Homogenized5x([a,b],I,Info5);
-// X = Ideal(a^2b + x, xb^3 + y^2, x^2b^2 - y^2a^2, y^2a^4 + x^3b);
+    // M1:=Mat([[2, 1, 1, 0],
+    //          [1, 2, 0, 1],
+    //          [0, 1, 0, 1],
+    //          [1, 0, 0, 0]]);
+    // Use Q[x,y,a,b], Ord(M1);
+    // Info5.GradingDim := 2;  Info5.OrdMat :=M1;
+    // I := Ideal(x+1,y^2+x);
+    // X := Homogenized5x([a,b],I,Info5);
+    // X = Ideal(a^2b + x, xb^3 + y^2, x^2b^2 - y^2a^2, y^2a^4 + x^3b);
+    std::vector<RingElem> L = RingElems(RingZZ(),"2,1,1,0, 1,2,0,1, 0,1,0,1, 1,0,0,0");
+    matrix M1 = NewDenseMat(MatByRows(4,4,L));
+    PolyRing P = NewPolyRing(RingQQ(), symbols("x,y,a,b"), NewMatrixOrdering(M1, 2));
+    ideal I(RingElems(P, "x+1, y^2+x"));
+    const auto H = std::vector<RingElem>(indets(P).end()-2, indets(P).end());
+    ideal Ih = homog(I, H);
+    ideal J(RingElems(P, "a^2*b +x,  x*b^3 +y^2,  x^2*b^2 -y^2*a^2,  y^2*a^4 +x^3*b"));
+    CoCoA_ASSERT_ALWAYS("cocoa5-26" && Ih == J);
   }
 
 
-  //[Id = "cocoa5-28",Descr = "Homogenized5 "];
+  //[Id = "cocoa5-28", Descr = "Homogenized5"];
   void test28()
   {
     // Use Q[x,y,z,h];
@@ -273,7 +279,7 @@ namespace CoCoA
     RingElem y2 = power(y,2);
     ideal I(power(x,2)*y+x*y+1, x*y2+y2+1);
     ideal J(homog(I, h));
-    CoCoA_ASSERT_ALWAYS("cocoa5-28" && J == ideal(x - y, power(y,3) + y2*h + power(h,3)));
+    CoCoA_ASSERT_ALWAYS("cocoa5-28" && J == ideal(x -y, power(y,3) +y2*h +power(h,3)));
   }
 
 
@@ -309,7 +315,7 @@ namespace CoCoA
   {
     GlobalManager CoCoAFoundations;
     
-    SetVerbosityLevel(0); // 100
+    SetVerbosityLevel(0); // 10, 100, 120
     
     //SetVerbosityLevel(120); // 100, 120
     title("test1"); test1();
@@ -323,7 +329,7 @@ namespace CoCoA
     //test9(); // intersect module NYI
     //test10();
     title("test11"); test11();
-    //test26(); // homog
+    title("test26"); test26(); // homog
     title("test28"); test28(); // homog
     title("test30"); test30();
   }

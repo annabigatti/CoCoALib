@@ -237,7 +237,7 @@ namespace CoCoA
       RingElem tmp(OldP);
       for (SparsePolyIter i=BeginIter(g); !IsEnded(i); ++i)
       {
-        tmp = theGRI.myNewP2OldP()(monomial(NewP,coeff(i),PP(i)));
+        tmp = theGRI.myWorkToOrigHom()(monomial(NewP,coeff(i),PP(i)));
         v += tmp * e[theGRI.myCompt_orig(PP(i))];
       }
       return v;

@@ -47,6 +47,7 @@ namespace CoCoA
   ideal LT(const ideal& I);
   ideal LF(const ideal& I);
   ideal homog(const ideal& I, ConstRefRingElem x);
+  ideal homog(const ideal& I, const std::vector<RingElem>& X);
   ideal IdealOfGBasis(const ideal& I);
   ideal IdealOfMinGens(const ideal& I);
   ideal elim(const ideal& I, const std::vector<RingElem>& ElimIndets);

@@ -119,13 +119,13 @@ namespace CoCoA
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(P),
-    myOldSPRValue(P),
+    myPworkValue(P),
+    myPorigValue(P),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P)), ordering(PPM(P)))),
     myFreeModuleValue(NewFreeModule(P,1)),
     myOutputFreeModuleValue(NewFreeModule(P,1)),
-    myNewP2OldPValue(IdentityHom(P)),
-    myOldP2NewPValue(IdentityHom(P)),
+    myWorkToOrigHomValue(IdentityHom(P)),
+    myOrigToWorkHomValue(IdentityHom(P)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(false),
     myTimeoutChecker(CheckForTimeout)
@@ -143,31 +143,31 @@ namespace CoCoA
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(P_work),
-    myOldSPRValue(P_orig),
+    myPworkValue(P_work),
+    myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(theFM),
     myOutputFreeModuleValue(theOutputFM),
-    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
+    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
   {
     // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
     std::vector<RingElem> Y; // The grading indets
-    const std::vector<RingElem>& x = indets(myNewSPRValue);
+    const std::vector<RingElem>& x = indets(myPworkValue);
     // Fill Y
-    for (long i=0; i < GradingDim(myNewSPRValue); ++i)
+    for (long i=0; i < GradingDim(myPworkValue); ++i)
       Y.push_back(x[i+NumIndets(P_orig)]);
 
     const std::vector<degree> Sh=shifts(myFreeModuleValue);
-    //RingElem tmp(myNewSPRValue);
+    //RingElem tmp(myPworkValue);
     for (long i=0; i < NumCompts(myFreeModuleValue); ++i)
       myEYValue.push_back(myE(i) * myY(Sh[i]));
     //{
     //  tmp=power(myE(),this->myComponent(i));
-    //  for (long j=0; j < GradingDim(myNewSPRValue); ++j)
+    //  for (long j=0; j < GradingDim(myPworkValue); ++j)
     //    tmp*=power(Y[j],Sh[i][j]);
     //  myEYValue.push_back(tmp);
     //}
@@ -183,13 +183,13 @@ namespace CoCoA
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(P_work),
-    myOldSPRValue(P_orig),
+    myPworkValue(P_work),
+    myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(NewFreeModule(P_work,1)),
     myOutputFreeModuleValue(theOutputFM),
-    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
+    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
@@ -208,13 +208,13 @@ namespace CoCoA
                        const bool IsSatAlg,
                        const DivMaskRule& DivMaskR,
                        const CpuTimeLimit& CheckForTimeout):
-    myNewSPRValue(P_work),
-    myOldSPRValue(P_orig),
+    myPworkValue(P_work),
+    myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(NewFreeModule(P_work,1)),
     myOutputFreeModuleValue(NewFreeModule(P_work,1)),
-    myNewP2OldPValue(WorkToOrigRingHom(myNewSPRValue,myOldSPRValue)),
-    myOldP2NewPValue(OrigToWorkRingHom(myNewSPRValue,myOldSPRValue)),
+    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     //    IamModuleValue(IsForModule),
     IamModuleValue(P_work!=P_orig),
@@ -236,8 +236,8 @@ namespace CoCoA
   bool GRingInfo::operator==(const GRingInfo& theGRI)const
   {
     return
-      (myNewSPRValue    == theGRI.myNewSPRValue
-       && myOldSPRValue == theGRI.myOldSPRValue
+      (myPworkValue    == theGRI.myPworkValue
+       && myPorigValue == theGRI.myPorigValue
        && myPPMValue    == theGRI.myPPMValue
        && myOutputFreeModuleValue == theGRI.myOutputFreeModuleValue
        && myEYValue     == theGRI.myEYValue
@@ -251,7 +251,7 @@ namespace CoCoA
   long GRingInfo::myCompt_work(ConstRefPPMonoidElem T)const
   {
     if (!IamModule()) return 0;// True Ring
-    return exponent(T,ModuleVarIndex(myNewSPRValue));
+    return exponent(T,ModuleVarIndex(myPworkValue));
   }
 
 
@@ -265,7 +265,7 @@ namespace CoCoA
 // long GRingInfo::myPhonyComponent(ConstRefPPMonoidElem T)const
 // {
 //   if (!IamModule()) return 0;// True Ring
-//   return myComponent(exponent(T,ModuleVarIndex(myNewSPRValue)));
+//   return myComponent(exponent(T,ModuleVarIndex(myPworkValue)));
 // }
 
 
@@ -276,7 +276,7 @@ namespace CoCoA
 RingElem GRingInfo::myY(const degree& d) const
 {
    RingElem result(one(myNewSPR()));
-   const long YFirstIdx = NumIndets(myNewSPRValue) -GradingDim(myNewSPRValue) -1;
+   const long YFirstIdx = NumIndets(myPworkValue) -GradingDim(myPworkValue) -1;
    for (long j=0; j < GradingDim(myNewSPR()); ++j)
      result *= IndetPower(myNewSPR(), YFirstIdx+j, d[j]); // Y(j)^d[j]
    return result;
@@ -358,8 +358,8 @@ long ModuleVarIndex(const SparsePolyRing& P)
 
 bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 {
-  return (GRI1.myNewSPRValue == GRI2.myNewSPRValue &&
-          GRI1.myOldSPRValue == GRI2.myOldSPRValue &&
+  return (GRI1.myPworkValue == GRI2.myPworkValue &&
+          GRI1.myPorigValue == GRI2.myPorigValue &&
           GRI1.myPPMValue == GRI2.myPPMValue);
        //&& // I want to do this, the == operator is not there
          //GRI1.myDivMaskRuleValue==GRI2.myDivMaskRuleValue
@@ -370,8 +370,8 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 // std::vector<RingElem> GRingInfo::myY()const
 // {
 //   vector<RingElem> Y;
-//   for (long i=0; i < GradingDim(myNewSPRValue); ++i)
-//     Y.push_back(indet(myNewSPRValue, i+NumIndets(myOldSPRValue)));
+//   for (long i=0; i < GradingDim(myPworkValue); ++i)
+//     Y.push_back(indet(myPworkValue, i+NumIndets(myPorigValue)));
 //   return Y;
 // }//myY()
 
@@ -401,5 +401,26 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
    }
    return true;
  }
+
+
+  GRingInfo GRing_IinP(const SparsePolyRing& P,
+                       const bool IsHomogIn,
+                       const CpuTimeLimit& CheckForTimeout)
+  {
+    return GRingInfo(P, IsHomogIn,
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
+                     CheckForTimeout);
+  }
+
+
+  GRingInfo GRing_IinRx(const SparsePolyRing& Rx,
+                        const bool IsHomogIn,
+                        const CpuTimeLimit& CheckForTimeout)
+  {
+    GRingInfo GRI(GRing_IinP(Rx, IsHomogIn, CheckForTimeout));
+    GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
+    return GRI;
+  }
+
 
 }// end namespace cocoa
