@@ -198,7 +198,7 @@ namespace CoCoA
   {
     if (!IsSparsePolyRing(RingOf(I)))  CoCoA_THROW_ERROR1(ERR::ReqSparsePolyRing);
     if (AreGensMonomial(I)) return I;
-    if (IsZero(I)) return I;
+    // if (IsZero(I)) return I; // covered by AreGensMonomial
     std::vector<RingElem> v(1,x);
     return ideal(ComputeHomogenization(gens(I), v));
   }
@@ -208,7 +208,7 @@ namespace CoCoA
   {
     if (!IsSparsePolyRing(RingOf(I)))  CoCoA_THROW_ERROR1(ERR::ReqSparsePolyRing);
     if (AreGensMonomial(I)) return I;
-    if (IsZero(I)) return I;
+    // if (IsZero(I)) return I; // covered by AreGensMonomial
     return ideal(ComputeHomogenization(gens(I), X));
   }
 
@@ -908,7 +908,7 @@ namespace CoCoA
     if (!IsSparsePolyRing(RingOf(I)))
       CoCoA_THROW_ERROR2(ERR::ReqSparsePolyRing, "ring of I");
     if (GradingDim(RingOf(I))==0)  CoCoA_THROW_ERROR1(ERR::ReqNonZeroGradingDim);
-    if (IsZero(I)) return true;
+    // if (IsZero(I)) return true; // covered by AreGensMonomial
     if (AreGensMonomial(I))  // Slug #1739
     {
       VERBOSE(90) << "AreGensMonomial(I) is true" << std::endl;
