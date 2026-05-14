@@ -106,7 +106,7 @@ namespace CoCoA
     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
     myLPPForOrd(theLPP),
     myLCValue(theLC),
-    myPolyValue(theGRI.myNewSPR()),
+    myPolyValue(theGRI.myP_work()),
     myGRingInfoValue(theGRI),
     myWDeg(wdeg(theLPP)),
     mySugar(uninitialized)
@@ -129,7 +129,7 @@ namespace CoCoA
     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
     myLPPForOrd(LPP(the_p)),
     myLCValue(LC(the_p)),
-    myPolyValue(theGRI.myNewSPR()),
+    myPolyValue(theGRI.myP_work()),
     myGRingInfoValue(theGRI),
     myWDeg(wdeg(LPP(the_p))),
     mySugar(uninitialized)
@@ -147,11 +147,11 @@ namespace CoCoA
 
   GPoly::GPoly(const GRingInfo& theGRI):
     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-    myLPPForOrd(PPM(theGRI.myNewSPR())),
-    myLCValue(CoeffRing(theGRI.myNewSPR())),
-    myPolyValue(theGRI.myNewSPR()),
+    myLPPForOrd(PPM(theGRI.myP_work())),
+    myLCValue(CoeffRing(theGRI.myP_work())),
+    myPolyValue(theGRI.myP_work()),
     myGRingInfoValue(theGRI),
-    myWDeg(GradingDim(theGRI.myNewSPR())),
+    myWDeg(GradingDim(theGRI.myP_work())),
     mySugar(uninitialized)
   {
     IamActive = true;
@@ -540,7 +540,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
 
   const PPMonoid& PPM(const Reductors& red)
   {
-    return PPM(red.myGRingInfo().myNewSPR());
+    return PPM(red.myGRingInfo().myP_work());
   }
 
 

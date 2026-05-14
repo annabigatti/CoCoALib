@@ -273,23 +273,24 @@ namespace CoCoA
   { return myMaxComponentIndex-i; }  // was inline AMB 2026-04-18
 
   
-RingElem GRingInfo::myY(const degree& d) const
-{
-   RingElem result(one(myNewSPR()));
-   const long YFirstIdx = NumIndets(myPworkValue) -GradingDim(myPworkValue) -1;
-   for (long j=0; j < GradingDim(myNewSPR()); ++j)
-     result *= IndetPower(myNewSPR(), YFirstIdx+j, d[j]); // Y(j)^d[j]
-   return result;
-}
+  RingElem GRingInfo::myY(const degree& d) const
+  {
+    const SparsePolyRing P(myP_work());
+    RingElem result(one(P));
+    const long YFirstIdx = NumIndets(P) -GradingDim(P) -1;
+    for (long j=0; j < GradingDim(P); ++j)
+      result *= IndetPower(P, YFirstIdx+j, d[j]); // Y(j)^d[j]
+    return result;
+  }
 
 
   RingElem GRingInfo::myE(long i) const
   { // was inline
-    return IndetPower(myNewSPR(), ModuleVarIndex(myNewSPR()), myCompt_OrigToWork(i));
+    return IndetPower(myP_work(), ModuleVarIndex(myP_work()), myCompt_OrigToWork(i));
   }
 
 
-SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
+  SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
   {
     switch (myInputAndGrading())
     {
@@ -298,31 +299,22 @@ SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
     case SaturatingAlg:    // SaturatingAlg
       return NewWSugarSat(f);
     case NONHOMOG_GRADING: // ANNA: (w)graded + non-homogeneous
-      {
-        if (/*module && */ IsMyGradingPosPlus())
-        { // ANNA: should be implemented with proper weights
-          int idx = ModuleVarIndex(myNewSPR());
-          return NewStdSugarNoIdx(f, idx);
-        }
-        return NewWDeg1CompTmp(f);
-      }
+      if (/*module && */ IsMyGradingPosPlus())
+        // ANNA: should be implemented with proper weights
+        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
+      return NewWDeg1CompTmp(f);
     case NOGRADING:        // ANNA: GradingDim = 0 --> StandardSugarAlgorithm
-      //      if (/*module && */ IsMyGradingPosPlus())
+      // if (/*module && */ IsMyGradingPosPlus())
       if (IamModule())
-      {
-        int idx = ModuleVarIndex(myNewSPR());
-        return NewStdSugarNoIdx(f, idx);
-      }
+        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
       return NewStdSugar(f);
     case SaturatingAlgNoDRL: // GradingDim = 0
       if (/*module && */ IsMyGradingPosPlus())
-      {
-        int idx = ModuleVarIndex(myNewSPR());
-        return NewStdSugarNoIdxSat(f, idx);
-      }
+        return NewStdSugarNoIdxSat(f, ModuleVarIndex(myP_work()));
       return NewStdSugarSat(f);
-    default: CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
-    }//switch
+    default:
+      CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
+    }
     return NewStdSugar(f); // just to keep the compiler quiet
   }
 
@@ -330,15 +322,15 @@ SugarDegree GRingInfo::myNewSugar(ConstRefRingElem f) const
 ostream& operator<<(ostream& out, const GRingInfo& theGRI)
 {
   if (!out) return out;  // short-cut for bad ostreams
-  out<<"the working ring is "<<theGRI.myNewSPR()<<endl
-     <<" the original ring is "<<theGRI.myOldSPR()<<endl
+  out << "the working ring is " << theGRI.myP_work() << endl
+      << " the original ring is " << theGRI.myP_orig() << endl
      //<<" Input Free Module "<<theGRI.myFreeModule()<<endl
      //<<" Output Free Module "<<theGRI.myOutputFreeModule()<<endl
-     <<" IamModule "<<theGRI.IamModule()<<endl
-     <<" myInputAndGrading = "<<theGRI.myInputAndGrading()<<endl
-     <<" myGradingPosPlusValue = "<<theGRI.IsMyGradingPosPlus()<<endl
-     <<" embedding grading "
-     <<" EY=" << theGRI.myEYValue << endl;
+      << " IamModule " << theGRI.IamModule() << endl
+      << " myInputAndGrading = " << theGRI.myInputAndGrading() << endl
+      << " myGradingPosPlusValue = " << theGRI.IsMyGradingPosPlus() << endl
+      << " embedding grading "
+      << " EY=" << theGRI.myEYValue << endl;
   //  for (const RingElem& f: theGRI.myEYValue)  out << f << endl;
   out << endl;
   return out;
@@ -346,18 +338,11 @@ ostream& operator<<(ostream& out, const GRingInfo& theGRI)
 
 
 long ModuleVarIndex(const SparsePolyRing& P)
-{
-//long tmp = NumIndets(P);
-//if (tmp!=0)
-//  return tmp-1;
-//else
-//  return tmp;
-  return NumIndets(P)-1;
-}
+{ return NumIndets(P)-1; }
 
 
 bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
-{
+{  // used only for debugging
   return (GRI1.myPworkValue == GRI2.myPworkValue &&
           GRI1.myPorigValue == GRI2.myPorigValue &&
           GRI1.myPPMValue == GRI2.myPPMValue);

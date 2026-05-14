@@ -284,7 +284,7 @@ namespace CoCoA
                       const GRingInfo& theGRI,
                       const long FromCompt)			
     {
-      RingElem p(theGRI.myNewSPR());
+      RingElem p(theGRI.myP_work());
       const RingHom& phi = theGRI.myOrigToWorkHom();
       for (long i=0; i<NumCompts(owner(v)); ++i)
         p += phi(v[i]) * theGRI.myEY(i+FromCompt);
@@ -310,7 +310,7 @@ namespace CoCoA
     {
       GPolyList outPL;
       if (InputVectorList.empty())  return outPL;
-      const SparsePolyRing NewP=GRI.myNewSPR();
+      const SparsePolyRing NewP=GRI.myP_work();
       outPL = EmbedVectorList(InputVectorList, GRI, 0);
       long k=NumCompts(GRI.myFreeModule());
       if (GRI.myInputAndGrading()==NONHOMOG_GRADING)
@@ -430,8 +430,8 @@ namespace CoCoA
                            const GRingInfo& theGRI,
                            const long FromCompt)
     {
-      const SparsePolyRing OldP=theGRI.myOldSPR();
-      const SparsePolyRing NewP=theGRI.myNewSPR();
+      const SparsePolyRing OldP=theGRI.myP_orig();
+      const SparsePolyRing NewP=theGRI.myP_work();
       const FreeModule FM=theGRI.myOutputFreeModule();
       ModuleElem v(FM);
       
@@ -481,7 +481,7 @@ namespace CoCoA
           // if ( IsConstant(outPL.last()) ) // redmine #1647 ////' doesn't happen
           // {
           //   outPL.clear();
-          //   outPL.push_back(theGRI.myOldSPR()->myOne());
+          //   outPL.push_back(theGRI.myP_orig()->myOne());
           //   break;
           // }
         }

@@ -193,7 +193,7 @@ typedef std::list<GPoly> GPolyList;
   { return f.myLPPForDiv(); }
 
   inline const SparsePolyRing& owner(const GPoly& gp)
-  { return gp.myGRingInfoValue.myNewSPR(); }
+  { return gp.myGRingInfoValue.myP_work(); }
 
 
   inline const PPMonoid& PPM(const GPoly& gp)

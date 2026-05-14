@@ -106,8 +106,8 @@ namespace CoCoA
       myGRingInfoValue(theGRI),
       myTrueReductors(theGRI),
       mySPoly(theGRI),
-      myOldDeg(GradingDim(theGRI.myNewSPR())),
-      myIncomingWDeg(GradingDim(theGRI.myNewSPR())),
+      myOldDeg(GradingDim(theGRI.myP_work())),
+      myIncomingWDeg(GradingDim(theGRI.myP_work())),
       myStat(len(F)),
       myCriteria(criteria)
   {
@@ -130,8 +130,8 @@ namespace CoCoA
       myGRingInfoValue(theGRI),
       myTrueReductors(theGRI),
       mySPoly(theGRI),
-      myOldDeg(GradingDim(theGRI.myNewSPR())),
-      myIncomingWDeg(GradingDim(theGRI.myNewSPR())),
+      myOldDeg(GradingDim(theGRI.myP_work())),
+      myIncomingWDeg(GradingDim(theGRI.myP_work())),
       myStat(len(TheInputGPolys)),
       myCriteria(criteria)
   {
@@ -167,8 +167,8 @@ namespace CoCoA
 
   //   out<<"\n";
   //   out<<"The Ring"<<GR.myGRingInfoValue<<"\n";
-  //   out<<"GradingDim  is "<<GradingDim(GR.myGRingInfoValue.myNewSPR())<<endl;
-  //   out<<"The Ring Module Index "<<ModuleVarIndex(GR.myGRingInfoValue.myNewSPR())<<"\n";
+  //   out<<"GradingDim  is "<<GradingDim(GR.myGRingInfoValue.myP_work())<<endl;
+  //   out<<"The Ring Module Index "<<ModuleVarIndex(GR.myGRingInfoValue.myP_work())<<"\n";
   //   out<<"Age "<< GR.myAgeValue <<"\n";
   //   out<<"Preparation done? "<<GR.myPrepared<<"\n";
   //   out<<"myOldDeg "<<GR.myOldDeg<<"\n";
@@ -227,8 +227,8 @@ namespace CoCoA
     // used in myExportGBasis/MinGens_module
     ModuleElem DeEmbedPoly(ConstRefRingElem g, const GRingInfo& theGRI)
     {
-      const SparsePolyRing OldP=theGRI.myOldSPR();
-      const SparsePolyRing NewP=theGRI.myNewSPR();
+      const SparsePolyRing OldP=theGRI.myP_orig();
+      const SparsePolyRing NewP=theGRI.myP_work();
       const FreeModule FM=theGRI.myOutputFreeModule();
       ModuleElem v(FM);
       
@@ -620,10 +620,10 @@ namespace CoCoA
   {
     VerboseLog VERBOSE("myDoGBasisSelfSatCore");
     CoCoA_ASSERT(myGetBuchbergerOpType() == SaturatingAlg);
-    VERBOSE(100) << "ring is " << myGRingInfoValue.myNewSPR() << std::endl;
-    VERBOSE(100) << ordering(PPM(myGRingInfoValue.myNewSPR())) << endl;
-    const long HIndetIndex=NumIndets(myGRingInfoValue.myNewSPR())-1;// This is OK for Ideals only
-    degree SPolyPredDeg(GradingDim(myGRingInfoValue.myNewSPR()));// Used for stats in the dehmog alg
+    VERBOSE(100) << "ring is " << myGRingInfoValue.myP_work() << std::endl;
+    VERBOSE(100) << ordering(PPM(myGRingInfoValue.myP_work())) << endl;
+    const long HIndetIndex=NumIndets(myGRingInfoValue.myP_work())-1;// This is OK for Ideals only
+    degree SPolyPredDeg(GradingDim(myGRingInfoValue.myP_work()));// Used for stats in the dehmog alg
     myPrepareGBasis();
     //    double T=0.0;
     while (!myPairs.empty())
@@ -655,7 +655,7 @@ namespace CoCoA
   void GReductor::myDoGBasisRealSolve()
   {
     VerboseLog VERBOSE("myDoGBasisRealSolve");
-    SparsePolyRing P = myGRingInfo().myNewSPR();
+    SparsePolyRing P = myGRingInfo().myP_work();
     if (!IsZZ(CoeffRing(P)))  CoCoA_THROW_ERROR2(ERR::BadRing, "must be over QQ");
     SparsePolyRing PQQ = NewPolyRing(RingQQ(), NewSymbols(NumIndets(P)));
     RingHom P_PQQ = PolyRingHom(P, PQQ, ZZEmbeddingHom(PQQ), indets(PQQ));
