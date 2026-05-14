@@ -44,7 +44,7 @@ else
   elif [ -f "$GMP_INC_DIR3/gmp.h" ]
   then
     GMP_INC_DIR="$GMP_INC_DIR3"
-  elif [ -n "$PLATFORM" -a -f "$GMP_INC_DIR4/gmp.h" ]
+  elif [ -n "$PLATFORM" ] && [ -f "$GMP_INC_DIR4/gmp.h" ]
   then
     GMP_INC_DIR="$GMP_INC_DIR4"
   else
