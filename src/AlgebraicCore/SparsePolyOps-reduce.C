@@ -224,9 +224,9 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI)
   {
     if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
-      return NewRedCogPolyField(GRI.myNewSPR());
+      return NewRedCogPolyField(GRI.myP_work());
     else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
-      return NewRedCogPolyGCD(GRI.myNewSPR());
+      return NewRedCogPolyGCD(GRI.myP_work());
     else CoCoA_THROW_ERROR1("Don't know what to do with these coefficients");
     return ReductionCog(nullptr);  // just to keep the compiler quiet
   }
@@ -235,9 +235,9 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI)
   {
     if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
-      return NewRedCogGeobucketField(GRI.myNewSPR());
+      return NewRedCogGeobucketField(GRI.myP_work());
     else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
-      return NewRedCogGeobucketGCD(GRI.myNewSPR());
+      return NewRedCogGeobucketGCD(GRI.myP_work());
     else CoCoA_THROW_ERROR1("Don't know what to do with these coefficients");
     return ReductionCog(nullptr);  // just to keep the compiler quiet
   }
@@ -300,7 +300,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
     if ( !IsZero(*this) && !IsOne(myLCValue) ) // makes myPolyValue monic
       if ( myGRingInfo().myCoeffRingType()==CoeffEncoding::Field )
-        myGRingInfo().myNewSPR()->myDivByCoeff(raw(myPolyValue), raw(myLCValue));
+        myGRingInfo().myP_work()->myDivByCoeff(raw(myPolyValue), raw(myLCValue));
     // if CoeffEncoding::Field myRelease does NOT make poly monic
     // if CoeffEncoding::FrFldOfGCDDomain myRelease makes poly content free
   }

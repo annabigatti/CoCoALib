@@ -118,7 +118,7 @@ public:
     static constexpr long ourNoTruncValue = -1;  // no GB truncation
     void myDoGBasisRealSolve();
     void myDoGBasisSelfSatCore(); ///< dehomog algorithm
-    const SparsePolyRing& myPRing()const{return myGRingInfoValue.myNewSPR();};
+    const SparsePolyRing& myPRing()const{return myGRingInfoValue.myP_work();};
     const GRingInfo& myGRingInfo()const{return myGRingInfoValue;};
     void myCreateInputPolyPairs(GPolyList&);
 

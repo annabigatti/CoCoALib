@@ -89,8 +89,8 @@ public:
                  const bool HomogeneousInput,
                  const bool SaturatingAlgorithm); ///< some assignments in common to all kind of GRingInfo
 
-  const SparsePolyRing& myNewSPR() const {return myPworkValue;}
-  const SparsePolyRing& myOldSPR() const {return myPorigValue;}
+  const SparsePolyRing& myP_work() const {return myPworkValue;}
+  const SparsePolyRing& myP_orig() const {return myPorigValue;}
   const FreeModule& myFreeModule()  const {return myFreeModuleValue;}
   const FreeModule& myOutputFreeModule() const {return myOutputFreeModuleValue;}
   const RingHom& myWorkToOrigHom() const {return myWorkToOrigHomValue;}
@@ -109,13 +109,13 @@ public:
   friend std::ostream& operator<<(std::ostream& out, const GRingInfo& theGRI);
   bool IamModule()const{return IamModuleValue;};
 
-  //  const RingElem& myE()const{return indet(myNewSPR(),ModuleVarIndex(myNewSPR()));};
+  //  const RingElem& myE()const{return indet(myP_work(),ModuleVarIndex(myP_work()));};
   //  std::vector<RingElem> myEY()const{return myEYValue;};
   //  std::vector<RingElem> myY()const;
   SugarDegree myNewSugar(ConstRefRingElem f) const;
-  //  RingElem myY(long i)const{return indet(myNewSPR(),i+NumIndets(myPworkValue)-1-GradingDim(myPworkValue));};
-  RingElem myY(const degree& the_d)const;
-  ConstRefRingElem myEY(long i)const{return myEYValue[i];};
+  //  RingElem myY(long i)const{return indet(myP_work(),i+NumIndets(myPworkValue)-1-GradingDim(myPworkValue));};
+  RingElem myY(const degree& the_d) const;
+  ConstRefRingElem myEY(long i) const {return myEYValue[i];};
   RingElem myE(long i) const;
   //  bool amIGraded()const{return myEYValue.empty();};
   bool IsMyGradingPosPlus()const{return myGradingPosPlusValue;};
