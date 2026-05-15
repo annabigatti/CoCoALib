@@ -205,10 +205,6 @@ namespace debug_new
 using namespace debug_new;
 
 void* operator new(size_t sz)
-#if __cplusplus < 201100L
-  // C++98 requires this exception specification; C++11 rejects it
-  throw (std::bad_alloc)
-#endif
 {
   if (sz > MAX_ALLOC) throw std::bad_alloc();
   ++NUM_NEW;
