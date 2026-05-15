@@ -126,13 +126,12 @@ namespace CoCoA
 
 // As recommended in Meyers's book I have put the globals in an anonymous
 // namespace.  I chose to use plain pointers for the global variables
-// ``InPtr``, ``OutPtr``, ``ErrPtr`` and ``LogPtr``; references are unsuitable because
-// they cannot be reseated in C++, and ``auto_ptr`` is unsuitable because
-// we do not want to own the streams.  I do not believe that there can be
-// problems with race-conditions when these four global variables are
-// initialized since we use only the addresses of ``std::cin``, etc.
-// However, there could be race-condition problems with subsequent
-// changes to the values.
+// ``InPtr``, ``OutPtr``, ``ErrPtr`` and ``LogPtr``; references are unsuitable
+// because they cannot be reseated in C++, and ``shared_ptr`` is probably not
+// suitable.   I do not believe that there can be problems with race-conditions
+// when these four global variables are initialized since we use only the
+// addresses of ``std::cin``, etc.  However, there could be race-condition
+// problems with subsequent changes to the values -- who would do that?
 
 
 // It is tempting to make these simple functions into inline functions,
