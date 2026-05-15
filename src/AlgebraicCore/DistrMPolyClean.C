@@ -338,65 +338,6 @@ namespace CoCoA
   }                                                 //???
 
 
-//   void DistrMPolyClean::myWeylAddMulSummand(const summand* s, const DistrMPolyClean& g, bool SkipLMg)
-//   {
-//     CoCoA_ASSERT(IsCompatible(*this, g));
-
-//     //    const PPOrdering& ord = ordering(myPPM);
-//     const ring& R = myCoeffRing;
-//     const size_t nvars = NumIndets(myPPM);
-// //???    clog << "AddMul: Doing funny product of the following two polys" << std::endl;
-// //???    output(clog, g);
-// //???    CoCoA_ASSERT(myRefCount == 1);
-//     //???    MakeWritable(f);
-
-//     const summand* g_term = g.mySummands;
-//     if (SkipLMg)    g_term = g_term->myNext;
-// //???    summand** f_prev = &mySummands;
-// //???    summand*  f_term = *f_prev;
-
-//     DistrMPolyClean ppg = g;
-//     vector<long> expv(nvars);
-//     myPPM->myExponents(expv, raw(s->myPP));
-// //???    clog << "expv: "; for (int i=0; i<myNumIndets;++i) clog << expv[i] << "  "; clog << std::endl;
-//     for (size_t indet = nvars/2; indet < nvars; ++indet)
-//     {
-//       long n = expv[indet];
-//       if (n == 0) continue;
-// //???      clog << "AddMul: doing D variable with index " << indet - myNumIndets/2 << std::endl;
-//       DistrMPolyClean der = ppg;
-
-// //???      ppg *= IndetPower(myPPM, indet, n);
-//       ppg.myMulByPP(raw(IndetPower(myPPM, indet, n)));
-// //      mul(raw(ppg), raw(ppg), raw(IndetPower(indet, n)));
-
-//       for (long i=1; i <= n; ++i)
-//       {
-//         deriv(der, der, indet-nvars/2);
-// //???        deriv(raw(der), raw(der), indet-nvars/2);
-// //???        clog << "der(" << i << ")="; output(clog, raw(der)); clog << std::endl;
-
-// //        ppg += binomial(n, i)*der*IndetPower(myPPM, indet, n-i); // *IndetPower(myPPM, h, 2*i); // for homog case
-//         auto_ptr<summand> jaa(new summand(myCoeffRing, myPPM));
-//         R->myAssign(raw(jaa->myCoeff), binomial(n, i));
-//         myPPM->myMulIndetPower(raw(jaa->myPP), indet, n-i);
-// // if (HOMOG_CASE)        myPPM->mul(jaa->myPP, jaa->myPP, IndetPower(myPPM, h, 2*i));
-//         ppg.myAddMulSummand(jaa.get(), der, false);
-//       }
-//     }
-//     { // f *= indet^deg(pp, indet); for the early vars
-//       for (size_t indet = nvars/2; indet < nvars; ++indet)
-//         expv[indet] = 0;
-//       auto_ptr<summand> jaa(new summand(myCoeffRing, myPPM));
-//       R->myAssign(raw(jaa->myCoeff), raw(s->myCoeff));
-//       myPPM->myAssign(raw(jaa->myPP), expv);
-//       myAddMulSummand(jaa.get(), ppg, false);
-//     }
-//   }
-
-
-
-
   void DistrMPolyClean::myReductionStep(const DistrMPolyClean& g)
   {
     CoCoA_ASSERT(&g!=this);
