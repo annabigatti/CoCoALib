@@ -27,10 +27,6 @@
 //using std::size_t;
 #include <iostream>
 //using std::ostream;
-#include <memory>
-//using std::auto_ptr;
-//#include <vector>
-//using std::vector;
 
 
 namespace CoCoA

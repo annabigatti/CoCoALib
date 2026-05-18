@@ -45,9 +45,6 @@
 
 #include <vector>
 using std::vector;
-// No longer needed: unique_ptr (was auto_ptr)
-// #include <memory>
-// using std::unique_ptr;
 
 namespace CoCoA
 {

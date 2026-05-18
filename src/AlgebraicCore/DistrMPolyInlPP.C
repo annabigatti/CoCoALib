@@ -904,7 +904,6 @@ namespace CoCoA
     APs.myRenew();
     myCoeffRing->myAssign(APs->myCoeff, (g.mySummands)->myCoeff);
     myOrdvArith->myAssign(APs->myOrdv, (g.mySummands)->myOrdv);
-    //    auto_ptr<summand> s(myCopySummand(g.mySummands));
     int CMP;
 
     while (f_smnd != nullptr &&
