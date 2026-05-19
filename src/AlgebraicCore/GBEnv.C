@@ -44,7 +44,7 @@ using std::endl;
 namespace CoCoA
 {  
 
-  // BUG BUG BUG remove 30000 from line below!!!
+  // BUG BUG BUG? remove 30000 from line below!!!
   /*static*/ const long GRingInfo::myMaxComponentIndex = min(30000ul,
                                                              min(static_cast<unsigned long>(numeric_limits<long>::max()-1),
                                                                  static_cast<unsigned long>(numeric_limits<SmallExponent_t>::max()-1))); // max num of compts -- depends on type SmallExponent_t
@@ -76,8 +76,6 @@ namespace CoCoA
       return PolyAlgebraHom(P_orig, P_work, images);
     }
     
-  } // namespace // anonymous ----------------------------------------
-  
 
   //-------------------------------------------------------
   //---------class GRingInfo-------------------------------
@@ -98,6 +96,11 @@ namespace CoCoA
     return NONHOMOG_GRADING;
   }//DetermineComputationType
   
+    bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR);
+
+
+  } // namespace // anonymous ----------------------------------------
+  
 
   // ----------------------------------------------------------------------
   // GRingInfo ctors
@@ -109,7 +112,7 @@ namespace CoCoA
     myInputAndGradingValue=DetermineComputationType(GradingDim(P),
                                                     IsHomog,
                                                     IsSatAlg);
-    myGradingPosPlusValue=DetermineIfMyGradingIsPosPlus(P);
+    myGradingPosPlusValue=DetermineIfMyGradingIsPosPlus(P); // always false???
     mySetCoeffRingType(CoeffEncoding::Field);
   }
   
@@ -155,22 +158,16 @@ namespace CoCoA
     myTimeoutChecker(CheckForTimeout)
   {
     // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
-    std::vector<RingElem> Y; // The grading indets
-    const std::vector<RingElem>& x = indets(myPworkValue);
+    // std::vector<RingElem> Y; // NOT used!
+    // const std::vector<RingElem>& x = indets(myPworkValue);
     // Fill Y
-    for (long i=0; i < GradingDim(myPworkValue); ++i)
-      Y.push_back(x[i+NumIndets(P_orig)]);
+    // for (long i=0; i < GradingDim(myPworkValue); ++i)
+    //   Y.push_back(x[i+NumIndets(P_orig)]);
 
     const std::vector<degree> Sh=shifts(myFreeModuleValue);
     //RingElem tmp(myPworkValue);
     for (long i=0; i < NumCompts(myFreeModuleValue); ++i)
       myEYValue.push_back(myE(i) * myY(Sh[i]));
-    //{
-    //  tmp=power(myE(),this->myComponent(i));
-    //  for (long j=0; j < GradingDim(myPworkValue); ++j)
-    //    tmp*=power(Y[j],Sh[i][j]);
-    //  myEYValue.push_back(tmp);
-    //}
     myCtorAux(P_work, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
@@ -186,16 +183,15 @@ namespace CoCoA
     myPworkValue(P_work),
     myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
-    myFreeModuleValue(NewFreeModule(P_work,1)),
-    myOutputFreeModuleValue(theOutputFM),
+    myFreeModuleValue(NewFreeModule(P_work,1)), // unused
+    myOutputFreeModuleValue(theOutputFM), // unused
     myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
     myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
   {
-    //    if (!IsField(CoeffRing(P_orig)))
-    //      CoCoA_THROW_ERROR1(ERR::ReqField);
+    // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
     myCtorAux(P_work, IsHomog, IsSatAlg);
     myTimeoutChecker.myReset(IterationVariability::high);
   }// ctor GRingInfo
@@ -211,13 +207,13 @@ namespace CoCoA
     myPworkValue(P_work),
     myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
-    myFreeModuleValue(NewFreeModule(P_work,1)),
-    myOutputFreeModuleValue(NewFreeModule(P_work,1)),
+    myFreeModuleValue(NewFreeModule(P_work,1)), // unused
+    myOutputFreeModuleValue(NewFreeModule(P_work,1)), // unused
     myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
     myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     //    IamModuleValue(IsForModule),
-    IamModuleValue(P_work!=P_orig),
+    IamModuleValue(P_work!=P_orig), // Move outside ctor to GRing_Mx
     myTimeoutChecker(CheckForTimeout)
   {
     //    if (!IsField(CoeffRing(P_orig)))
@@ -233,18 +229,18 @@ namespace CoCoA
   { myCoeffRingTypeValue = CT; }
 
 
-  bool GRingInfo::operator==(const GRingInfo& theGRI)const
-  {
-    return
-      (myPworkValue    == theGRI.myPworkValue
-       && myPorigValue == theGRI.myPorigValue
-       && myPPMValue    == theGRI.myPPMValue
-       && myOutputFreeModuleValue == theGRI.myOutputFreeModuleValue
-       && myEYValue     == theGRI.myEYValue
-       //&& // I want to do this, the == operator is not there
-       //myDivMaskRuleValue==theGRI.myDivMaskRuleValue
-       );
-  }//operator==
+  // bool GRingInfo::operator==(const GRingInfo& theGRI)const
+  // {
+  //   return
+  //     (myPworkValue    == theGRI.myPworkValue
+  //      && myPorigValue == theGRI.myPorigValue
+  //      && myPPMValue    == theGRI.myPPMValue
+  //      && myOutputFreeModuleValue == theGRI.myOutputFreeModuleValue
+  //      && myEYValue     == theGRI.myEYValue
+  //      //&& // I want to do this, the == operator is not there
+  //      //myDivMaskRuleValue==theGRI.myDivMaskRuleValue
+  //      );
+  // }//operator==
 
 
 
@@ -260,13 +256,6 @@ namespace CoCoA
     CoCoA_ASSERT(IamModule());
     return myMaxComponentIndex - myCompt_work(T);
   }
-
-
-// long GRingInfo::myPhonyComponent(ConstRefPPMonoidElem T)const
-// {
-//   if (!IamModule()) return 0;// True Ring
-//   return myComponent(exponent(T,ModuleVarIndex(myPworkValue)));
-// }
 
 
   long GRingInfo::myCompt_OrigToWork(const long i) const
@@ -360,10 +349,12 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 //   return Y;
 // }//myY()
 
+  namespace // anonymous ----------------------------------------
+  {
 
- // AMB 2026-02-05: This function only returns false.  ???
+    // AMB 2026-02-05: This function only returns false.  ???
  // Grdim>=2, order matrix first row is 0,..,0,1
- bool GRingInfo::DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
+ bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
  {
    // This checks if indeed the order is a PosPlus.
    // Another option is to SET this field at the right time.
@@ -387,6 +378,8 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
    return true;
  }
 
+  } // namespace // anonymous -----------------------------------------
+
 
   GRingInfo GRing_IinP(const SparsePolyRing& P,
                        const bool IsHomogIn,
@@ -405,6 +398,40 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
     GRingInfo GRI(GRing_IinP(Rx, IsHomogIn, CheckForTimeout));
     GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
     return GRI;
+  }
+
+
+  GRingInfo GRing_M0(const SparsePolyRing& P_work,
+                     const SparsePolyRing& P_orig,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout)
+  {
+    return GRingInfo(P_work, P_orig, IsHomogIn,
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
+                     CheckForTimeout);
+  }
+
+
+  GRingInfo GRing_M1(const SparsePolyRing& P_work,
+                     const FreeModule& FM,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout)
+  {
+    return GRingInfo(P_work, RingOf(FM), FM, IsHomogIn,
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
+                     CheckForTimeout);
+  }
+
+
+  GRingInfo GRing_M2(const SparsePolyRing& P_work,
+                     const FreeModule& FM_in,
+                     const FreeModule& FM_out,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout)
+  {
+    return GRingInfo(P_work, RingOf(FM_out), FM_in, FM_out, IsHomogIn,
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
+                     CheckForTimeout);
   }
 
 

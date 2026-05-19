@@ -89,44 +89,51 @@ public:
                  const bool HomogeneousInput,
                  const bool SaturatingAlgorithm); ///< some assignments in common to all kind of GRingInfo
 
+  //--general----
   const SparsePolyRing& myP_work() const {return myPworkValue;}
+
+  //--for embed/deembed----
   const SparsePolyRing& myP_orig() const {return myPorigValue;}
   const FreeModule& myFreeModule()  const {return myFreeModuleValue;}
   const FreeModule& myOutputFreeModule() const {return myOutputFreeModuleValue;}
   const RingHom& myWorkToOrigHom() const {return myWorkToOrigHomValue;}
   const RingHom& myOrigToWorkHom() const {return myOrigToWorkHomValue;}
+
+  //--for internal computation----
   const DivMaskRule& myDivMaskRule() const {return myDivMaskRuleValue;}
   const PPMonoid& myPPM() const {return myPPMValue;}
   CoeffEncoding::type myCoeffRingType() const { return myCoeffRingTypeValue; }
-
   void mySetCoeffRingType(CoeffEncoding::type CT); ///< Field or FrFldOfGCDDomain
-  long myCompt_OrigToWork(const long i) const; //Complement to myMaxComponentIndex
-  long myCompt_work(ConstRefPPMonoidElem T)const;///< the component in work ring
-  long myCompt_orig(ConstRefPPMonoidElem T) const;///< the component in orig module
-  bool operator==(const GRingInfo&) const;
-  ///< Are equal myPworkValue and myDivMaskRuleValue only
-  friend bool AreCompatible(const GRingInfo&,const GRingInfo&);
-  friend std::ostream& operator<<(std::ostream& out, const GRingInfo& theGRI);
-  bool IamModule()const{return IamModuleValue;};
 
-  //  const RingElem& myE()const{return indet(myP_work(),ModuleVarIndex(myP_work()));};
-  //  std::vector<RingElem> myEY()const{return myEYValue;};
-  //  std::vector<RingElem> myY()const;
+  //--for embed/deembed----
+  long myCompt_OrigToWork(const long i) const; //Complement to myMaxComponentIndex
+  long myCompt_orig(ConstRefPPMonoidElem T) const;///< the component in orig module
+
+  //--general----
+  long myCompt_work(ConstRefPPMonoidElem T)const;///< the component in work ring
+  //  bool operator==(const GRingInfo&) const; // NOT USED
+  friend bool AreCompatible(const GRingInfo&,const GRingInfo&); // only for debugging GPoly
+  friend std::ostream& operator<<(std::ostream& out, const GRingInfo& theGRI);
+
+  //--for internal computation----
+  bool IamModule() const {return IamModuleValue;}
   SugarDegree myNewSugar(ConstRefRingElem f) const;
   //  RingElem myY(long i)const{return indet(myP_work(),i+NumIndets(myPworkValue)-1-GradingDim(myPworkValue));};
+
+  //--for embed----
   RingElem myY(const degree& the_d) const;
   ConstRefRingElem myEY(long i) const {return myEYValue[i];};
   RingElem myE(long i) const;
-  //  bool amIGraded()const{return myEYValue.empty();};
+
+  //--for sugar----
   bool IsMyGradingPosPlus()const{return myGradingPosPlusValue;};
-  void MySetComputationInputAndGradingType(const ComputationInputAndGradingType CIAGT)
-        {myInputAndGradingValue=CIAGT;};
+  void MySetComputationInputAndGradingType(const ComputationInputAndGradingType CIAGT) {myInputAndGradingValue=CIAGT;}
   //void SetMyGradingPosPlus(bool b){myGradingPosPlusValue=b;};
-  ComputationInputAndGradingType myInputAndGrading()const{return myInputAndGradingValue;};
-  friend ComputationInputAndGradingType  DetermineComputationType(long GrDim,
-                                                                  const bool IsHomog,
-                                                                  const bool IsSatAlg);
-  bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing&);
+  ComputationInputAndGradingType myInputAndGrading() const {return myInputAndGradingValue;}
+  // DetermineComputationType      // moved into anon namespace
+  // DetermineIfMyGradingIsPosPlus // moved into anon namespace
+
+  //--for internal computation---- (reduce/GReductor)
   void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
 
 private: // member fields
@@ -148,10 +155,9 @@ private: // member fields
 // FM and the two ring hom. Do we want a separate Module2RingEmbedding class?
 //myReductionRule
 //myLPPMonoid (?)
-
 };// end class GRingInfo
 
-
+  // pseudo-ctors GRing for ideals
   GRingInfo GRing_IinP(const SparsePolyRing& P,
                        const bool IsHomogIn,
                        const CpuTimeLimit& CheckForTimeout);
@@ -159,6 +165,23 @@ private: // member fields
   GRingInfo GRing_IinRx(const SparsePolyRing& Rx,
                         const bool IsHomogIn,
                         const CpuTimeLimit& CheckForTimeout);
+
+  // pseudo-ctors GRing for submodules
+  GRingInfo GRing_M0(const SparsePolyRing& P_work,
+                     const SparsePolyRing& P_orig,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout);
+
+  GRingInfo GRing_M1(const SparsePolyRing& P_work,
+                     const FreeModule& FM,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout);
+
+  GRingInfo GRing_M2(const SparsePolyRing& P_work,
+                     const FreeModule& FM_in,
+                     const FreeModule& FM_out,
+                     const bool IsHomogIn,
+                     const CpuTimeLimit& CheckForTimeout);
 
 }
 
