@@ -220,50 +220,11 @@ namespace CoCoA
   }
 
 
-  namespace { // anonymous    //-- DeEmbedding --------------------------
-
-    // similar copy for this function in TmpGOperations:
-    // this copy is only for fn DeEmbedPoly(g, GRI) defined just below
-    // used in myExportGBasis/MinGens_module
-    ModuleElem DeEmbedPoly(ConstRefRingElem g, const GRingInfo& theGRI)
-    {
-      const SparsePolyRing OldP=theGRI.myP_orig();
-      const SparsePolyRing NewP=theGRI.myP_work();
-      const FreeModule FM=theGRI.myOutputFreeModule();
-      ModuleElem v(FM);
-      
-      const std::vector<ModuleElem>& e = gens(FM);
-      
-      RingElem tmp(OldP);
-      for (SparsePolyIter i=BeginIter(g); !IsEnded(i); ++i)
-      {
-        tmp = theGRI.myWorkToOrigHom()(monomial(NewP,coeff(i),PP(i)));
-        v += tmp * e[theGRI.myCompt_orig(PP(i))];
-      }
-      return v;
-    }
-
-  } // namespace anonymous------------------------------------
-
-
-  std::vector<ModuleElem> GReductor::myExportGBasis_module()
-  {
-    std::vector<ModuleElem> G;  G.reserve(len(myGB));
-    for (const auto& ptr: myGB)
-      if (IsActive(*ptr))
-        G.push_back(DeEmbedPoly(poly(*ptr), myGRingInfoValue));
-    return G;
-  }
-
-
-  std::vector<ModuleElem> GReductor::myExportMinGens_module()
-  {
-    std::vector<ModuleElem> G;  G.reserve(len(myGB));
-    for (const auto& ptr: myGB)
-      if (IsMinimalGen(*ptr))
-        G.push_back(DeEmbedPoly(poly(*ptr), myGRingInfoValue));
-    return G;
-  }
+  // removed: now treated as other deembeddings in TmpGOperations
+  //          (more copies, but more general code)
+  // ModuleElem DeEmbedPoly(ConstRefRingElem g, const GRingInfo& theGRI)
+  // std::vector<ModuleElem> GReductor::myExportGBasis_module()
+  // std::vector<ModuleElem> GReductor::myExportMinGens_module()
 
 
 

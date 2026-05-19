@@ -99,10 +99,10 @@ public:
     void mySetBuchbergerOpType(const BuchbergerOpTypeFlag theBuchbergerOpType) 
         {myBuchbergerOpType=theBuchbergerOpType;}
 
-    std::vector<RingElem> myExportGBasis();
-    std::vector<RingElem> myExportMinGens();
-    std::vector<ModuleElem> myExportGBasis_module();
-    std::vector<ModuleElem> myExportMinGens_module();
+    std::vector<RingElem> myExportGBasis(); // pick & copy relevant elements
+    std::vector<RingElem> myExportMinGens(); // pick & copy relevant elements
+    // std::vector<ModuleElem> myExportGBasis_module(); // removed
+    // std::vector<ModuleElem> myExportMinGens_module(); // removed
 
     void myDoAFFGBasis(); // I am working on sugar selection strategies
     void myDoGBasis();

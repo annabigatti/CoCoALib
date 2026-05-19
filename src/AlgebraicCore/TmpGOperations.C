@@ -574,10 +574,10 @@ namespace CoCoA
     }
     GReductor GBR(GRI, EmbeddedPolys);
     GBR.myDoGBasis();// homog input standard alg interred
-    VectorList GB_tmp = GBR.myExportGBasis_module();
+    VectorList GB_tmp = DeEmbedPolyList(GBR.myExportGBasis(), GRI, 0);
     VectorList MinGens_tmp;
     if (GradingDim(RingOf(FM))>0 && IsHomogIn) // HOMOG ?
-      MinGens_tmp = GBR.myExportMinGens_module();
+      MinGens_tmp = DeEmbedPolyList(GBR.myExportMinGens(), GRI, 0);
     std::swap(GB_out, GB_tmp);
     std::swap(MinGens_out, MinGens_tmp);
   } // ComputeGBasis2
