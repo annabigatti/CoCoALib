@@ -35,7 +35,7 @@ ARCH=$(uname -m)      #so far seen:  x86_64, aarch64, i686, i386
 
 # First try pkg-config and then add other "potentially missed" default places
 PKG_GMP_DIR=""
-if command -v "$PKGCONF" >/dev/null 2>&1 && "$PKGCONF" --exists gmp; then
+if "$PKGCONF" --exists gmp >/dev/null 2>&1; then
     PKG_GMP_DIR="$($PKGCONF --variable=libdir gmp 2>/dev/null)"
 fi
 GMP_LIBDIRS="$PKG_GMP_DIR"
