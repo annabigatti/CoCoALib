@@ -242,37 +242,37 @@ namespace CoCoA
     //}
 
 
-    GPoly EYd(const GRingInfo& theGRI, const long CompIndex, const degree& d)
-    {  return GPoly(theGRI.myE(CompIndex)*theGRI.myY(d), theGRI);  }
+    RingElem EYd(const GRingInfo& theGRI, const long ComptIdx, const degree& d)
+    {  return theGRI.myE(ComptIdx) * theGRI.myY(d);  }
 
 
     GPoly EmbedPoly(ConstRefRingElem p, const GRingInfo& theGRI,
-                    const long CompIndex)
+                    const long ComptIdx)
     {
       const RingHom& phi=theGRI.myOrigToWorkHom();
-      return GPoly(phi(p)*theGRI.myE(CompIndex), theGRI);
+      return GPoly(phi(p)*theGRI.myE(ComptIdx), theGRI);
     }
 
 
     GPolyList EmbedPolyList(const std::vector<RingElem>& F,
                             const GRingInfo& GRI,
-                            const long CompIndex)
+                            const long ComptIdx)
     {
       GPolyList result;
       if (F.empty())  return result;
-      for (const RingElem& f: F) result.push_back(EmbedPoly(f, GRI, CompIndex));
+      for (const RingElem& f: F) result.push_back(EmbedPoly(f, GRI, ComptIdx));
       return result;
     }
 
 
     GPolyList EmbedPolyListNo0(const std::vector<RingElem>& F,
                                const GRingInfo& GRI,
-                               const long CompIndex)
+                               const long ComptIdx)
     {
       GPolyList result;
       if (F.empty())  return result;
       for (const RingElem& f: F)
-        if (!IsZero(f)) result.push_back(EmbedPoly(f, GRI, CompIndex));
+        if (!IsZero(f)) result.push_back(EmbedPoly(f, GRI, ComptIdx));
       return result;
     }
 
@@ -381,14 +381,13 @@ namespace CoCoA
                                     const ModuleElem& v,
                                     const GRingInfo& theGRI)
     {
-      GPolyList FirstPart;
-      if (VL.empty())  return FirstPart;
-      FirstPart = EmbedVectorList(VL, theGRI, 0);
+      GPolyList L = EmbedVectorList(VL, theGRI, 0);
+      if (L.empty())  return L;
       GPoly GP1 = EmbedVector(v, theGRI, 0);
-      GPoly GP2 = EYd(theGRI, NumCompts(owner(v)), wdeg(v));
-      GP1.myAppendClear(GP2);
-      FirstPart.push_back(GP1);
-      return FirstPart;
+      RingElem GP2 = EYd(theGRI, NumCompts(owner(v)), wdeg(v));
+      GP1.myAppendClear(GP2); // v + e[NC]*Y^d
+      L.push_back(GP1);
+      return L;
     }
 
 
@@ -396,27 +395,14 @@ namespace CoCoA
                                   const RingElem& f,
                                   const GRingInfo& theGRI)
     {
-      GPolyList FirstPart;
-      if (G.empty())  return FirstPart;
-      FirstPart = EmbedPolyList(G, theGRI, 0);
+      GPolyList L = EmbedPolyList(G, theGRI, 0);
+      if (L.empty())  return L;
       GPoly GP1 = EmbedPoly(f, theGRI, 0);
-      GPoly GP2 = EYd(theGRI, 1, wdeg(f));
-      GP1.myAppendClear(GP2);
-      FirstPart.push_back(GP1);
-      return FirstPart;
+      RingElem GP2 = EYd(theGRI, 1, wdeg(f));
+      GP1.myAppendClear(GP2); // f + e[1]*Y^d
+      L.push_back(GP1);
+      return L;
     }
-
-
-    // void ColonEmbedGPolyList(GPolyList& theGPL, GPoly& the_gp)
-    // {
-    //   const GRingInfo& GRI(the_gp.myGRingInfo());
-    //   CoCoA_ASSERT(theGPL.begin()->myGRingInfo()==GRI);
-    //   const long NC = NumCompts(GRI.myFreeModule());
-    //   RingElem tmp =  GRI.myE(NC)*GRI.myY(wdeg(the_gp)); // JAA 2012-10-11
-    //   the_gp.myAppendClear(tmp);                         // JAA 2012-10-11
-    //   theGPL.push_back(GPoly(GRI));
-    //   theGPL.back().AssignClear(the_gp);
-    // } // ColonEmbedGPolyList
 
 
     ////////////////////////////////////////////
