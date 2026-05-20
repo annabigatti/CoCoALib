@@ -5267,6 +5267,31 @@ record[
 </command>
 <!-- ===  COMMAND  =============================================== -->
 <command>
+  <title>DivExact</title>
+  <short_description>exact division</short_description>
+<syntax>
+DivExact(X: <type>INT</type>, Y: <type>INT</type>): <rtn>INT</rtn>
+</syntax>
+<description>
+This function computes the quotient <tt>X/Y</tt> provided that <tt>Y</tt> divides <tt>X</tt>
+exactly; if the division is not exact then it is undocumented what result is
+returned.  For larger arguments this function is faster than computing <tt>X/Y</tt>.
+<example>
+/**/  DivExact(factorial(1000), factorial(998));
+999000
+</example>
+</description>
+<seealso>
+  <see>div</see>
+  <see>mod</see>
+</seealso>
+<keys>
+  <key>remainder</key>
+  <key>exact division</key>
+</keys>
+</command>
+<!-- ===  COMMAND  =============================================== -->
+<command>
   <title>domain</title>
   <short_description>domain of a homomorphism</short_description>
 <syntax>
