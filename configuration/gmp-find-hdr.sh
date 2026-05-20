@@ -42,7 +42,7 @@ then
   GMP_INC_DIR="$GMP_LIB_DIR_DIR"
 else
   # GMP is installed -- have to check two possible locations for the header file
-  GMP_INC_DIR1="$(pkg-config --variable=includedir gmp 2>/dev/null)"
+  GMP_INC_DIR1="$($PKGCONF --variable=includedir gmp 2>/dev/null)"
   GMP_INC_DIR2="$GMP_LIB_DIR_DIR"/include
   GMP_INC_DIR3="$GMP_LIB_DIR_DIR_DIR/include"
   GMP_INC_DIR4="$GMP_LIB_DIR_DIR_DIR/include/$PLATFORM"
