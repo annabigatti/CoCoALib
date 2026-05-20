@@ -33,19 +33,25 @@ fi
 ARCH=$(uname -m)      #so far seen:  x86_64, aarch64, i686, i386
 
 
-STD_GMP_LIBDIRS="/usr/local/lib  /usr/lib  /usr/lib/$ARCH-linux-gnu  /usr/lib64
-                 /usr/lib32  /usr/lib/i386-linux-gnu  /opt/homebrew/lib
-                 /opt/local/lib  /sw/lib  /usr/sfw/lib"
-
-# Also try pkg-config
-if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists gmp; then
-    STD_GMP_LIBDIRS="$(pkg-config --variable=libdir gmp 2>/dev/null) $STD_GMP_LIBDIRS"
+# First try pkg-config and then add other "potentially missed" default places
+PKG_GMP_DIR=""
+if command -v "$PKGCONF" >/dev/null 2>&1 && "$PKGCONF" --exists gmp; then
+    PKG_GMP_DIR="$($PKGCONF --variable=libdir gmp 2>/dev/null)"
 fi
+GMP_LIBDIRS="$PKG_GMP_DIR"
+
+for dir in /usr/local/lib  /usr/lib  /usr/lib/$ARCH-linux-gnu  /usr/lib64 \
+           /usr/lib32  /usr/lib/i386-linux-gnu  /opt/homebrew/lib \
+           /opt/local/lib  /sw/lib  /usr/sfw/lib
+do
+    [ "$dir" != "$PKG_GMP_DIR" ] && GMP_LIBDIRS="$GMP_LIBDIRS $dir"
+done
+
 
 LIBGMPPATHS=libgmp-paths
 /bin/rm -rf "$LIBGMPPATHS"
 COUNTER=0
-for dir in $STD_GMP_LIBDIRS
+for dir in $GMP_LIBDIRS
 do
   if [ -d "$dir" ]
   then
@@ -59,7 +65,7 @@ done
 if [ "$COUNTER" -eq 0 ]
 then
   # Did not find any plausible GMP installation, so return empty handed.
-    echo "ERROR: No GMP installation found; looked inside $STD_GMP_LIBDIRS   $SCRIPT_NAME"   > /dev/stderr
+    echo "ERROR: No GMP installation found; looked inside $GMP_LIBDIRS   $SCRIPT_NAME"   > /dev/stderr
     echo ">>>>> HINT:  try installing the linux package libgmp-dev  <<<<<"  >> /dev/stderr
     echo ">>>>> HINT:  or get sources from https://www.gmplib.org/  <<<<<"  >> /dev/stderr
 #    /bin/rm -f "$LIBGMPPATHS"  # never created the file -- no need to remove it!

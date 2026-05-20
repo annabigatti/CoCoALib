@@ -1351,12 +1351,9 @@ if [ $HAVE_GSL = "yes" ]
 then
 ####  echo "GSL_INC_DIR=\"$GSL_INC_DIR\""                     >> "$CONFIG_TMP"
 ####  echo "GSL_INCLUDE=-I \$(GSL_INC_DIR)"                   >> "$CONFIG_TMP"
-  command -v pkgconf > /dev/null 2>&1
-  if [ $? -eq 0 ]
+  if "$PKGCONF" --exists gsl 2>/dev/null
   then
-      # !!! THIS BRANCH IS UNTESTED !!!
-      # pkgconf assumes that gsl is system installed
-      GSL_LDLIBS=`pkgconf --libs gsl`
+      GSL_LDLIBS=$($PKGCONF --libs gsl)
       echo "GSL_LDLIBS=$GSL_LDLIBS"                           >> "$CONFIG_TMP"
   else
       echo "GSL_LDLIBS=-lgsl-symlink  -lgslcblas  -llapack"   >> "$CONFIG_TMP"
