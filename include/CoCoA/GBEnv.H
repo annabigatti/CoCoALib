@@ -58,7 +58,7 @@ class GRingInfo
 public:
   GRingInfo(const SparsePolyRing& theNewSPR,
             const bool HomogeneousInput,
-	    const bool SaturatingAlgorithm,
+            const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);       // when you have polynomials only ie GB
 
@@ -67,7 +67,7 @@ public:
             const FreeModule& theFM,
             const FreeModule& theOutputFM,
             const bool HomogeneousInput,
- 	    const bool SaturatingAlgorithm,
+            const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);       // when you have modules from theFM
 
@@ -75,13 +75,14 @@ public:
             const SparsePolyRing& theOldSPR,
             const FreeModule& theOutputFM,
             const bool HomogeneousInput,
- 	    const bool SaturatingAlgorithm,
+            const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);      // when you have module op on polynomials result vectorlist
+
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
             const bool HomogeneousInput,
- 	    const bool SaturatingAlgorithm,
+            const bool SaturatingAlgorithm,
             const DivMaskRule&,
             const CpuTimeLimit& CheckForTimeout);      // when you have module op on polynomials result polylist
   ~GRingInfo(){};
@@ -118,7 +119,6 @@ public:
   //--for internal computation----
   bool IamModule() const {return IamModuleValue;}
   SugarDegree myNewSugar(ConstRefRingElem f) const;
-  //  RingElem myY(long i)const{return indet(myP_work(),i+NumIndets(myPworkValue)-1-GradingDim(myPworkValue));};
 
   //--for embed----
   RingElem myY(const degree& the_d) const;
@@ -128,33 +128,28 @@ public:
   //--for sugar----
   bool IsMyGradingPosPlus()const{return myGradingPosPlusValue;};
   void MySetComputationInputAndGradingType(const ComputationInputAndGradingType CIAGT) {myInputAndGradingValue=CIAGT;}
-  //void SetMyGradingPosPlus(bool b){myGradingPosPlusValue=b;};
   ComputationInputAndGradingType myInputAndGrading() const {return myInputAndGradingValue;}
-  // DetermineComputationType      // moved into anon namespace
-  // DetermineIfMyGradingIsPosPlus // moved into anon namespace
 
   //--for internal computation---- (reduce/GReductor)
   void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
 
 private: // member fields
-  const SparsePolyRing myPworkValue;///< embedding info
-  const SparsePolyRing myPorigValue;
+  const SparsePolyRing myPworkValue;  // for embed/deembed
+  const SparsePolyRing myPorigValue;  // for embed/deembed
   const PPMonoid myPPMValue;  ///< the monoid for storing LPP's and lcm's for divisibility tests
-  const FreeModule myFreeModuleValue;
-  const FreeModule myOutputFreeModuleValue;
-  RingHom myWorkToOrigHomValue;///< completely defined by myPworkValue, myPorigValue
-  RingHom myOrigToWorkHomValue;
+  const FreeModule myFreeModuleValue; // for embed/deembed
+  const FreeModule myOutputFreeModuleValue; // for embed/deembed
+  RingHom myWorkToOrigHomValue;       // for embed/deembed
+  RingHom myOrigToWorkHomValue;       // for embed/deembed
   const DivMaskRule myDivMaskRuleValue;
   const bool IamModuleValue;
   static const long myMaxComponentIndex; // max num of compts -- depends on type SmallExponent_t (see GBEnv.C)
-  std::vector<RingElem> myEYValue;
+  std::vector<RingElem> myEYValue; // for embed/deembed
   CoeffEncoding::type myCoeffRingTypeValue;
   ComputationInputAndGradingType myInputAndGradingValue;
   bool myGradingPosPlusValue;
   CpuTimeLimit myTimeoutChecker;
 // FM and the two ring hom. Do we want a separate Module2RingEmbedding class?
-//myReductionRule
-//myLPPMonoid (?)
 };// end class GRingInfo
 
   // pseudo-ctors GRing for ideals
