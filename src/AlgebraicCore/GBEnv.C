@@ -250,7 +250,7 @@ namespace CoCoA
   long GRingInfo::myCompt_work(ConstRefPPMonoidElem T) const
   {
     if (!IamModule()) return 0;// True Ring
-    return exponent(T, ModuleVarIndex(myPworkValue));
+    return exponent(T, myModuleIndetIndex());
   }
 
   // for embed/deembed ---
@@ -262,7 +262,7 @@ namespace CoCoA
 
 
   // for embed/deembed ---
-  long GRingInfo::myCompt_OrigToWork(const long i) const
+  long GRingInfo::myCompt_OrigToWork(long i) const
   { return myMaxComponentIndex-i; }  // was inline AMB 2026-04-18
 
   
@@ -280,7 +280,7 @@ namespace CoCoA
 
   RingElem GRingInfo::myE(long i) const
   { // was inline
-    return IndetPower(myP_work(), ModuleVarIndex(myP_work()), myCompt_OrigToWork(i));
+    return IndetPower(myP_work(), myModuleIndetIndex(), myCompt_OrigToWork(i));
   }
 
 
@@ -295,16 +295,16 @@ namespace CoCoA
     case NONHOMOG_GRADING: // ANNA: (w)graded + non-homogeneous
       if (/*module && */ IsMyGradingPosPlus())
         // ANNA: should be implemented with proper weights
-        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdx(f, myModuleIndetIndex());
       return NewWDeg1CompTmp(f);
     case NOGRADING:        // ANNA: GradingDim = 0 --> StandardSugarAlgorithm
       // if (/*module && */ IsMyGradingPosPlus())
       if (IamModule())
-        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdx(f, myModuleIndetIndex());
       return NewStdSugar(f);
     case SaturatingAlgNoDRL: // GradingDim = 0
       if (/*module && */ IsMyGradingPosPlus())
-        return NewStdSugarNoIdxSat(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdxSat(f, myModuleIndetIndex());
       return NewStdSugarSat(f);
     default:
       CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
@@ -329,15 +329,15 @@ ostream& operator<<(ostream& out, const GRingInfo& theGRI)
 }
 
 
-long ModuleVarIndex(const SparsePolyRing& P)
-{ return NumIndets(P)-1; }
+  long GRingInfo::myModuleIndetIndex() const
+  { return NumIndets(myPworkValue)-1; }
 
 
 bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 {  // used only for debugging
-  return (GRI1.myPworkValue == GRI2.myPworkValue &&
-          GRI1.myPorigValue == GRI2.myPorigValue &&
-          GRI1.myPPMValue == GRI2.myPPMValue);
+  return (GRI1.myP_work() == GRI2.myP_work() &&
+          GRI1.myP_orig() == GRI2.myP_orig() &&
+          GRI1.myPPM() == GRI2.myPPM());
        //&& // I want to do this, the == operator is not there
          //GRI1.myDivMaskRuleValue==GRI2.myDivMaskRuleValue
 }

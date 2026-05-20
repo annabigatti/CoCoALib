@@ -45,11 +45,10 @@ namespace CoCoA
 
 // Add fields for GradingIndex,ModulevarIndex.
 
-long ModuleVarIndex(const SparsePolyRing&);
+// long ModuleVarIndex(const SparsePolyRing&); // now private member fn
 
 enum ComputationInputAndGradingType
 {HOMOG, NOGRADING, NONHOMOG_GRADING, SaturatingAlg, SaturatingAlgNoDRL};
-
 
 
 class GRingInfo
@@ -107,13 +106,13 @@ public:
   void mySetCoeffRingType(CoeffEncoding::type CT); ///< Field or FrFldOfGCDDomain
 
   //--for embed/deembed----
-  long myCompt_OrigToWork(const long i) const; //Complement to myMaxComponentIndex
+  long myCompt_OrigToWork(long i) const; //Complement to myMaxComponentIndex
   long myCompt_orig(ConstRefPPMonoidElem T) const;///< the component in orig module
 
   //--general----
   long myCompt_work(ConstRefPPMonoidElem T)const;///< the component in work ring
   //  bool operator==(const GRingInfo&) const; // NOT USED
-  friend bool AreCompatible(const GRingInfo&,const GRingInfo&); // only for debugging GPoly
+  bool AreCompatible(const GRingInfo&,const GRingInfo&); // only for debugging GPoly
   friend std::ostream& operator<<(std::ostream& out, const GRingInfo& theGRI);
 
   //--for internal computation----
@@ -127,11 +126,14 @@ public:
 
   //--for sugar----
   bool IsMyGradingPosPlus()const{return myGradingPosPlusValue;};
-  void MySetComputationInputAndGradingType(const ComputationInputAndGradingType CIAGT) {myInputAndGradingValue=CIAGT;}
+  //void MySetComputationInputAndGradingType // NOT USED
   ComputationInputAndGradingType myInputAndGrading() const {return myInputAndGradingValue;}
 
   //--for internal computation---- (reduce/GReductor)
   void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
+
+private:
+  long myModuleIndetIndex() const;
 
 private: // member fields
   const SparsePolyRing myPworkValue;  // for embed/deembed
