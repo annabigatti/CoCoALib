@@ -11,6 +11,17 @@ then
   exit 1
 fi
 
+# Check that path ends with libgmp.*  (simple rather than rigorous)
+case `basename "$1"` in
+    libgmp.*)
+	: # OK what we expected
+	;;
+    *)
+	echo "ERROR: path does not end with libgmp.*   $SCRIPT_NAME"   > /dev/stderr
+	exit 1
+	;;
+esac
+
 GMP_LIB="$1"
 
 
