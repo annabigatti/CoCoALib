@@ -227,7 +227,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
       return NewRedCogPolyField(GRI.myP_work());
     else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
       return NewRedCogPolyGCD(GRI.myP_work());
-    else CoCoA_THROW_ERROR1("Don't know what to do with these coefficients");
+    else CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
     return ReductionCog(nullptr);  // just to keep the compiler quiet
   }
 
