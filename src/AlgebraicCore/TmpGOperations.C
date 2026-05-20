@@ -311,36 +311,33 @@ namespace CoCoA
       GPolyList outPL;
       if (G.empty())  return outPL;
       outPL = EmbedVectorList(G, GRI, 0);
-      long k=NumCompts(GRI.myFreeModule()); // = owner(G[0]));
-      if (GRI.myInputAndGrading()==NONHOMOG_GRADING)
-        for (GPoly& p: outPL)
-        { // Added by JAA 2012/10/11
-          RingElem Ek = GRI.myE(k++); // previous k
-          p.myAppendClear(Ek);
-        }
-      else
-        for (GPoly& p: outPL)
-        { // Added by JAA 2012/10/11
-          RingElem EkY = GRI.myE(k++) * GRI.myY(wdeg(p)); // previous k
-          p.myAppendClear(EkY);
-        }
+      RingElem Ek;
+      long k = NumCompts(GRI.myFreeModule()); // = owner(G[0]));
+      for (GPoly& g: outPL)
+      {
+        Ek = GRI.myE(k);
+        if (GRI.myInputAndGrading() != NONHOMOG_GRADING)
+          Ek *= GRI.myY(wdeg(g));
+        g.myAppendClear(Ek);
+        k++;
+      }
       return outPL;
     }
 
 
     GPolyList SyzEmbedPolyList(const std::vector<RingElem>& F,
-                               const GRingInfo& theGRI)
+                               const GRingInfo& GRI)
     {
       GPolyList F_gp;
       if (F.empty())  return F_gp;
-      F_gp = EmbedPolyList(F, theGRI, 0);
+      F_gp = EmbedPolyList(F, GRI, 0);
       RingElem Ek;
       long k=1;
       for (auto& g: F_gp)
       {
-        Ek = theGRI.myE(k);
-        if (theGRI.myInputAndGrading() != NONHOMOG_GRADING)
-          Ek *= theGRI.myY(wdeg(g)); // Gives the right degree to e^k
+        Ek = GRI.myE(k);
+        if (GRI.myInputAndGrading() != NONHOMOG_GRADING)
+          Ek *= GRI.myY(wdeg(g)); // Gives the right degree to e^k
         g.myAppendClear(Ek);
         ++k;
       }
