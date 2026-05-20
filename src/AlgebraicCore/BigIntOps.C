@@ -197,19 +197,21 @@ namespace CoCoA
   {
     if (IsZero(N2))
       CoCoA_THROW_ERROR1(ERR::DivByZero);
-    BigInt ans;
-    mpz_divexact(mpzref(ans), mpzref(N1), mpzref(N2));
-    return ans;
+    BigInt q;
+    mpz_divexact(mpzref(q), mpzref(N1), mpzref(N2));
+    CoCoA_ASSERT(N1 == q*N2);
+    return q;
   }
   
   BigInt DivExact(const BigInt& N1, const MachineInt& n2)
   {
     if (IsZero(n2))
       CoCoA_THROW_ERROR1(ERR::DivByZero);
-    BigInt ans;
-    mpz_divexact_ui(mpzref(ans), mpzref(N1), uabs(n2));
-    if (IsNegative(n2))  negate(ans);
-    return ans;
+    BigInt q;
+    mpz_divexact_ui(mpzref(q), mpzref(N1), uabs(n2));
+    if (IsNegative(n2))  negate(q);
+    CoCoA_ASSERT(N1 == q*n2);
+    return q;
   }
 
 
