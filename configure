@@ -346,6 +346,16 @@ then
 fi
 
 #############################################################################
+# Set env variable PKGCONF:  pkgconf (NEW)  or pkg-config (OLD)
+# Used by scripts in directory configuration/  to find installed libraries.
+
+export PKGCONF="pkg-config"
+if command -v pkgconf  >/dev/null  2>&1
+then
+   PKGCONF="pkgconf"
+fi
+
+#############################################################################
 # Find directory of this script (taken from link below)
 # http://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
 
