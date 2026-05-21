@@ -561,15 +561,15 @@ void GPoly::myUpdateLenLPPLCDegComp()
   }
 
 
-  void Reductors::myStampaReductors(ostream& out) const
-  {
-    if (!out) return;  // short-cut for bad ostreams
+  // void Reductors::myStampaReductors(ostream& out) const
+  // {
+  //   if (!out) return;  // short-cut for bad ostreams
 
-    out << "TheREDUCTORS := " << myReductors << endl;
+  //   out << "TheREDUCTORS := " << myReductors << endl;
 
-    // if (IhaveBorelReductorsFlag)
-    //   out << "The_BOREL_REDUCTORS := " << myBorelReductors << endl;
-  }
+  //   // if (IhaveBorelReductorsFlag)
+  //   //   out << "The_BOREL_REDUCTORS := " << myBorelReductors << endl;
+  // }
 
 
    // Find the (unique and existing) ReductorData which ptr is equal to GPolyPtr.
