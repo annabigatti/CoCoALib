@@ -72,9 +72,9 @@ namespace CoCoA
     //    friend long StdDeg(const GPair& GP);
     friend const SugarDegree& sugar(const GPair& GP);
     friend std::ostream& operator<<(std::ostream&, const GPair&);// the indices are printed ++
-    friend const ring& CoeffRing(const GPair& P);
-    friend const SparsePolyRing& owner(const GPair& P);
-    friend const GRingInfo& GetGRingInfo(const GPair& P);
+    //    friend const ring& CoeffRing(const GPair& P);
+    //    friend const SparsePolyRing& owner(const GPair& P);
+    //    friend const GRingInfo& GetGRingInfo(const GPair& P);
 
   private:
     const GPoly* myFirstGPolyPtr; ///< f
@@ -92,7 +92,7 @@ namespace CoCoA
   inline const degree& wdeg(const GPair& GP) {return GP.myWDeg;}
   //  inline long StdDeg(const GPair& GP) {return GP.myStdDeg;}  // ANNA: unused
   inline const SugarDegree& sugar(const GPair& GP) {return GP.mySugar;}
-  inline const GRingInfo& GetGRingInfo(const GPair& P) {return P.myGRingInfo();}
+  //  inline const GRingInfo& GetGRingInfo(const GPair& P) {return P.myGRingInfo();}
 
   typedef std::list<GPair> GPairList;
 

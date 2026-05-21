@@ -155,15 +155,15 @@ void Ordered_Insert(GPairList& L,const GPair& P)
 // }//RemoveFromGPList
 
 
-const ring& CoeffRing(const GPair& P)
-{
-  return CoeffRing(*(P.myFirstGPolyPtr));
-}//CoeffRing
+// const ring& CoeffRing(const GPair& P)
+// {
+//   return CoeffRing(*(P.myFirstGPolyPtr));
+// }//CoeffRing
 
-const SparsePolyRing& owner(const GPair& P)
-{
-  return owner(*(P.myFirstGPolyPtr));
-}//owner
+// const SparsePolyRing& owner(const GPair& P)
+// {
+//   return owner(*(P.myFirstGPolyPtr));
+// }//owner
 
 
 // ***************************************************  ModuleGPairsList
