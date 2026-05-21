@@ -101,28 +101,29 @@ namespace CoCoA
   void RemoveFromGPList(GPairList&,GPair&);
 
 
-// This class is not used. See if it is still useful
-  typedef std::vector<GPairList> MGPairList;
-  class ModuleGPairList
-  {
+  // This class is not used. See if it is still useful
 
-  public:
-    ModuleGPairList();
-    ~ModuleGPairList(){};
-    void Insert(GPair&);
-    friend std::ostream& operator<<(std::ostream&, const ModuleGPairList&);
-    // if found, there is an element in this which divides P;, if !found, not.
-    GPairList::iterator FindDivides(const GPair& P,bool& found);
-    bool IsIn(const GPair& P);
-    GPairList::iterator FindSameLCMAndSecondInd(const GPair& P,bool& found);
-    //splice the part of degree D
-    //   void GetPartInDegD(ModuleGPairList&, degree D);
-    //add MGPL to this. suppose MGPL is all in a degree lesser than any in this
-    void PushPartOfLesserDeg(ModuleGPairList&MGPL);
-    long size() const;
-  private:
-    MGPairList myMGPList;
-  };
+  // typedef std::vector<GPairList> MGPairList;
+  // class ModuleGPairList
+  // {
+
+  // public:
+  //   ModuleGPairList();
+  //   ~ModuleGPairList(){};
+  //   void Insert(GPair&);
+  //   friend std::ostream& operator<<(std::ostream&, const ModuleGPairList&);
+  //   // if found, there is an element in this which divides P;, if !found, not.
+  //   GPairList::iterator FindDivides(const GPair& P,bool& found);
+  //   bool IsIn(const GPair& P);
+  //   GPairList::iterator FindSameLCMAndSecondInd(const GPair& P,bool& found);
+  //   //splice the part of degree D
+  //   //   void GetPartInDegD(ModuleGPairList&, degree D);
+  //   //add MGPL to this. suppose MGPL is all in a degree lesser than any in this
+  //   void PushPartOfLesserDeg(ModuleGPairList&MGPL);
+  //   long size() const;
+  // private:
+  //   MGPairList myMGPList;
+  // };
 
   // -------------------- inline functions -------------------- //
 

@@ -197,86 +197,87 @@ const SparsePolyRing& owner(const GPair& P)
 
 // ***********
 
-ModuleGPairList::ModuleGPairList()
-{
-  myMGPList.resize(10000);
-}
-
-void ModuleGPairList::Insert(GPair& P)
-{
-  Ordered_Insert(myMGPList[P.mySecondIndex()],P);
-  //make a copy of en element that will be destroyed - think about using splice
-}
-
-GPairList::iterator ModuleGPairList::FindDivides(const GPair& P, bool& found)
-{
-  GPairList::iterator it;
-  it = find_if(myMGPList[P.mySecondIndex()].begin(),
-               myMGPList[P.mySecondIndex()].end(),
-               [&](const GPair& arg) { return GPairDividesLCM(arg,P); });
-  found = (it!=myMGPList[P.mySecondIndex()].end());
-  return it;
-}//FindDivides
+// ModuleGPairList::ModuleGPairList()
+// {
+//   myMGPList.resize(10000);
+// }
 
 
-
-bool ModuleGPairList::IsIn(const GPair& P)
-{
-  return find(myMGPList[P.mySecondIndex()].begin(),
-              myMGPList[P.mySecondIndex()].end(),
-              P)
-    !=
-    myMGPList[P.mySecondIndex()].end();
-}//IsIn
+// void ModuleGPairList::Insert(GPair& P)
+// {
+//   Ordered_Insert(myMGPList[P.mySecondIndex()],P);
+//   //make a copy of en element that will be destroyed - think about using splice
+// }
 
 
-GPairList::iterator ModuleGPairList::FindSameLCMAndSecondInd(const GPair& P,bool& found)
-{
-  GPairList::iterator it;
-  it=find_if(myMGPList[P.mySecondIndex()].begin(),
-             myMGPList[P.mySecondIndex()].end(),
-             [&](const GPair& arg) { return GPairEqualLCM(arg,P);});
-  found = (it!=myMGPList[P.mySecondIndex()].end());
-  return it;
-}//FindSameLCMAndSecondInd
+// GPairList::iterator ModuleGPairList::FindDivides(const GPair& P, bool& found)
+// {
+//   GPairList::iterator it;
+//   it = find_if(myMGPList[P.mySecondIndex()].begin(),
+//                myMGPList[P.mySecondIndex()].end(),
+//                [&](const GPair& arg) { return GPairDividesLCM(arg,P); });
+//   found = (it!=myMGPList[P.mySecondIndex()].end());
+//   return it;
+// }
 
 
-long ModuleGPairList::size() const
-{
-  long S=0;
-  for (int i=0; i!=len(myMGPList);++i)
-    S += len(myMGPList[i]);
-  return S;
-}
+// bool ModuleGPairList::IsIn(const GPair& P)
+// {
+//   return find(myMGPList[P.mySecondIndex()].begin(),
+//               myMGPList[P.mySecondIndex()].end(),
+//               P)
+//     !=
+//     myMGPList[P.mySecondIndex()].end();
+// }
+
+
+// GPairList::iterator ModuleGPairList::FindSameLCMAndSecondInd(const GPair& P,bool& found)
+// {
+//   GPairList::iterator it;
+//   it=find_if(myMGPList[P.mySecondIndex()].begin(),
+//              myMGPList[P.mySecondIndex()].end(),
+//              [&](const GPair& arg) { return GPairEqualLCM(arg,P);});
+//   found = (it!=myMGPList[P.mySecondIndex()].end());
+//   return it;
+// }//FindSameLCMAndSecondInd
+
+
+// long ModuleGPairList::size() const
+// {
+//   long S=0;
+//   for (int i=0; i!=len(myMGPList);++i)
+//     S += len(myMGPList[i]);
+//   return S;
+// }
 
 
 
-ostream& operator<<(ostream& out,const ModuleGPairList& MGPL)
-{
-  if (!out) return out;  // short-cut for bad ostreams
+// ostream& operator<<(ostream& out,const ModuleGPairList& MGPL)
+// {
+//   if (!out) return out;  // short-cut for bad ostreams
 
-  //out<<endl<<"SIZE"<<len(MGPL.myMGPList)<<endl;
-  for (const auto& mgp: MGPL.myMGPList)
-  {
-    //out<<".";
-    if (mgp.empty()) continue;
-    GPairList::const_iterator it1=mgp.begin();
-    out<<endl<<"Index="<<it1->mySecondIndex()<<endl;
-    for (;it1!=mgp.end();++it1) {out<<*it1;};
-  }
-  //  MGPairList::const_iterator it;
-  // for (it=MGPL.myMGPList.begin();it!=MGPL.myMGPList.end();++it)
-  // {
-  //   //out<<".";
-  //   if (!it->empty())
-  //   {
-  //     GPairList::const_iterator it1=it->begin();
-  //     out<<endl<<"Index="<<it1->mySecondIndex()<<endl;
-  //     for (;it1!=it->end();++it1) {out<<*it1;};
-  //   }
-  // }
-  return out;
-}//operator<<
+//   //out<<endl<<"SIZE"<<len(MGPL.myMGPList)<<endl;
+//   for (const auto& mgp: MGPL.myMGPList)
+//   {
+//     //out<<".";
+//     if (mgp.empty()) continue;
+//     GPairList::const_iterator it1=mgp.begin();
+//     out<<endl<<"Index="<<it1->mySecondIndex()<<endl;
+//     for (;it1!=mgp.end();++it1) {out<<*it1;};
+//   }
+//   //  MGPairList::const_iterator it;
+//   // for (it=MGPL.myMGPList.begin();it!=MGPL.myMGPList.end();++it)
+//   // {
+//   //   //out<<".";
+//   //   if (!it->empty())
+//   //   {
+//   //     GPairList::const_iterator it1=it->begin();
+//   //     out<<endl<<"Index="<<it1->mySecondIndex()<<endl;
+//   //     for (;it1!=it->end();++it1) {out<<*it1;};
+//   //   }
+//   // }
+//   return out;
+// }//operator<<
 
 
 /********** End Module GPLists ********************************************/
