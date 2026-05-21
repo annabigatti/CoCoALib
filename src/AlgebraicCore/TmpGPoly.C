@@ -522,7 +522,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
   { return PPM(red.myGRingInfo().myP_work()); }
 
 
-  void Reductors::Insert(GPoly* p, const long count)
+  void Reductors::myInsert(GPoly* p, const long count)
   {
     myReductors.push_back(ReductorData(p, component(*p), count));
     //This is useless if  myKey is  Age.

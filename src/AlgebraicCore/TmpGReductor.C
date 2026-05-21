@@ -362,13 +362,13 @@ namespace CoCoA
       myGB.clear();
       myGB.push_back(&myPolys.back());
       myTrueReductors.myClear();
-      myTrueReductors.Insert(&myPolys.back());
+      myTrueReductors.myInsert(&myPolys.back());
       myPairs.clear();
       return;
     }
     myPolys.push_back(inPoly);// this must be the second op
     //myTrueReductors.SuperInterreduce(mySPoly);  // ANNA
-    myTrueReductors.Insert(&myPolys.back());
+    myTrueReductors.myInsert(&myPolys.back());
     myGB.push_back(&myPolys.back());
     GPairList new_pairs;
     myBuildNewPairs(new_pairs);

@@ -237,7 +237,7 @@ typedef std::list<GPoly> GPolyList;
   public:
     Reductors(const GRingInfo& P);
     ~Reductors(){};
-    void Insert(GPoly*, const long count=0);
+    void myInsert(GPoly*, const long count=0);
 
     long myLen() const {return len(myReductors);};
     //    void myStampaReductors(std::ostream&) const;
