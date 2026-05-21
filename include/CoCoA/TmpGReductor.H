@@ -26,14 +26,10 @@
 #include "CoCoA/TmpGPair.H"
 #include "CoCoA/TmpGRStats.H"
 #include "CoCoA/utils.H"
-//#include "CoCoA/CoCoA4io.H"
 
 
 namespace CoCoA
 {
-
-  //  void ReadInt(std::istream&,int&,SkipTagType);
-
   class FreeModule;     // forward declaration -- defined in FreeModule.H
   class SparsePolyRing; // forward declaration -- defined in SparsePolyRing.H
 
@@ -81,12 +77,6 @@ public:
     GReductor(const GReductor&);// copy ctor not working, to be fixed
     ~GReductor(){};
 
-    // GReductor(const GRingInfo&,
-    //           GPolyList&,
-    //           const ClearMarker,
-    //           const BuchbergerOpTypeFlag theBuchbergerOpType=HomogeneousAlg,
-    //           const GBCriteria criteria=GBCriteria(GBCriteria::AllSet));
-
     BuchbergerOpTypeFlag myGetBuchbergerOpType() const {return myBuchbergerOpType;}
     bool myPreparationDone() const {return myPrepared;}
     //    bool WrongLPPFound() const {return myWrongLPPFoundValue;}
@@ -101,8 +91,6 @@ public:
 
     std::vector<RingElem> myExportGBasis(); // pick & copy relevant elements
     std::vector<RingElem> myExportMinGens(); // pick & copy relevant elements
-    // std::vector<ModuleElem> myExportGBasis_module(); // removed
-    // std::vector<ModuleElem> myExportMinGens_module(); // removed
 
     void myDoAFFGBasis(); // I am working on sugar selection strategies
     void myDoGBasis();
@@ -130,16 +118,12 @@ public:
     void myUpdateIncomingWDeg();
     void myApplyBCriterion();
 
-// These two should go in GPoly (interface) with the
-// real body in PolyRing
-//void smart_dehomog(GPoly&,long);
-//void smart_dehomog_DRL(GPoly&,long);
 
   private:  // member fields
     const GRingInfo myGRingInfoValue;
     GPairList myPairs;// here the polys are ptrs to myPolys
     Reductors myTrueReductors;// the true reductors.
-    GPolyPtrList myGB;// the candidate Gbasis - NB polys are ptrs to myPolys
+    std::list<GPoly*> myGB;// the candidate Gbasis - NB polys are ptrs to myPolys
     GPolyList myPolys;// the REAL Polys, the other are ptrs
     GPoly mySPoly;
     degree myOldDeg;// used for flow control and stats. The degree it refers to is the degree of the pair
@@ -148,87 +132,11 @@ public:
     Stats myStat;// the statistics
     bool myPrepared; // Default false. True after a myPrepareGBasis has been performed
     long myAgeValue;
-    //    bool IsDynamicAlgorithm;
-    //    bool myWrongLPPFoundValue; // DYNAMIC ALGORITHM
     GBCriteria myCriteria;
     BuchbergerOpTypeFlag myBuchbergerOpType; // Type of operation performed on the reductor
     static int ourDefaultStatLevel; ///< default verbosity level for statistics
 //    CpuTimeLimit myCheckForTimeout;
-
-
   };// End class GReductor
-
-
-
-//////////////////////////// Embedding/DeEmbedding /////////////////////
-// Used only in TmpGOperations -- where should they live?
-//----------------------------------------------------------------------
-
-    // enum ModOrdTypeForcing {NoForcing, PosWDegTO, WDegTOPos, WDegPosTO};
-    // SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM);
-    // SparsePolyRing MakeNewPRingFromModule(const FreeModule& FM, ModOrdTypeForcing MOType);
-    // SparsePolyRing MakeNewPRingForP2(const SparsePolyRing& theOldP, ModOrdTypeForcing MOType);
-    // SparsePolyRing MakeNewPRingFromModule_PosTO(const FreeModule& FM, bool HomogInput);
-    // SparsePolyRing MakeNewPRingForP2_PosTO(const SparsePolyRing& OldP, bool HomogInput);
-
-  //  // Embed theVL
-  //   GPolyList EmbedVectorList(const VectorList& theVL,
-  //                             const GRingInfo& theGRI);
-  //   // Embed theVL starting from the StartingFromCompIndex component
-  //   GPolyList EmbedVectorList(const VectorList& theVL,
-  //                             const GRingInfo& theGRI,
-  //                             const long StartingFromCompIndex);
-
-
-
-  //   // The embedding used in syzygy computations
-  //   GPolyList SyzEmbedVectorList(const VectorList& InputVectorList,
-  //                                const GRingInfo& theGRI);
-  // // The embedding used in syzygy computations
-  //   GPolyList SyzEmbedPolyList(const PolyList& InputPolyList,
-  //                                const GRingInfo& theGRI);
-				
-  //   // The embedding used in intersection computations
-  //   GPolyList IntEmbedVectorLists(const VectorList& VL1,
-  //                                 const VectorList& VL2,
-  //                                 const GRingInfo& theGRI);
-				
-  //   // The embedding used in intersection computations
-  //   GPolyList IntEmbedPolyLists(const PolyList& PL1,
-  //                               const PolyList& PL2,
-  //                               const GRingInfo& theGRI);
- 			
-  // // The special poly embedding used in colon computations
-  //   GPolyList ColonEmbedVectorLists(const VectorList& VL,
-  //                                   const ModuleElem& v,
-  //                                   const GRingInfo& theGRI);
-				
-  //   GPolyList ColonEmbedPolyLists(const PolyList& F,
-  //                                 const RingElem& f,
-  //                                 const GRingInfo& theGRI);
-
-  //   void SyzEmbedGPolyList(GPolyList& theGPL);
-
-  //   void IntEmbedGPolyList(GPolyList& theGPL1, GPolyList& theGPL2);
-
-  //   void ColonEmbedGPolyList(GPolyList& theGPL, GPoly& the_gp);
-
-
-    // VectorList DeEmbedPolyList(const PolyList& G,
-    //                            const GRingInfo& theGRI);
-
-    // VectorList DeEmbedPolyList(const PolyList& G,
-    //                            const GRingInfo& theGRI,
-    //                            const long ComponentsLimit); // only polys whose LPP has deg of last indet <=CL
-
-    // PolyList DeEmbedPolyListToPL(const PolyList& G,
-    //                              const GRingInfo& theGRI,
-    //                              const long ComponentsLimit);
-
-    // RingElem homog(ConstRefRingElem the_p, const std::vector<RingElem>& the_Y); ///< hp = hom(p,y) in the ring with the y's
-    // void homogenized(ModuleElem& the_hv,
-    //                  const ModuleElem& the_v,
-    //                  const GRingInfo& theGRI);
 
 
 }// end namespace cocoa
