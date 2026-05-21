@@ -28,7 +28,6 @@
 //#include "CoCoA/ModuleOrdering.H"
 #include "CoCoA/RingDistrMPolyInlFpPP.H"
 #include "CoCoA/RingDistrMPolyInlPP.H"
-#include "CoCoA/RingFp.H" // for dynamic_cast<RingFpImpl*>(CoeffRing.myRingPtr())
 #include "CoCoA/RingQQ.H"  // for RingQQ, QQEmbeddingHom
 #include "CoCoA/RingZZ.H"
 #include "CoCoA/SparsePolyIter.H"
@@ -42,14 +41,7 @@
 #include "CoCoA/symbol.H"
 #include "CoCoA/time.H"
 #include "CoCoA/verbose.H"  // for VerboseLog
-//#include "CoCoA/utils.H" // for LongRange
 
-//#include <algorithm>
-//using std::for_each;
-// #include <functional>
-// using std::binary_function;
-// using std::less;
-// using std::mem_fun_ref; // for calling GPair::complete on GPairList
 #include <iostream>
 using std::ostream;
 using std::endl;
@@ -85,17 +77,13 @@ namespace CoCoA
 
 
   void GReductor::myCtorAux(const BuchbergerOpTypeFlag theBuchbergerOpType)
-  //,                        const UseDynamicAlgFlag IsDynamic)
   {
     myPrepared=false;
     myAgeValue = 0;
-    //    myWrongLPPFoundValue=false;
-
     myBuchbergerOpType=theBuchbergerOpType;
-
-    if (!myCriteria.myCoprime) myStat.myCopLevel=1000;
-    if (!myCriteria.myGM) myStat.myGMLevel=1000;
-    if (!myCriteria.myBack) myStat.myBCLevel=1000;
+    if (!myCriteria.myCoprime) myStat.myCopLevel = 1000;
+    if (!myCriteria.myGM) myStat.myGMLevel = 1000;
+    if (!myCriteria.myBack) myStat.myBCLevel = 1000;
   }
 
 
@@ -173,8 +161,6 @@ namespace CoCoA
   //   out<<"Preparation done? "<<GR.myPrepared<<"\n";
   //   out<<"myOldDeg "<<GR.myOldDeg<<"\n";
   //   out<<"myIncomingWDeg " << GR.myIncomingWDeg << "\n";
-  //   //    out<<"Is Dynamic Algorithm? "<<GR.IsDynamicAlgorithm<<"\n";
-  //   //    out<<"Is Wrong LPP been Found? "<<GR.myWrongLPPFoundValue<<"\n";
   //   out<<"Cop Criterion " <<GR.myCriteria.myCoprime<<"\n";
   //   out<<"GM Criteria "   <<GR.myCriteria.myGM<<"\n";
   //   out<<"Back Criterion "<<GR.myCriteria.myBack<<"\n";
@@ -218,14 +204,6 @@ namespace CoCoA
       if (IsMinimalGen(*ptr))  G.push_back(poly(*ptr));
     return G;
   }
-
-
-  // removed: now treated as other deembeddings in TmpGOperations
-  //          (more copies, but more general code)
-  // ModuleElem DeEmbedPoly(ConstRefRingElem g, const GRingInfo& theGRI)
-  // std::vector<ModuleElem> GReductor::myExportGBasis_module()
-  // std::vector<ModuleElem> GReductor::myExportMinGens_module()
-
 
 
 //esame piu' approfondito - sia correttezza sia efficienza
@@ -275,10 +253,10 @@ namespace CoCoA
     long walking_index = 0;
     long inserted_pairs = 0;//STAT
 
-    GPolyPtrList::const_iterator last=myGB.end(); --last;
+    auto it = myGB.begin(); // std::list<GPoly*>
+    auto last = myGB.end(); --last;
     long last_component = component(**last);
-    GPolyPtrList::const_iterator it;
-    for (it=myGB.begin(); it!=last; ++it,++walking_index)
+    for ( ; it!=last; ++it,++walking_index)
     {
       if (IsActive(**it)&&last_component == component(**it))
       {
@@ -516,9 +494,6 @@ namespace CoCoA
       {
         myUpdateBasisAndPairs();
         VERBOSE_NewPolyInGB(VERBOSE, len(myGB), len(myPairs), mySPoly);
-        // if (!myPairs.empty())
-        //   if (myIncomingWDeg!=myOldDeg && myTrueReductors.IhaveBorelReductors())
-        //     myTrueReductors.myBorelReductorsUpdateInNextDegree();
       }
       myUpdateIncomingWDeg();
       if (myTruncDeg() != ourNoTruncValue)
@@ -567,9 +542,6 @@ namespace CoCoA
         }
         myUpdateBasisAndPairs();
         VERBOSE_NewPolyInGB(VERBOSE, len(myGB), len(myPairs), mySPoly);
-        // if (!myPairs.empty())
-        //   if (myIncomingWDeg!=myOldDeg&&myTrueReductors.IhaveBorelReductors())
-        //     myTrueReductors.myBorelReductorsUpdateInNextDegree();
       }
     } // while
     return zero(RingZZ()); // just to keep the compiler quiet
@@ -650,7 +622,7 @@ namespace CoCoA
   {
     for (const auto& p: theCandidateBasis)
       Ordered_Insert(myPairs, GPair(p));
-  } // myCreateInputPolyPairs
+  }
 
 
   // Prepare the first pairs; "input poly pairs"
