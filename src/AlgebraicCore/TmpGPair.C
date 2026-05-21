@@ -147,12 +147,12 @@ void Ordered_Insert(GPairList& L,const GPair& P)
 }//Ordered_Insert
 
 
-void RemoveFromGPList(GPairList& L,GPair& P)
-{
-  GPairList::iterator it = find(L.begin(),L.end(),P);
-  if (it != L.end())
-    L.erase(it);
-}//RemoveFromGPList
+// void RemoveFromGPList(GPairList& L,GPair& P)
+// {
+//   GPairList::iterator it = find(L.begin(),L.end(),P);
+//   if (it != L.end())
+//     L.erase(it);
+// }//RemoveFromGPList
 
 
 const ring& CoeffRing(const GPair& P)
@@ -168,15 +168,15 @@ const SparsePolyRing& owner(const GPair& P)
 
 // ***************************************************  ModuleGPairsList
 
-  namespace // anonymous
-  {
+  // namespace // anonymous
+  // {
 
     // *********** These 3 functions are strictly for use in the procedures below.
     // JAA: 2022-02-18  switched to "lambda fns"
-    bool GPairDividesLCM(const GPair& P1, const GPair& P2)
-    {
-      return IsDivisibleFast(LCMwMask(P2), LCMwMask(P1)) && GPairComponent(P1)==GPairComponent(P2);
-    }
+    // bool GPairDividesLCM(const GPair& P1, const GPair& P2)
+    // {
+    //   return IsDivisibleFast(LCMwMask(P2), LCMwMask(P1)) && GPairComponent(P1)==GPairComponent(P2);
+    // }
 
 
     // Currently unused!  (comment out to avoid compiler warning)
@@ -188,12 +188,12 @@ const SparsePolyRing& owner(const GPair& P)
     // }
 
 
-    bool GPairEqualLCM(const GPair& P1, const GPair& P2)
-    {
-      return LCMwMask(P1)==LCMwMask(P2) && GPairComponent(P1)==GPairComponent(P2);
-    }
+    // bool GPairEqualLCM(const GPair& P1, const GPair& P2)
+    // {
+    //   return LCMwMask(P1)==LCMwMask(P2) && GPairComponent(P1)==GPairComponent(P2);
+    // }
 
-  } // end of namespace anonymous
+  // } // end of namespace anonymous
 
 // ***********
 
