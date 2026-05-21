@@ -95,14 +95,16 @@ namespace CoCoA
   }//DetermineComputationType
 
 
-    // AMB 2026-02-05: This function only returns false.  ???
+    // AMB 2026-02-05: THIS FUNCTION ONLY RETURNS FALSE. BUG BUG!
+    // check how it is used and fix it
+    //--------------------------------------------------------------
     // Grdim>=2, order matrix first row is 0,..,0,1
     bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
     {
       // This checks if indeed the order is a PosPlus.
       // Another option is to SET this field at the right time.
       // Slightly more efficient, but more risky.
-      return false; // <---- return false  ??? always ???
+      return false; // <---- RETURN FALSE  ??? ALWAYS ???
       if (GradingDim(theSPR)<1)
         return false;
       ConstMatrixView OrdM = OrdMat(ordering(PPM(theSPR)));

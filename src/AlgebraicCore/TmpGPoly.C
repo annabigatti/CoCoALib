@@ -465,7 +465,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
     myKey=MakeKey(*p);
     //    myComponent=p_component;
     myCount = count;
-    //    IamBorelUpdated = true;
     myIamNotToBeUsedValue=false;
   }
 
@@ -477,7 +476,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
     myKey=RD.myKey;
     //    myComponent=RD.myComponent;
     myCount = RD.myCount;
-    //    IamBorelUpdated = RD.IamBorelUpdated;
     myIamNotToBeUsedValue=RD.myIamNotToBeUsedValue;
   }
 
@@ -493,7 +491,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
        <<", LPPForOrd=" << LPPForOrd(*(RD.myGPolyPtr))
       //       <<", MdCmp=" << RD.myComponent
        //<<", Used = " << RD.myCount  //TMP SAT
-      //       <<", Upd = " << RD.IamBorelUpdated
        <<", ToBeUsd = " << RD.myIamNotToBeUsedValue
        <<", Wdeg=" << wdeg(*(RD.myGPolyPtr))
        <<", Sugar=" << sugar(*(RD.myGPolyPtr))
@@ -516,59 +513,22 @@ void GPoly::myUpdateLenLPPLCDegComp()
 //********* Reductors *****************************************************
 
 
-  // Reductors::Reductors(const GRingInfo& P, const UseBorelFlag UBR):
-  //     myGRingInfoValue(P)
-  // {
-  //   myReductors.reserve(10000);
-  //   if (UBR == DontUseBorel)
-  //     IhaveBorelReductorsFlag = false;
-  //   else
-  //   {
-  //     IhaveBorelReductorsFlag = true;
-  //     myBorelReductors.reserve(10000);
-  //   }
-  // }
-
-
   Reductors::Reductors(const GRingInfo& P):
       myGRingInfoValue(P)
-  {
-    myReductors.reserve(10000);
-    //    IhaveBorelReductorsFlag = false;
-  }
+  { myReductors.reserve(10000); }
 
 
   const PPMonoid& PPM(const Reductors& red)
-  {
-    return PPM(red.myGRingInfo().myP_work());
-  }
+  { return PPM(red.myGRingInfo().myP_work()); }
 
 
-  void Reductors::Insert(GPoly* p, const long count)
+  void Reductors::myInsert(GPoly* p, const long count)
   {
     myReductors.push_back(ReductorData(p, component(*p), count));
     //This is useless if  myKey is  Age.
     long N = len(myReductors)-1;
     for (long i=0;i!=N;++i)
       if (myReductors[N]<myReductors[i]) std::swap(myReductors[i],myReductors[N]);
-    // ANNA : Borel algorithm
-    // if (IhaveBorelReductorsFlag)
-    // {
-    //   myBorelGPolys.push_back(*p); // ANNA
-    //   GPoly* f = &myBorelGPolys.back();
-    //   myBorelReductors.push_back(ReductorData(f, component(*f), count));
-    // }
-  }
-
-
-  void Reductors::myStampaReductors(ostream& out) const
-  {
-    if (!out) return;  // short-cut for bad ostreams
-
-    out << "TheREDUCTORS := " << myReductors << endl;
-
-    // if (IhaveBorelReductorsFlag)
-    //   out << "The_BOREL_REDUCTORS := " << myBorelReductors << endl;
   }
 
 
@@ -623,11 +583,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
 
   // clean the reductors keeping the same GRI
   void Reductors::myClear()
-  {
-    myReductors.clear();
-    // myBorelReductors.clear();
-    // myBorelGPolys.clear();
-  }//clean
+  { myReductors.clear(); }
 
 
   // // power(y_1y_2..y_k,d_1d_2..d_k)=y_1^d_1y_2^d_2..y_k^d_k
