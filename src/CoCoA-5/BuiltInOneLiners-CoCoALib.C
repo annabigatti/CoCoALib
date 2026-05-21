@@ -1,4 +1,4 @@
-//   Copyright (c) 2012-2016,2022  John Abbott, Anna M. Bigatti
+//   Copyright (c) 2012-2016,2022,2026  John Abbott, Anna M. Bigatti
 //   Original author: 2012 Giovanni Lagorio.
 //
 //   This file is part of the source of CoCoALib, the CoCoA Library.
@@ -40,6 +40,7 @@ DECLARE_COCOALIB_FUNCTION1(NextProbPrime, INT) // AMB
 DECLARE_COCOALIB_FUNCTION1(PrevProbPrime, INT) // JAA
 DECLARE_COCOALIB_FUNCTION1(SmallestNonDivisor, INT) // JAA
 DECLARE_COCOALIB_FUNCTION2(FactorMultiplicity, INT, INT) // JAA
+DECLARE_COCOALIB_FUNCTION2(DivExact, INT, INT) // JAA 2026-05-20
 DECLARE_COCOALIB_FUNCTION2(RoundDiv, INT, INT) // JAA
 DECLARE_COCOALIB_FUNCTION2(FloorRoot, INT, INT) // AMB
 DECLARE_COCOALIB_FUNCTION3(PowerMod, INT, INT, INT)

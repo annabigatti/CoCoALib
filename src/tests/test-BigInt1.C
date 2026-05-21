@@ -140,6 +140,19 @@ namespace CoCoA
           CoCoA_ASSERT_ALWAYS(i/j == BigInt(i)/BigInt(j));
         }
       }
+
+    // Test DivExact
+    for (int i = -LIMIT; i <= LIMIT; ++i)
+    {
+      const BigInt I(i);
+      for (int j = -LIMIT; j <= LIMIT; ++j)
+      {
+        if (j == 0)  continue;
+        const BigInt prod = I*j;
+        CoCoA_ASSERT_ALWAYS(DivExact(prod, j) == I);
+        CoCoA_ASSERT_ALWAYS(DivExact(prod, BigInt(j)) == I);
+      }
+    }
   }
 
 } // end of namespace CoCoA

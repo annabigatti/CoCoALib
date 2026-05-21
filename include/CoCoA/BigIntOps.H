@@ -52,6 +52,9 @@ namespace CoCoA
   BigInt operator/(const BigInt& N1, const MachineInt& n2);
   BigInt operator/(const MachineInt& n1, const BigInt& N2);
 
+  BigInt DivExact(const BigInt& N1, const BigInt& N2);
+  BigInt DivExact(const BigInt& N1, const MachineInt& n2);
+
   BigInt operator%(const BigInt& N1, const BigInt& N2);
   long operator%(const BigInt& N1, const MachineInt& n2);
   BigInt operator%(const MachineInt& n1, const BigInt& N2);
