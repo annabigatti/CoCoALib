@@ -696,7 +696,7 @@ namespace CoCoA
         RingElem ans(P);
         for (SparsePolyIter it=BeginIter(h) ; !IsEnded(it) ; ++it )
           ans += monomial(P, num(coeff(it)), PP(it));
-        myDivByCoeff(raw(ans), raw(content(ans)));
+        myDivByCoeff(raw(ans), raw(content(ans))); // use DivExact? 2026-05
         myMulByCoeff(raw(ans), raw(gcd(content(f), content(g))));
         P->mySwap(rawlhs, raw(ans));
         return;
