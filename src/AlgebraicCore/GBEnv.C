@@ -54,8 +54,7 @@ namespace CoCoA
   namespace // anonymous
   { // namespace // anonymous ----------------------------------------
 
-    RingHom WorkToOrigRingHom(const SparsePolyRing& P_work,
-                              const SparsePolyRing& P_orig)
+    RingHom PwToPo(const SparsePolyRing& P_work, const SparsePolyRing& P_orig)
     {
       if (P_work==P_orig)  return  IdentityHom(P_work);
       std::vector<RingElem> images = indets(P_orig);  // x[i] |-> x[i]
@@ -65,9 +64,8 @@ namespace CoCoA
       return  PolyAlgebraHom(P_work, P_orig, images);
     }
 
-    
-    RingHom OrigToWorkRingHom(const SparsePolyRing& P_work,
-                              const SparsePolyRing& P_orig)
+
+    RingHom PoToPw(const SparsePolyRing& P_work, const SparsePolyRing& P_orig)
     {
       if (P_work==P_orig)  return  IdentityHom(P_work);
       std::vector<RingElem> images;
@@ -75,7 +73,7 @@ namespace CoCoA
         images.push_back(indet(P_work, i));       // x[i] |-> x[i]
       return PolyAlgebraHom(P_orig, P_work, images);
     }
-    
+
 
   //-------------------------------------------------------
   //---------class GRingInfo-------------------------------
@@ -95,12 +93,32 @@ namespace CoCoA
     if (IsHomog) return HOMOG;
     return NONHOMOG_GRADING;
   }//DetermineComputationType
-  
-    bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR);
 
 
-  } // namespace // anonymous ----------------------------------------
-  
+    // AMB 2026-02-05: This function only returns false.  ???
+    // Grdim>=2, order matrix first row is 0,..,0,1
+    bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
+    {
+      // This checks if indeed the order is a PosPlus.
+      // Another option is to SET this field at the right time.
+      // Slightly more efficient, but more risky.
+      return false; // <---- return false  ??? always ???
+      if (GradingDim(theSPR)<1)
+        return false;
+      ConstMatrixView OrdM = OrdMat(ordering(PPM(theSPR)));
+      // JAA 2015-11-30 line above replaces the two below
+      // matrix OrdM(NewDenseMat(RingQQ(),NumIndets(theSPR),NumIndets(theSPR)));
+      // PPM(theSPR)->myOrdering()->myOrdMatCopy(OrdM);
+      for (long i=0; i<NumIndets(theSPR)-1; ++i)
+        if (OrdM(0,i)!=0)
+          return false;
+      if (OrdM(0,NumIndets(theSPR)-1)!=1)
+        return false;
+      return true;
+    }
+
+  } // namespace // anonymous -----------------------------------------
+
 
   // ----------------------------------------------------------------------
   // GRingInfo ctors
@@ -151,8 +169,8 @@ namespace CoCoA
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(theFM),
     myOutputFreeModuleValue(theOutputFM),
-    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
-    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
+    myWorkToOrigHomValue(PwToPo(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
@@ -185,8 +203,8 @@ namespace CoCoA
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(NewFreeModule(P_work,1)), // unused
     myOutputFreeModuleValue(theOutputFM), // unused
-    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
-    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
+    myWorkToOrigHomValue(PwToPo(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
     myTimeoutChecker(CheckForTimeout)
@@ -209,8 +227,8 @@ namespace CoCoA
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
     myFreeModuleValue(NewFreeModule(P_work,1)), // unused
     myOutputFreeModuleValue(NewFreeModule(P_work,1)), // unused
-    myWorkToOrigHomValue(WorkToOrigRingHom(myPworkValue, myPorigValue)),
-    myOrigToWorkHomValue(OrigToWorkRingHom(myPworkValue, myPorigValue)),
+    myWorkToOrigHomValue(PwToPo(myPworkValue, myPorigValue)),
+    myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     //    IamModuleValue(IsForModule),
     IamModuleValue(P_work!=P_orig), // Move outside ctor to GRing_Mx
@@ -229,28 +247,13 @@ namespace CoCoA
   { myCoeffRingTypeValue = CT; }
 
 
-  // bool GRingInfo::operator==(const GRingInfo& theGRI)const
-  // {
-  //   return
-  //     (myPworkValue    == theGRI.myPworkValue
-  //      && myPorigValue == theGRI.myPorigValue
-  //      && myPPMValue    == theGRI.myPPMValue
-  //      && myOutputFreeModuleValue == theGRI.myOutputFreeModuleValue
-  //      && myEYValue     == theGRI.myEYValue
-  //      //&& // I want to do this, the == operator is not there
-  //      //myDivMaskRuleValue==theGRI.myDivMaskRuleValue
-  //      );
-  // }//operator==
-
-
-
-  long GRingInfo::myCompt_work(ConstRefPPMonoidElem T)const
+  long GRingInfo::myCompt_work(ConstRefPPMonoidElem T) const
   {
     if (!IamModule()) return 0;// True Ring
-    return exponent(T,ModuleVarIndex(myPworkValue));
+    return exponent(T, myModuleIndetIndex());
   }
 
-
+  // for embed/deembed ---
   long GRingInfo::myCompt_orig(ConstRefPPMonoidElem T) const
   {
     CoCoA_ASSERT(IamModule());
@@ -258,10 +261,12 @@ namespace CoCoA
   }
 
 
-  long GRingInfo::myCompt_OrigToWork(const long i) const
+  // for embed/deembed ---
+  long GRingInfo::myCompt_OrigToWork(long i) const
   { return myMaxComponentIndex-i; }  // was inline AMB 2026-04-18
 
   
+  // for embed/deembed ---
   RingElem GRingInfo::myY(const degree& d) const
   {
     const SparsePolyRing P(myP_work());
@@ -275,7 +280,7 @@ namespace CoCoA
 
   RingElem GRingInfo::myE(long i) const
   { // was inline
-    return IndetPower(myP_work(), ModuleVarIndex(myP_work()), myCompt_OrigToWork(i));
+    return IndetPower(myP_work(), myModuleIndetIndex(), myCompt_OrigToWork(i));
   }
 
 
@@ -290,16 +295,16 @@ namespace CoCoA
     case NONHOMOG_GRADING: // ANNA: (w)graded + non-homogeneous
       if (/*module && */ IsMyGradingPosPlus())
         // ANNA: should be implemented with proper weights
-        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdx(f, myModuleIndetIndex());
       return NewWDeg1CompTmp(f);
     case NOGRADING:        // ANNA: GradingDim = 0 --> StandardSugarAlgorithm
       // if (/*module && */ IsMyGradingPosPlus())
       if (IamModule())
-        return NewStdSugarNoIdx(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdx(f, myModuleIndetIndex());
       return NewStdSugar(f);
     case SaturatingAlgNoDRL: // GradingDim = 0
       if (/*module && */ IsMyGradingPosPlus())
-        return NewStdSugarNoIdxSat(f, ModuleVarIndex(myP_work()));
+        return NewStdSugarNoIdxSat(f, myModuleIndetIndex());
       return NewStdSugarSat(f);
     default:
       CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
@@ -311,75 +316,34 @@ namespace CoCoA
 ostream& operator<<(ostream& out, const GRingInfo& theGRI)
 {
   if (!out) return out;  // short-cut for bad ostreams
-  out << "the working ring is " << theGRI.myP_work() << endl
+  out << " the working ring is " << theGRI.myP_work() << endl
       << " the original ring is " << theGRI.myP_orig() << endl
      //<<" Input Free Module "<<theGRI.myFreeModule()<<endl
      //<<" Output Free Module "<<theGRI.myOutputFreeModule()<<endl
       << " IamModule " << theGRI.IamModule() << endl
       << " myInputAndGrading = " << theGRI.myInputAndGrading() << endl
-      << " myGradingPosPlusValue = " << theGRI.IsMyGradingPosPlus() << endl
-      << " embedding grading "
-      << " EY=" << theGRI.myEYValue << endl;
-  //  for (const RingElem& f: theGRI.myEYValue)  out << f << endl;
+      << " IsMyGradingPosPlus = " << theGRI.IsMyGradingPosPlus() << endl
+      << " EY = " << theGRI.myEYValue << endl;
   out << endl;
   return out;
 }
 
 
-long ModuleVarIndex(const SparsePolyRing& P)
-{ return NumIndets(P)-1; }
+  long GRingInfo::myModuleIndetIndex() const
+  { return NumIndets(myPworkValue)-1; }
 
 
 bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 {  // used only for debugging
-  return (GRI1.myPworkValue == GRI2.myPworkValue &&
-          GRI1.myPorigValue == GRI2.myPorigValue &&
-          GRI1.myPPMValue == GRI2.myPPMValue);
+  return (GRI1.myP_work() == GRI2.myP_work() &&
+          GRI1.myP_orig() == GRI2.myP_orig() &&
+          GRI1.myPPM() == GRI2.myPPM());
        //&& // I want to do this, the == operator is not there
          //GRI1.myDivMaskRuleValue==GRI2.myDivMaskRuleValue
 }
 
 
-// A member field?
-// std::vector<RingElem> GRingInfo::myY()const
-// {
-//   vector<RingElem> Y;
-//   for (long i=0; i < GradingDim(myPworkValue); ++i)
-//     Y.push_back(indet(myPworkValue, i+NumIndets(myPorigValue)));
-//   return Y;
-// }//myY()
-
-  namespace // anonymous ----------------------------------------
-  {
-
-    // AMB 2026-02-05: This function only returns false.  ???
- // Grdim>=2, order matrix first row is 0,..,0,1
- bool DetermineIfMyGradingIsPosPlus(const SparsePolyRing& theSPR)
- {
-   // This checks if indeed the order is a PosPlus.
-   // Another option is to SET this field at the right time.
-   // Slightly more efficient, but more risky.
-   return false; // <---- return false  ??? always ???
-   if (GradingDim(theSPR)<1)
-     return false;
-   ConstMatrixView OrdM = OrdMat(ordering(PPM(theSPR)));
-   // JAA 2015-11-30 line above replaces the two below
-   // matrix OrdM(NewDenseMat(RingQQ(),NumIndets(theSPR),NumIndets(theSPR)));
-   // PPM(theSPR)->myOrdering()->myOrdMatCopy(OrdM);
-   for (long i=0; i<NumIndets(theSPR)-1; ++i)
-     if (OrdM(0,i)!=0)
-     {
-       return false;
-     }
-   if (OrdM(0,NumIndets(theSPR)-1)!=1)
-   {
-     return false;
-   }
-   return true;
- }
-
-  } // namespace // anonymous -----------------------------------------
-
+// pseudo-ctors for GRingInfo -------------------------------
 
   GRingInfo GRing_IinP(const SparsePolyRing& P,
                        const bool IsHomogIn,
