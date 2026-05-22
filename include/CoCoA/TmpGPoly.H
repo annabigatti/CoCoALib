@@ -88,27 +88,27 @@ typedef std::list<GPoly> GPolyList;
     friend std::ostream& operator<<(std::ostream&, const GPoly&);
 
     inline friend ConstRefPPMonoidElem LPPForOrd(const GPoly& f) {return f.myLPPForOrd;}
-    inline friend ConstRefRingElem LC(const GPoly& f) {return f.myLCValue;}
+    //    inline friend ConstRefRingElem LC(const GPoly& f) {return f.myLCValue;}
     inline friend const PPWithMask& LPPForDivwMask(const GPoly& f) {return f.myLPPForDivwMask;}
 
     inline friend bool IsActive(const GPoly& f) {return f.IamActive;}
     inline friend long NumTerms(const GPoly& gp) {return gp.myNumTerms;}
-    inline friend const degree& wdeg(const GPoly& gp) {return gp.myWDeg;}
+    //    inline friend const degree& wdeg(const GPoly& gp) {return gp.myWDeg;}
     inline friend const SugarDegree& sugar(const GPoly& gp) {return gp.mySugar;}
     inline friend ConstRefRingElem poly(const GPoly& gp) {return gp.myPolyValue;}
     inline friend long age(const GPoly& gp) {return gp.myAge;}
     friend long MakeKey(const GPoly&);
 
     //    friend const SparsePolyRing& owner(const GPoly& gp);
-    friend const PPMonoid& PPM(const GPoly& gp);
-    friend const ring& CoeffRing(const GPoly& gp);
+    //    friend const PPMonoid& PPM(const GPoly& gp);
+    //    friend const ring& CoeffRing(const GPoly& gp);
 
     /**@name Pseudo-saturation functions */
     //@{
     // real body should be in SparsePolyRing
     void smart_dehomog_DRL(long DHVar);
     void smart_dehomog(long DHVar);
-    friend long max_common_wdeg(GPoly&,long Var);
+    //    friend long max_common_wdeg(GPoly&,long Var); in anon namespace
     friend void GPolyList2PolyListClear(GPolyList&,PolyList&);
     friend void GPolyList2PolyList(const GPolyList&,PolyList&);
 
@@ -177,12 +177,12 @@ typedef std::list<GPoly> GPolyList;
   //  { return gp.myGRingInfoValue.myP_work(); }
 
 
-  inline const PPMonoid& PPM(const GPoly& gp)
-  { return PPM(gp.myGRingInfoValue.myP_work()); }
+  // inline const PPMonoid& PPM(const GPoly& gp)
+  // { return PPM(gp.myGRingInfoValue.myP_work()); }
 
 
-  inline const ring& CoeffRing(const GPoly& gp)
-  { return CoeffRing(gp.myGRingInfoValue.myP_work()); }
+  // inline const ring& CoeffRing(const GPoly& gp)
+  // { return CoeffRing(gp.myGRingInfoValue.myP_work()); }
 
 
   // -------------------- ReductorData -------------------- //

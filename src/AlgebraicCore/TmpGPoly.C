@@ -237,14 +237,18 @@ void GPoly::myUpdateLenLPPLCDegComp()
   // }//MultiplyByPP
 
 
+  namespace { // anonymous --------------------
+
 // This procedure should rely on the procedure for polys.
 // When there are orderings, it should know if
 // Ord=DRL, Var=last var, in which case may just return
 // exponent(LPP(*this),DH_var_index)
+    // IMPLEMENT USING  SparsePolyIter <<----------------------
+    // Check what it does and ADD TEST FOR "GBasisSelfSatCore;"
   long max_common_wdeg(GPoly& f,long Var)
   {
-    const SparsePolyRing P = f.myGRingInfoValue.myP_work();
-    RingElem tmp(f.myPolyValue);
+    const SparsePolyRing P = f.myGRingInfo().myP_work();
+    RingElem tmp(poly(f));
     long result=numeric_limits<long>::max();
     for (;!IsZero(tmp);)
     {
@@ -252,7 +256,10 @@ void GPoly::myUpdateLenLPPLCDegComp()
       P->myDeleteLM(raw(tmp));
     }
     return result;
-  }//max_common_wdeg
+  }
+
+  } // namespace { // anonymous --------------------
+
 
 //   void GRingInfo::WDegLessSVar(degree& res,ConstRefPPMonoidElem T)const// wdeg(T)-wdeg(saturating to the power it has in T)
 //   {

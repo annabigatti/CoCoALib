@@ -30,7 +30,7 @@
 #include "CoCoA/RingDistrMPolyInlPP.H"
 #include "CoCoA/RingQQ.H"  // for RingQQ, QQEmbeddingHom
 #include "CoCoA/RingZZ.H"
-#include "CoCoA/SparsePolyIter.H"
+//#include "CoCoA/SparsePolyIter.H"
 #include "CoCoA/SparsePolyOps-RealRadical.H"
 #include "CoCoA/SparsePolyOps-RingElem.H"
 #include "CoCoA/VectorOps.H"  // for printing lists/vectors, HasUniqueOwner
@@ -400,6 +400,7 @@ namespace CoCoA
     if (myPairs.front().IamCoprime() && myCriteria.myCoprime)
     {
       mySPoly = GPoly(myGRingInfoValue); // initialized as 0
+      // IMPLEMENT   mySPoly.myAssignZero(); ??
       VERBOSE(myStat.myCopLevel) << "coprime" << endl;
       ++myStat.myCopKilled;
       myStat.myReductionTime=0.0;
