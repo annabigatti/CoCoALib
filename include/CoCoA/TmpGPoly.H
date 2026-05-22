@@ -50,8 +50,8 @@ class GPoly;
 typedef std::list<GPoly> GPolyList;
 
 
-// This class is only a wrapper around the polys.
-// Some other data useful for GBasis computation is added.
+// This class is a wrapper for a polynomial
+// with extra data for GBasis computation
 
 /*-----------------------------------------------------------------*/
 
@@ -64,23 +64,8 @@ typedef std::list<GPoly> GPolyList;
     GPoly(ConstRefRingElem,
           const GRingInfo&,
           long age=0);
-    GPoly(ConstRefRingElem,
-          ConstRefPPMonoidElem theLPP,//          const PPWithMask&,  ANNA
-          ConstRefRingElem,
-          const GRingInfo&,
-          long age=0);///< this ctor takes LPP and LC from input for Dynamic Algorithm
-    GPoly(RingElem&,
-          const GRingInfo&,
-          const ClearMarker,
-          long age=0);  ///< this ctor resets RingElem&
-    GPoly(RingElem&,
-          ConstRefPPMonoidElem theLPP,//          const PPWithMask&,  ANNA
-          ConstRefRingElem,
-          const GRingInfo&,
-          const ClearMarker,
-          long age=0);///< this ctor resets RingElem& and takes LPP and LC from input for Dynamic Algorithm
     explicit  GPoly(const GRingInfo&);
-    GPoly(const GPoly&);
+    //    GPoly(const GPoly&);
     ~GPoly(){};
     inline bool operator<(const GPoly& f) const {return myAge<f.myAge;};
     GPoly& operator=(const GPoly& rhs);
@@ -232,6 +217,7 @@ typedef std::list<GPoly> GPolyList;
   };
 
 
+  // -------------------- Reductors -------------------- //
   class Reductors{
 
   public:
@@ -240,7 +226,6 @@ typedef std::list<GPoly> GPolyList;
     void myInsert(GPoly*, const long count=0);
 
     long myLen() const {return len(myReductors);};
-    //    void myStampaReductors(std::ostream&) const;
     const GRingInfo& myGRingInfo() const {return myGRingInfoValue;}
     //    GPoly* LastGPolyPtr(){return myReductors.back().myGPolyPtr;};//copia ptr  // never used
     //    PPMonoidElem LastGPolyLPP(){return myReductors.back().myLPP;};//copia PP  // never used

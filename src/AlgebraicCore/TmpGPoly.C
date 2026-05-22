@@ -73,76 +73,76 @@ namespace CoCoA
    }//ctor
 
 
- // for DYN use, the LPP and LC are given to the GPoly
- GPoly::GPoly(ConstRefRingElem the_p,
-              ConstRefPPMonoidElem theLPP,
-              ConstRefRingElem theLC,
-              const GRingInfo& theGRI,
-              long age):  // default age=0
-    myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-    myLPPForOrd(theLPP),
-    myLCValue(theLC),
-    myPolyValue(the_p),
-    myGRingInfoValue(theGRI),
-    myWDeg(wdeg(theLPP)),
-    mySugar(uninitialized)
-  {
-    myLPPForDivwMask = exponents(myLPPForOrd);
-    IamActive = true;
-    //    IamMinimalGen = false;
-    myMinimalGenLevel = -1;
-    myAge = age;
-    myNumTerms = NumTerms(the_p);
-    myComponent = theGRI.myCompt_work(myLPPForDiv());
-   }//ctor
+ // // for DYN use, the LPP and LC are given to the GPoly
+ // GPoly::GPoly(ConstRefRingElem the_p,
+ //              ConstRefPPMonoidElem theLPP,
+ //              ConstRefRingElem theLC,
+ //              const GRingInfo& theGRI,
+ //              long age):  // default age=0
+ //    myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
+ //    myLPPForOrd(theLPP),
+ //    myLCValue(theLC),
+ //    myPolyValue(the_p),
+ //    myGRingInfoValue(theGRI),
+ //    myWDeg(wdeg(theLPP)),
+ //    mySugar(uninitialized)
+ //  {
+ //    myLPPForDivwMask = exponents(myLPPForOrd);
+ //    IamActive = true;
+ //    //    IamMinimalGen = false;
+ //    myMinimalGenLevel = -1;
+ //    myAge = age;
+ //    myNumTerms = NumTerms(the_p);
+ //    myComponent = theGRI.myCompt_work(myLPPForDiv());
+ //   }//ctor
 
-  // This ctor destroys the_p
-  GPoly::GPoly(RingElem& the_p,
-               ConstRefPPMonoidElem theLPP,
-               ConstRefRingElem theLC,
-               const GRingInfo& theGRI,
-               const ClearMarker,//just for operator ariety
-               long age):  // default age=0
-    myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-    myLPPForOrd(theLPP),
-    myLCValue(theLC),
-    myPolyValue(theGRI.myP_work()),
-    myGRingInfoValue(theGRI),
-    myWDeg(wdeg(theLPP)),
-    mySugar(uninitialized)
-  {
-    myLPPForDivwMask = exponents(myLPPForOrd);
-    swap(the_p,myPolyValue);
-    IamActive = true;
-    //    IamMinimalGen = false;
-    myMinimalGenLevel = -1;
-    myAge = age;
-    myNumTerms = NumTerms(myPolyValue);
-    myComponent = theGRI.myCompt_work(myLPPForDiv());
-  }//ctor
+  // // This ctor destroys the_p
+  // GPoly::GPoly(RingElem& the_p,
+  //              ConstRefPPMonoidElem theLPP,
+  //              ConstRefRingElem theLC,
+  //              const GRingInfo& theGRI,
+  //              const ClearMarker,//just for operator ariety
+  //              long age):  // default age=0
+  //   myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
+  //   myLPPForOrd(theLPP),
+  //   myLCValue(theLC),
+  //   myPolyValue(theGRI.myP_work()),
+  //   myGRingInfoValue(theGRI),
+  //   myWDeg(wdeg(theLPP)),
+  //   mySugar(uninitialized)
+  // {
+  //   myLPPForDivwMask = exponents(myLPPForOrd);
+  //   swap(the_p,myPolyValue);
+  //   IamActive = true;
+  //   //    IamMinimalGen = false;
+  //   myMinimalGenLevel = -1;
+  //   myAge = age;
+  //   myNumTerms = NumTerms(myPolyValue);
+  //   myComponent = theGRI.myCompt_work(myLPPForDiv());
+  // }//ctor
 
-// This ctor destroys the_p
-  GPoly::GPoly(RingElem& the_p,
-               const GRingInfo& theGRI,
-               const ClearMarker,// just for operator ariety
-               long age):  // default age=0
-    myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-    myLPPForOrd(LPP(the_p)),
-    myLCValue(LC(the_p)),
-    myPolyValue(theGRI.myP_work()),
-    myGRingInfoValue(theGRI),
-    myWDeg(wdeg(LPP(the_p))),
-    mySugar(uninitialized)
-  {
-    myLPPForDivwMask = exponents(myLPPForOrd);
-    swap(the_p,myPolyValue);
-    IamActive = true;
-    //    IamMinimalGen = false;
-    myMinimalGenLevel = -1;
-    myAge = age;
-    myNumTerms = NumTerms(myPolyValue);
-    myComponent = theGRI.myCompt_work(myLPPForDiv());
-  }//ctor
+// // This ctor destroys the_p
+//   GPoly::GPoly(RingElem& the_p,
+//                const GRingInfo& theGRI,
+//                const ClearMarker,// just for operator ariety
+//                long age):  // default age=0
+//     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
+//     myLPPForOrd(LPP(the_p)),
+//     myLCValue(LC(the_p)),
+//     myPolyValue(theGRI.myP_work()),
+//     myGRingInfoValue(theGRI),
+//     myWDeg(wdeg(LPP(the_p))),
+//     mySugar(uninitialized)
+//   {
+//     myLPPForDivwMask = exponents(myLPPForOrd);
+//     swap(the_p,myPolyValue);
+//     IamActive = true;
+//     //    IamMinimalGen = false;
+//     myMinimalGenLevel = -1;
+//     myAge = age;
+//     myNumTerms = NumTerms(myPolyValue);
+//     myComponent = theGRI.myCompt_work(myLPPForDiv());
+//   }//ctor
 
 
   GPoly::GPoly(const GRingInfo& theGRI):
@@ -163,21 +163,21 @@ namespace CoCoA
   }//ctor
 
 
-  GPoly::GPoly(const GPoly& the_gp):
-      myLPPForDivwMask(the_gp.myLPPForDivwMask),
-      myLPPForOrd(the_gp.myLPPForOrd),
-      myLCValue(LC(the_gp)),
-      myPolyValue(the_gp.myPolyValue),
-      myGRingInfoValue(the_gp.myGRingInfoValue),
-      myWDeg(the_gp.myWDeg),
-      mySugar(the_gp.mySugar)
-  {
-    IamActive = the_gp.IamActive;
-    myMinimalGenLevel = the_gp.myMinimalGenLevel;
-    myNumTerms = the_gp.myNumTerms;
-    myAge = the_gp.myAge;
-    myComponent = the_gp.myComponent;
- }//ctor
+ //  GPoly::GPoly(const GPoly& the_gp):
+ //      myLPPForDivwMask(the_gp.myLPPForDivwMask),
+ //      myLPPForOrd(the_gp.myLPPForOrd),
+ //      myLCValue(LC(the_gp)),
+ //      myPolyValue(the_gp.myPolyValue),
+ //      myGRingInfoValue(the_gp.myGRingInfoValue),
+ //      myWDeg(the_gp.myWDeg),
+ //      mySugar(the_gp.mySugar)
+ //  {
+ //    IamActive = the_gp.IamActive;
+ //    myMinimalGenLevel = the_gp.myMinimalGenLevel;
+ //    myNumTerms = the_gp.myNumTerms;
+ //    myAge = the_gp.myAge;
+ //    myComponent = the_gp.myComponent;
+ // }//ctor
 
 
   GPoly& GPoly::operator=(const GPoly& the_gp) // ANNA: should it throw if not compatible???
