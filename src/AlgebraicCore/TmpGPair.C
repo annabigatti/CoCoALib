@@ -50,7 +50,7 @@ namespace CoCoA
  // Special pair: it represents an input polynomial 
   GPair::GPair(const GPoly& the_p):
     myLCMwMask(the_p.myGRingInfo().myPPM(), the_p.myGRingInfo().myDivMaskRule()),
-    myOrdPoly(monomial(owner(the_p), LPPForOrd(the_p))),
+    myOrdPoly(monomial(the_p.myGRingInfo().myP_work(), LPPForOrd(the_p))),
     myWDeg(wdeg(myOrdPoly)),
     mySugar(sugar(the_p))
   {
@@ -65,8 +65,8 @@ namespace CoCoA
 
   GPair::GPair(const GPoly& p, const GPoly& q):
     myLCMwMask(p.myGRingInfo().myPPM(), p.myGRingInfo().myDivMaskRule()),
-    myOrdPoly(one(owner(p))),// Fake, filled by myComplete
-    myWDeg(GradingDim(owner(p))),// Fake, filled by myComplete
+    myOrdPoly(one(p.myGRingInfo().myP_work())),// Fake, filled by myComplete
+    myWDeg(GradingDim(p.myGRingInfo().myP_work())),// Fake, filled by myComplete
     mySugar(uninitialized)// Fake, filled by myComplete
   {
     myFirstGPolyPtr = &p;
@@ -100,8 +100,7 @@ namespace CoCoA
 
   void GPair::myComplete()
   {
-    const SparsePolyRing P = owner(myOrdPoly);
-    myOrdPoly = monomial(P, 1, exponents(PP(myLCMwMask)));
+    myOrdPoly = monomial(owner(myOrdPoly), 1, exponents(PP(myLCMwMask)));
     myWDeg = wdeg(PP(myLCMwMask));
     mySugar = NewSugar(*this);
     //  myStdDeg=GRI.TmpStdDeg(PP(myLCMwMask));  // ANNA is this used??

@@ -50,8 +50,8 @@ class GPoly;
 typedef std::list<GPoly> GPolyList;
 
 
-// This class is only a wrapper around the polys.
-// Some other data useful for GBasis computation is added.
+// This class is a wrapper for a polynomial
+// with extra data for GBasis computation
 
 /*-----------------------------------------------------------------*/
 
@@ -64,66 +64,51 @@ typedef std::list<GPoly> GPolyList;
     GPoly(ConstRefRingElem,
           const GRingInfo&,
           long age=0);
-    GPoly(ConstRefRingElem,
-          ConstRefPPMonoidElem theLPP,//          const PPWithMask&,  ANNA
-          ConstRefRingElem,
-          const GRingInfo&,
-          long age=0);///< this ctor takes LPP and LC from input for Dynamic Algorithm
-    GPoly(RingElem&,
-          const GRingInfo&,
-          const ClearMarker,
-          long age=0);  ///< this ctor resets RingElem&
-    GPoly(RingElem&,
-          ConstRefPPMonoidElem theLPP,//          const PPWithMask&,  ANNA
-          ConstRefRingElem,
-          const GRingInfo&,
-          const ClearMarker,
-          long age=0);///< this ctor resets RingElem& and takes LPP and LC from input for Dynamic Algorithm
     explicit  GPoly(const GRingInfo&);
-    GPoly(const GPoly&);
+    //    GPoly(const GPoly&);
     ~GPoly(){};
     inline bool operator<(const GPoly& f) const {return myAge<f.myAge;};
     GPoly& operator=(const GPoly& rhs);
-    void AssignClear(GPoly&);
-    bool operator==(const GPoly&)const;
+    //    void AssignClear(GPoly&);
+    //    bool operator==(const GPoly&)const;
     void myAppendClear(RingElem&);  ///< Dangerous
     void myAppendClear(GPoly&); ///< Dangerous
     const GRingInfo& myGRingInfo()const{return myGRingInfoValue;};
     CoeffEncoding::type myCoeffRingType()const{return myGRingInfoValue.myCoeffRingType();};
-    bool operator!=(const GPoly&)const;
+    //    bool operator!=(const GPoly&)const;
     inline void Deactivate(){IamActive=false;};
     inline void mySetMinimalGen() {myMinimalGenLevel=0;};
     void myInitializeSugar(const SugarDegree& s);
     void myAssignSPoly(const GPair&, const long age);
     ConstRefPPMonoidElem myLPPForDiv() const { return PP(myLPPForDivwMask); }
     friend long component(const GPoly& g) { return g.myComponent; }
-    void MultiplyByPP(ConstRefPPMonoidElem);
+    //    void MultiplyByPP(ConstRefPPMonoidElem);
     friend bool IsZero(const GPoly&);
     friend bool IsMinimalGen(const GPoly& g) {return g.myMinimalGenLevel==0;}
     friend std::ostream& operator<<(std::ostream&, const GPoly&);
 
     inline friend ConstRefPPMonoidElem LPPForOrd(const GPoly& f) {return f.myLPPForOrd;}
-    inline friend ConstRefRingElem LC(const GPoly& f) {return f.myLCValue;}
+    //    inline friend ConstRefRingElem LC(const GPoly& f) {return f.myLCValue;}
     inline friend const PPWithMask& LPPForDivwMask(const GPoly& f) {return f.myLPPForDivwMask;}
 
     inline friend bool IsActive(const GPoly& f) {return f.IamActive;}
     inline friend long NumTerms(const GPoly& gp) {return gp.myNumTerms;}
-    inline friend const degree& wdeg(const GPoly& gp) {return gp.myWDeg;}
+    //    inline friend const degree& wdeg(const GPoly& gp) {return gp.myWDeg;}
     inline friend const SugarDegree& sugar(const GPoly& gp) {return gp.mySugar;}
     inline friend ConstRefRingElem poly(const GPoly& gp) {return gp.myPolyValue;}
     inline friend long age(const GPoly& gp) {return gp.myAge;}
     friend long MakeKey(const GPoly&);
 
-    friend const SparsePolyRing& owner(const GPoly& gp);
-    friend const PPMonoid& PPM(const GPoly& gp);
-    friend const ring& CoeffRing(const GPoly& gp);
+    //    friend const SparsePolyRing& owner(const GPoly& gp);
+    //    friend const PPMonoid& PPM(const GPoly& gp);
+    //    friend const ring& CoeffRing(const GPoly& gp);
 
     /**@name Pseudo-saturation functions */
     //@{
     // real body should be in SparsePolyRing
     void smart_dehomog_DRL(long DHVar);
     void smart_dehomog(long DHVar);
-    friend long max_common_wdeg(GPoly&,long Var);
+    //    friend long max_common_wdeg(GPoly&,long Var); in anon namespace
     friend void GPolyList2PolyListClear(GPolyList&,PolyList&);
     friend void GPolyList2PolyList(const GPolyList&,PolyList&);
 
@@ -188,16 +173,16 @@ typedef std::list<GPoly> GPolyList;
   inline ConstRefPPMonoidElem LPPForDiv(const GPoly& f)
   { return f.myLPPForDiv(); }
 
-  inline const SparsePolyRing& owner(const GPoly& gp)
-  { return gp.myGRingInfoValue.myP_work(); }
+  //  inline const SparsePolyRing& owner(const GPoly& gp)
+  //  { return gp.myGRingInfoValue.myP_work(); }
 
 
-  inline const PPMonoid& PPM(const GPoly& gp)
-  { return PPM(owner(gp)); }
+  // inline const PPMonoid& PPM(const GPoly& gp)
+  // { return PPM(gp.myGRingInfoValue.myP_work()); }
 
 
-  inline const ring& CoeffRing(const GPoly& gp)
-  { return CoeffRing(owner(gp)); }
+  // inline const ring& CoeffRing(const GPoly& gp)
+  // { return CoeffRing(gp.myGRingInfoValue.myP_work()); }
 
 
   // -------------------- ReductorData -------------------- //
@@ -232,6 +217,7 @@ typedef std::list<GPoly> GPolyList;
   };
 
 
+  // -------------------- Reductors -------------------- //
   class Reductors{
 
   public:
@@ -240,7 +226,6 @@ typedef std::list<GPoly> GPolyList;
     void myInsert(GPoly*, const long count=0);
 
     long myLen() const {return len(myReductors);};
-    //    void myStampaReductors(std::ostream&) const;
     const GRingInfo& myGRingInfo() const {return myGRingInfoValue;}
     //    GPoly* LastGPolyPtr(){return myReductors.back().myGPolyPtr;};//copia ptr  // never used
     //    PPMonoidElem LastGPolyLPP(){return myReductors.back().myLPP;};//copia PP  // never used
