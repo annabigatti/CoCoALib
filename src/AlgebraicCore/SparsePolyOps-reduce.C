@@ -210,7 +210,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   void reduce(ReductionCog& F, const GPoly& g)
   {
     // SugarDegree s(sugar(g)); // not used --> use WSugarConst
-    SugarDegree s(NewWSugarConst(zero(owner(g))));
+    SugarDegree s(NewWSugarConst(zero(g.myGRingInfo().myP_work())));
     reduce(F, s, g);
   }
 
@@ -248,7 +248,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   void GPoly::myPolySetSPoly(const GPoly& f, const GPoly& g)
   {
     myPolyValue = poly(f);
-    (owner(f))->myMulByPP(raw(myPolyValue), raw(colon(LPPForOrd(g), LPPForOrd(f))));
+    (f.myGRingInfo().myP_work())->myMulByPP(raw(myPolyValue), raw(colon(LPPForOrd(g), LPPForOrd(f))));
     ReductionCog F = ChooseReductionCogPoly(myGRingInfo());
     F->myAssignReset(myPolyValue, f.myNumTerms);
     F->myReduce(poly(g), NumTerms(g));

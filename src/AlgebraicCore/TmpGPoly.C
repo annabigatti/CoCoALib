@@ -73,78 +73,6 @@ namespace CoCoA
    }//ctor
 
 
- // // for DYN use, the LPP and LC are given to the GPoly
- // GPoly::GPoly(ConstRefRingElem the_p,
- //              ConstRefPPMonoidElem theLPP,
- //              ConstRefRingElem theLC,
- //              const GRingInfo& theGRI,
- //              long age):  // default age=0
- //    myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
- //    myLPPForOrd(theLPP),
- //    myLCValue(theLC),
- //    myPolyValue(the_p),
- //    myGRingInfoValue(theGRI),
- //    myWDeg(wdeg(theLPP)),
- //    mySugar(uninitialized)
- //  {
- //    myLPPForDivwMask = exponents(myLPPForOrd);
- //    IamActive = true;
- //    //    IamMinimalGen = false;
- //    myMinimalGenLevel = -1;
- //    myAge = age;
- //    myNumTerms = NumTerms(the_p);
- //    myComponent = theGRI.myCompt_work(myLPPForDiv());
- //   }//ctor
-
-  // // This ctor destroys the_p
-  // GPoly::GPoly(RingElem& the_p,
-  //              ConstRefPPMonoidElem theLPP,
-  //              ConstRefRingElem theLC,
-  //              const GRingInfo& theGRI,
-  //              const ClearMarker,//just for operator ariety
-  //              long age):  // default age=0
-  //   myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-  //   myLPPForOrd(theLPP),
-  //   myLCValue(theLC),
-  //   myPolyValue(theGRI.myP_work()),
-  //   myGRingInfoValue(theGRI),
-  //   myWDeg(wdeg(theLPP)),
-  //   mySugar(uninitialized)
-  // {
-  //   myLPPForDivwMask = exponents(myLPPForOrd);
-  //   swap(the_p,myPolyValue);
-  //   IamActive = true;
-  //   //    IamMinimalGen = false;
-  //   myMinimalGenLevel = -1;
-  //   myAge = age;
-  //   myNumTerms = NumTerms(myPolyValue);
-  //   myComponent = theGRI.myCompt_work(myLPPForDiv());
-  // }//ctor
-
-// // This ctor destroys the_p
-//   GPoly::GPoly(RingElem& the_p,
-//                const GRingInfo& theGRI,
-//                const ClearMarker,// just for operator ariety
-//                long age):  // default age=0
-//     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
-//     myLPPForOrd(LPP(the_p)),
-//     myLCValue(LC(the_p)),
-//     myPolyValue(theGRI.myP_work()),
-//     myGRingInfoValue(theGRI),
-//     myWDeg(wdeg(LPP(the_p))),
-//     mySugar(uninitialized)
-//   {
-//     myLPPForDivwMask = exponents(myLPPForOrd);
-//     swap(the_p,myPolyValue);
-//     IamActive = true;
-//     //    IamMinimalGen = false;
-//     myMinimalGenLevel = -1;
-//     myAge = age;
-//     myNumTerms = NumTerms(myPolyValue);
-//     myComponent = theGRI.myCompt_work(myLPPForDiv());
-//   }//ctor
-
-
   GPoly::GPoly(const GRingInfo& theGRI):
     myLPPForDivwMask(theGRI.myPPM(), theGRI.myDivMaskRule()),
     myLPPForOrd(PPM(theGRI.myP_work())),
@@ -161,23 +89,6 @@ namespace CoCoA
     myComponent = 0;
     myAge = 0;//-1?
   }//ctor
-
-
- //  GPoly::GPoly(const GPoly& the_gp):
- //      myLPPForDivwMask(the_gp.myLPPForDivwMask),
- //      myLPPForOrd(the_gp.myLPPForOrd),
- //      myLCValue(LC(the_gp)),
- //      myPolyValue(the_gp.myPolyValue),
- //      myGRingInfoValue(the_gp.myGRingInfoValue),
- //      myWDeg(the_gp.myWDeg),
- //      mySugar(the_gp.mySugar)
- //  {
- //    IamActive = the_gp.IamActive;
- //    myMinimalGenLevel = the_gp.myMinimalGenLevel;
- //    myNumTerms = the_gp.myNumTerms;
- //    myAge = the_gp.myAge;
- //    myComponent = the_gp.myComponent;
- // }//ctor
 
 
   GPoly& GPoly::operator=(const GPoly& the_gp) // ANNA: should it throw if not compatible???
@@ -197,38 +108,38 @@ namespace CoCoA
     return *this;
   }//operator=
 
-  void GPoly::AssignClear(GPoly& the_gp) // ANNA: should it throw if not compatible???
-  {
-    CoCoA_ASSERT( AreCompatible(myGRingInfoValue,the_gp.myGRingInfoValue));
-    //    swap(myLPPForDivwMask, the_gp.myLPPForDivwMask);
-    myLPPForDivwMask = the_gp.myLPPForDivwMask;
-    swap(myLPPForOrd, the_gp.myLPPForOrd);
-    myLCValue = the_gp.myLCValue;
-    swap(myPolyValue,the_gp.myPolyValue);
-    myWDeg = the_gp.myWDeg;
-    IamActive = the_gp.IamActive;
-    myNumTerms = the_gp.myNumTerms;
-    myAge = the_gp.myAge;
-    myComponent = the_gp.myComponent;
-    mySugar = the_gp.mySugar;
-    the_gp=GPoly(myGRingInfoValue);
-  }//AssignClear
+  // void GPoly::AssignClear(GPoly& the_gp) // ANNA: should it throw if not compatible???
+  // {
+  //   CoCoA_ASSERT( AreCompatible(myGRingInfoValue,the_gp.myGRingInfoValue));
+  //   //    swap(myLPPForDivwMask, the_gp.myLPPForDivwMask);
+  //   myLPPForDivwMask = the_gp.myLPPForDivwMask;
+  //   swap(myLPPForOrd, the_gp.myLPPForOrd);
+  //   myLCValue = the_gp.myLCValue;
+  //   swap(myPolyValue,the_gp.myPolyValue);
+  //   myWDeg = the_gp.myWDeg;
+  //   IamActive = the_gp.IamActive;
+  //   myNumTerms = the_gp.myNumTerms;
+  //   myAge = the_gp.myAge;
+  //   myComponent = the_gp.myComponent;
+  //   mySugar = the_gp.mySugar;
+  //   the_gp=GPoly(myGRingInfoValue);
+  // }//AssignClear
 
 
-  bool GPoly::operator==(const GPoly& f)const
-  {
-    CoCoA_ASSERT(AreCompatible(myGRingInfoValue, f.myGRingInfoValue) );
-    if (myPolyValue == f.myPolyValue) return true;
-    return true;
-  }//operator==
+  // bool GPoly::operator==(const GPoly& f)const
+  // {
+  //   CoCoA_ASSERT(AreCompatible(myGRingInfoValue, f.myGRingInfoValue) );
+  //   if (myPolyValue == f.myPolyValue) return true;
+  //   return true;
+  // }//operator==
 
 
-  bool GPoly::operator!=(const GPoly& f)const
-  {
-    CoCoA_ASSERT( AreCompatible(myGRingInfoValue, f.myGRingInfoValue) );
-    if (myPolyValue == f.myPolyValue) return false;
-    return true;
-  }//operator!=
+  // bool GPoly::operator!=(const GPoly& f)const
+  // {
+  //   CoCoA_ASSERT( AreCompatible(myGRingInfoValue, f.myGRingInfoValue) );
+  //   if (myPolyValue == f.myPolyValue) return false;
+  //   return true;
+  // }//operator!=
 
 
   bool IsZero(const GPoly& f) { return CoCoA::IsZero(f.myPolyValue); }
@@ -302,28 +213,28 @@ void GPoly::myUpdateLenLPPLCDegComp()
 // TEMPORARY - Dangerous, does not adjust all the fields of *this
  void GPoly::myAppendClear(RingElem& p)
  {
-   SparsePolyRingPtr(owner(*this))->myAppendClear(raw(myPolyValue), raw(p));
+   SparsePolyRingPtr(myGRingInfoValue.myP_work())->myAppendClear(raw(myPolyValue), raw(p));
    myNumTerms = NumTerms(myPolyValue);
  }//myAppendClear
 
 // TEMPORARY - Dangerous, does not adjust all the fields of *this
  void GPoly::myAppendClear(GPoly& p)
  {
-   SparsePolyRingPtr(owner(*this))->myAppendClear(raw(myPolyValue), raw(p.myPolyValue));
+   SparsePolyRingPtr(myGRingInfoValue.myP_work())->myAppendClear(raw(myPolyValue), raw(p.myPolyValue));
    myNumTerms = NumTerms(myPolyValue);
  }//myAppendClear
 
 
-  void  GPoly::MultiplyByPP(ConstRefPPMonoidElem MultPP)
-  {
-    // MultPP is in PPM(owner(GPoly))
-    myLPPForOrd *= MultPP; // should we make it more efficient?
-    myLPPForDivwMask = exponents(myLPPForOrd);
-    SparsePolyRingPtr(owner(*this))->myMulByPP(raw(myPolyValue), raw(MultPP)); // (..) because of g++ parser bug
-    myWDeg = wdeg(myLPPForOrd); // should we make it more efficient?
-    mySugar->myMul(MultPP);
-    // The other fields stay the same.
-  }//MultiplyByPP
+  // void  GPoly::MultiplyByPP(ConstRefPPMonoidElem MultPP)
+  // {
+  //   // MultPP is in PPM(owner(GPoly))
+  //   myLPPForOrd *= MultPP; // should we make it more efficient?
+  //   myLPPForDivwMask = exponents(myLPPForOrd);
+  //   SparsePolyRingPtr(owner(*this))->myMulByPP(raw(myPolyValue), raw(MultPP)); // (..) because of g++ parser bug
+  //   myWDeg = wdeg(myLPPForOrd); // should we make it more efficient?
+  //   mySugar->myMul(MultPP);
+  //   // The other fields stay the same.
+  // }//MultiplyByPP
 
 
 // This procedure should rely on the procedure for polys.
@@ -332,7 +243,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
 // exponent(LPP(*this),DH_var_index)
   long max_common_wdeg(GPoly& f,long Var)
   {
-    const SparsePolyRing P = owner(f);
+    const SparsePolyRing P = f.myGRingInfoValue.myP_work();
     RingElem tmp(f.myPolyValue);
     long result=numeric_limits<long>::max();
     for (;!IsZero(tmp);)
@@ -408,7 +319,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
   void GPoly::smart_dehomog_DRL(long DH_var_index)
   {
     long mc_deg=exponent(LPPForDiv(*this),DH_var_index);
-    const SparsePolyRing P = owner(*this);
+    const SparsePolyRing P = myGRingInfoValue.myP_work();
     RingElem result(P);
     RingElem tmp(P);
     RingElem H2Deg = P->myMonomial(raw(one(CoeffRing(P))),
@@ -433,7 +344,7 @@ void GPoly::myUpdateLenLPPLCDegComp()
   void GPoly::smart_dehomog(long DH_var_index)
   {
     long mc_deg=max_common_wdeg(*this,DH_var_index);
-    const SparsePolyRing P = owner(myPolyValue);
+    const SparsePolyRing P = myGRingInfoValue.myP_work();
     RingElem result(P);
     RingElem tmp(P);
     RingElem H2Deg = P->myMonomial(raw(one(CoeffRing(P))),

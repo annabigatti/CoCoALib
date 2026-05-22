@@ -69,20 +69,20 @@ typedef std::list<GPoly> GPolyList;
     ~GPoly(){};
     inline bool operator<(const GPoly& f) const {return myAge<f.myAge;};
     GPoly& operator=(const GPoly& rhs);
-    void AssignClear(GPoly&);
-    bool operator==(const GPoly&)const;
+    //    void AssignClear(GPoly&);
+    //    bool operator==(const GPoly&)const;
     void myAppendClear(RingElem&);  ///< Dangerous
     void myAppendClear(GPoly&); ///< Dangerous
     const GRingInfo& myGRingInfo()const{return myGRingInfoValue;};
     CoeffEncoding::type myCoeffRingType()const{return myGRingInfoValue.myCoeffRingType();};
-    bool operator!=(const GPoly&)const;
+    //    bool operator!=(const GPoly&)const;
     inline void Deactivate(){IamActive=false;};
     inline void mySetMinimalGen() {myMinimalGenLevel=0;};
     void myInitializeSugar(const SugarDegree& s);
     void myAssignSPoly(const GPair&, const long age);
     ConstRefPPMonoidElem myLPPForDiv() const { return PP(myLPPForDivwMask); }
     friend long component(const GPoly& g) { return g.myComponent; }
-    void MultiplyByPP(ConstRefPPMonoidElem);
+    //    void MultiplyByPP(ConstRefPPMonoidElem);
     friend bool IsZero(const GPoly&);
     friend bool IsMinimalGen(const GPoly& g) {return g.myMinimalGenLevel==0;}
     friend std::ostream& operator<<(std::ostream&, const GPoly&);
@@ -99,7 +99,7 @@ typedef std::list<GPoly> GPolyList;
     inline friend long age(const GPoly& gp) {return gp.myAge;}
     friend long MakeKey(const GPoly&);
 
-    friend const SparsePolyRing& owner(const GPoly& gp);
+    //    friend const SparsePolyRing& owner(const GPoly& gp);
     friend const PPMonoid& PPM(const GPoly& gp);
     friend const ring& CoeffRing(const GPoly& gp);
 
@@ -173,16 +173,16 @@ typedef std::list<GPoly> GPolyList;
   inline ConstRefPPMonoidElem LPPForDiv(const GPoly& f)
   { return f.myLPPForDiv(); }
 
-  inline const SparsePolyRing& owner(const GPoly& gp)
-  { return gp.myGRingInfoValue.myP_work(); }
+  //  inline const SparsePolyRing& owner(const GPoly& gp)
+  //  { return gp.myGRingInfoValue.myP_work(); }
 
 
   inline const PPMonoid& PPM(const GPoly& gp)
-  { return PPM(owner(gp)); }
+  { return PPM(gp.myGRingInfoValue.myP_work()); }
 
 
   inline const ring& CoeffRing(const GPoly& gp)
-  { return CoeffRing(owner(gp)); }
+  { return CoeffRing(gp.myGRingInfoValue.myP_work()); }
 
 
   // -------------------- ReductorData -------------------- //

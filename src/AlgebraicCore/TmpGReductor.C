@@ -70,7 +70,7 @@ namespace CoCoA
       CoCoA_ASSERT(!IsZero(f));//BUG HUNTING  ???
       CoCoA_ASSERT(!IsZero(g));//BUG HUNTING  ???
       //const PPMonoid& PPM1=PPM(owner(f));
-      return PPM(owner(f))->myCmp(raw(LPPForOrd(f)),raw(LPPForOrd(g)))>0;
+      return PPM(f.myGRingInfo().myP_work())->myCmp(raw(LPPForOrd(f)),raw(LPPForOrd(g)))>0;
     }
 
   } //   namespace anonymous
