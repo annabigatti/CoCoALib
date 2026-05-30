@@ -83,7 +83,7 @@ namespace CoCoA
     SumBigRat& operator+=(const BigRat& Q); // NOT THREADSAFE
 ///    void myAdd(const BigInt& N); // threadsafe version of op+=
 ///    void myAdd(const BigRat& Q); // threadsafe version of op+=
-    BigRat myTotal() const;      // compute & return the total (not threadsafe)
+    BigRat myResult() const;      // compute & return the total (not threadsafe)
   private: // data members
 ///    std::mutex myMutex; // causes too much complication
     SumBigInt myBigIntPart;
@@ -94,8 +94,8 @@ namespace CoCoA
     friend std::ostream& operator<<(std::ostream& out, const SumBigRat& S);
   };
 
-  inline BigRat total(const SumBigRat& S)
-  { return S.myTotal(); }
+  inline BigRat result(const SumBigRat& S)
+  { return S.myResult(); }
 
   std::ostream& operator<<(std::ostream& out, const SumBigRat& S);
 

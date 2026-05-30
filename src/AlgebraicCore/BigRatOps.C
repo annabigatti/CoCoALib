@@ -284,7 +284,7 @@ namespace CoCoA
   }
 
 
-  BigRat SumBigRat::myTotal() const
+  BigRat SumBigRat::myResult() const
   {
 //???    //    std::scoped_lock lock(myMutex); // needs C++17
 //???    std::lock_guard<std::mutex> lock(myMutex); // cannot use auto :-(
@@ -294,13 +294,14 @@ namespace CoCoA
       sum += q;
       q = 0;
     }
+    const BigInt& N = result(myBigIntPart);  // reference is safe here
     if (IsZero(sum))
-      return BigRat(myBigIntPart.myTotal());
+      return BigRat(N);
 
     const std::size_t i = ourIndex(sum);
     if (i >= myGeobucket.size())  myGeobucket.resize(i+1);
     myGeobucket[i] = sum;
-    return sum + total(myBigIntPart);
+    return sum + N;
   }
 
 

@@ -7,7 +7,7 @@ CWD=src/tests/
 DEPEND_FILE=Makefile_dependencies
 
 TESTS=test-empty.C \
-      test-BigInt1.C  test-BigInt2.C  test-BigInt3.C \
+      test-BigInt1.C  test-BigInt2.C  test-BigInt3.C  test-BigInt4.C \
       test-BigRat1.C  test-BigRat2.C  test-BigRat3.C  test-BigRat4.C \
       test-bool3.C \
       test-exbugs.C  \

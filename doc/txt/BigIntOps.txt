@@ -150,8 +150,23 @@ This class is **not thread-safe.**
 Let ``N`` be an integer, and ``SBI`` be a ``SumBigInt`` object.
 - ``SumBigInt()``   -- create a ``SumBigInt`` object with value 0
 - ``SBI += N``      -- accumulate ``N`` (big or small) into the sum inside ``SBI``
-- ``total(SBI)``    -- return the sum of the values accumulated
-- ``SBI.myTotal()`` -- equiv to ``SBI.myTotal()``
+- ``result(SBI)``    -- return the sum of the values accumulated; this operation may take some time!
+- ``SBI.myResult()`` -- equiv to ``result(SBI)``
+-
+
+BUG: Currently there is no ``operator-=``; should there be?
+
+
+==== Product ====
+
+To multiply many ``BigInt`` integers use a ``ProdBigInt`` object.
+This class is **not thread-safe.**
+
+Let ``N`` be an integer, and ``PBI`` be a ``ProdBigInt`` object.
+- ``ProdBigInt()``   -- create a ``ProdBigInt`` object with value 1
+- ``PBI *= N``       -- multiply the product inside ``PBI`` by ``N`` (big or small)
+- ``result(PBI)``    -- return the product of the values accumulated; this operation make take some time!
+- ``PBI.myResult()`` -- equiv to ``result(PBI)``
 -
 
 BUG: Currently there is no ``operator-=``; should there be?

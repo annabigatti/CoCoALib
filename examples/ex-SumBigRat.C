@@ -36,14 +36,14 @@ namespace CoCoA
       ZZsum += -i;
       ZZsum += i;
     }
-    if (ZZsum.myTotal() != power(2,10000))
+    if (result(ZZsum) != power(2,10000))
       CoCoA_THROW_ERROR2(ERR::AssertFail, "ZZsum is wrong");
 
     // Sum the reciprocals of the first few primes
-    SumBigRat SUM;
+    SumBigRat QQsum;
     for (PrimeSeq Pseq; *Pseq < 1000000; ++Pseq)
-      SUM += BigRat(1,*Pseq);
-    cout << FloatStr(SUM.myTotal()) << endl;
+      QQsum += BigRat(1,*Pseq);
+    cout << FloatStr(result(QQsum)) << endl;
   }
 
 } // end of namespace CoCoA
