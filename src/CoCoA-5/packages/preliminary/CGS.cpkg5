@@ -41,7 +41,7 @@ EndDefine; -- About
 
 -- package variables
 
-  GB_function := ReducedGBasis;
+  GB_function := $NotBuiltin.ReducedGBasis;
 //  GB_function := GBasis;
 //  GB_function := ReducedGBasisByHomog;
   
