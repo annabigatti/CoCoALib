@@ -659,7 +659,7 @@ namespace CoCoA
         {
           CheckForInterrupt(FnName);
           myGRingInfo().myCheckForTimeout(FnName);
-          std::vector<ReductorData>::iterator it1=myTrueReductors.find(*it);
+          std::vector<ReductorData>::iterator it1=myTrueReductors.myFind(*it);
           it1->mySetIamNotToBeUsed(true);
           if (FindReducer(**it, myTrueReductors) != nullptr)  // surely -->0
           //if (IsZero(**it))    //  remove it

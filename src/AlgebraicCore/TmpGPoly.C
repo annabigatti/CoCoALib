@@ -225,18 +225,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
  }//myAppendClear
 
 
-  // void  GPoly::MultiplyByPP(ConstRefPPMonoidElem MultPP)
-  // {
-  //   // MultPP is in PPM(owner(GPoly))
-  //   myLPPForOrd *= MultPP; // should we make it more efficient?
-  //   myLPPForDivwMask = exponents(myLPPForOrd);
-  //   SparsePolyRingPtr(owner(*this))->myMulByPP(raw(myPolyValue), raw(MultPP)); // (..) because of g++ parser bug
-  //   myWDeg = wdeg(myLPPForOrd); // should we make it more efficient?
-  //   mySugar->myMul(MultPP);
-  //   // The other fields stay the same.
-  // }//MultiplyByPP
-
-
   namespace { // anonymous --------------------
 
 // This procedure should rely on the procedure for polys.
@@ -259,66 +247,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
   }
 
   } // namespace { // anonymous --------------------
-
-
-//   void GRingInfo::WDegLessSVar(degree& res,ConstRefPPMonoidElem T)const// wdeg(T)-wdeg(saturating to the power it has in T)
-//   {
-//     PPMonoid TmpPPM=owner(T);
-//     long LastVarIndex=NumIndets(TmpPPM)-1;
-//     PPMonoidElem T1(TmpPPM->myOne());
-//     vector<long> exps(TmpPPM->myNumIndets());
-//     TmpPPM->myExponents(exps,raw(T));
-//     TmpPPM->myMulIndetPower(raw(T1),LastVarIndex,exps[LastVarIndex]);
-//     PPMonoidElem T2(TmpPPM);
-//     TmpPPM->myDiv(raw(T2),raw(T),raw(T1));
-//     res=wdeg(T2);
-//   }//WDegLessSVar
-  
-//   degree GRingInfo::WDegLessSVarA(ConstRefPPMonoidElem T)const// wdeg(T)-wdeg(saturating to the power it has in T)
-//   {
-//     PPMonoid TmpPPM=owner(T);
-//     long LastVarIndex=NumIndets(TmpPPM)-1;
-//     PPMonoidElem T1(TmpPPM->myOne());
-//     vector<long> exps(TmpPPM->myNumIndets());
-//     TmpPPM->myExponents(exps,raw(T));
-//     TmpPPM->myMulIndetPower(raw(T1),LastVarIndex,exps[LastVarIndex]);
-//     PPMonoidElem T2(TmpPPM);
-//     TmpPPM->myDiv(raw(T2),raw(T),raw(T1));
-//     return wdeg(T2);
-//   }//WDegLessSVar
-
-//  degree GRingInfo::WDegLessSVarB(ConstRefPPMonoidElem T01,ConstRefPPMonoidElem T02)const// wdeg(T)-wdeg(saturating to the power it has in T)
-//   {
-//     PPMonoid TmpPPM=owner(T01);
-//     PPMonoidElem T(TmpPPM);
-//     TmpPPM->myDiv(raw(T),raw(T01),raw(T02));
-//     long LastVarIndex=NumIndets(TmpPPM)-1;
-//     PPMonoidElem T1(TmpPPM->myOne());
-//     vector<long> exps(TmpPPM->myNumIndets());
-//     TmpPPM->myExponents(exps,raw(T));
-//     TmpPPM->myMulIndetPower(raw(T1),LastVarIndex,exps[LastVarIndex]);
-//     PPMonoidElem T2(TmpPPM);
-//     TmpPPM->myDiv(raw(T2),raw(T),raw(T1));
-//     return wdeg(T2);
-//   }//WDegLessSVar
-
-// void GRingInfo::WDegLessSVarSmart(degree& res,
-//                                   ConstRefPPMonoidElem T1, 
-//                                   ConstRefPPMonoidElem T2)const
-// {
-//    PPMonoid TmpPPM=owner(T1);
-//    long LastVarIndex=NumIndets(TmpPPM)-1;
-//    res.mySetComponent(0,exponent(T1,LastVarIndex)-exponent(T2,LastVarIndex));//WARNING: this works only for st deg
-// }//WDegLessSVarSmart
-
-// void GRingInfo::WDegLessSVarFake(degree& res,
-//                                  ConstRefPPMonoidElem T1, 
-//                                  ConstRefPPMonoidElem T2)const
-// {
-//    PPMonoid TmpPPM=owner(T1);
-//    long LastVarIndex=NumIndets(TmpPPM)-1;
-//    res.mySetComponent(0,exponent(T1,LastVarIndex)-exponent(T2,LastVarIndex));//WARNING: this works only for st deg
-// }//WDegLessSVarFake
 
 
 // WARN : this function should rely on smart_dehomog for polys.
@@ -450,20 +378,15 @@ void GPoly::myUpdateLenLPPLCDegComp()
   }
 
 
-   // Find the (unique and existing) ReductorData which ptr is equal to GPolyPtr.
-   // Existence is guaranteed by the fact that this procedure is used ONLY for
-   // the final interreduction.
-   vector<ReductorData>::iterator Reductors::find(GPoly* GPolyPtr)
-   {
-     for (vector<ReductorData>::iterator it=myReductors.begin();
-	                                 it!=myReductors.end();
-					 ++it)
-       if (it->myGetGPolyPtr()==GPolyPtr)
-         return it;
-
-     CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
-     return myReductors.end();// for compilator's sake.
-   }//find
+  // Find the (unique and existing) ReductorData whose ptr is GPolyPtr.
+  // Used ONLY for the final interreduction (guaranteed to succeed)
+  vector<ReductorData>::iterator Reductors::myFind(GPoly* GPolyPtr)
+  {
+    for (auto it=myReductors.begin(); it!=myReductors.end(); ++it)
+      if (it->myGetGPolyPtr()==GPolyPtr)  return it;
+    CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
+    return myReductors.end(); // just to keep the compiler quiet
+  }
 
 
 /*Reduces the polys in G of degree Deg(f) with the poly f */
@@ -502,22 +425,6 @@ void GPoly::myUpdateLenLPPLCDegComp()
   // clean the reductors keeping the same GRI
   void Reductors::myClear()
   { myReductors.clear(); }
-
-
-  // // power(y_1y_2..y_k,d_1d_2..d_k)=y_1^d_1y_2^d_2..y_k^d_k
-  // void power(RingElem& theResult,
-  //            const std::vector<RingElem>& theV,
-  //            const degree& the_d)
-  // {
-  //   CoCoA_ASSERT(len(theV)==GradingDim(the_d));
-  //    CoCoA_ASSERT(GradingDim(owner(theResult))==GradingDim(the_d));
-  //    const SparsePolyRing SPR=owner(theResult);
-  //    theResult=one(SPR);
-  //    if (theV.empty())
-  //      return;
-  //    for (long j=0; j < GradingDim(SPR); ++j)
-  //      theResult*=power(theV[j],the_d[j]);
-  // }//power
 
 
 }// end namespace cocoa

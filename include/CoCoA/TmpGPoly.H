@@ -245,7 +245,7 @@ typedef std::list<GPoly> GPolyList;
     // HERE TO BE NOTICED friend const PPMonoid& PPM(const Reductors&);
 			
     void myClear();
-    std::vector<ReductorData>::iterator find(GPoly*);// Find the (unique) Reductor data which ptr is equal to GPolyPtr. Returns end() if nothing is found.
+    std::vector<ReductorData>::iterator myFind(GPoly*);// the unique Reductor data whose ptr is GPolyPtr. Return ERROR if not found
 
   private:
     // ptrs to myPolys
