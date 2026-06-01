@@ -3,9 +3,9 @@ package $CGS;  -- CGS implementation --
 export CGSRecNabe;
 export CGSIter;
 export PrintCMinPoly;
-export PrintSegments;
+export PrintCases;
 export CompareCGS;
-//export PulisciFinale;
+export PulisciFinale;
 
 export ElimXElimZdrl;
 export ElimXElimZdrlA;
@@ -96,7 +96,6 @@ define ResetGlobals()
   $.time_MBLPP_X := 0;
 enddefine; -- ResetGlobals
 
-//-------- printing timings/data ----------------------------------------
 define FmtCount(str, X, NumSpaces)
   if $.PrintFormat = "txt" then
     if X=0 then return str +format("- ", NumSpaces) +" "; endif;
@@ -167,8 +166,6 @@ define PrintLatexHeader()
   println "\\\\\\hline";
 enddefine; -- PrintLatexHeader
 
-//-- more about printing timings/data: ----------------------------------------
-//-- "plus" means tracking for time and counts --------------------------------
   
 define ReducedGBasis_KAX_plus(J)
   IsVERBOSE := IsVERBOSE_func("ReducedGBasis_KAX_plus");
@@ -278,8 +275,6 @@ define PrintExample(name, opt str)
   endif;
 enddefine; -- PrintIter
 
-//-- end -- about printing timings/data: -----------------------------
-
 ----------------------------------------------------------------------
 
 define LC_X(g, ProdX)
@@ -355,16 +350,15 @@ define CGSIter(I,X, opt OrdMat)
     P := NewPolyRing(CoeffRing(K_AX), IndetSymbols(K_AX), OrdMat, 0);
     phi := PolyAlgebraHom(K_AX, P, indets(P));
     result := record[X := phi(X), I := ideal(phi(gens(I)))];
-    result.segments := CGSCoreIter2026(result.I, result.X);
+    result.segments := CGSCoreIter(result.I, result.X);
   else
     CheckElimOrdering(K_AX, X);
     result := record[X := X, I := I];
-    result.segments := CGSCoreIter2026(result.I, result.X);
+    result.segments := CGSCoreIter(result.I, result.X);
   endif;
   PrintGlobals("iter");
   return result;
 enddefine; -- CGSIter
-  
 
 --==== auxiliary ====-
 define ContainsNone(I, ListOfIdeals)
@@ -558,100 +552,6 @@ define CGSCoreIter(I,X) // after Nabeshima
 //  println "TIMER ",DecimalStr(TIMER,1);
   return CGS;
 enddefine; -- CGSCoreIter
-
-  
---=================================================--
---==   modify only below, not the original above ==--
---====  core iterative 2026  ====--
-  
-define CGSCoreIter2026(I,X) // after Nabeshima
-  IsVERBOSE := IsVERBOSE_func("CGSCoreIter2026");
-  TIMER := 0;
-  K_AX := RingOf(I); -- K[A,X];
-  ProdX := product(X);
-  -- initialization ----------------
-  VanishingToDo := [ideal(K_AX, [])];
-  ZeroCasesDone := [];
-  CGS := [];
-  -- main loop ----------------------
-  while not(IsEmpty(VanishingToDo)) do
-    --< Step 2.1 >--
-    aa := ChooseVanishing(ref VanishingToDo, ref ZeroCasesDone);
-    if IsVERBOSE($.VL_base) then println "-- iteration with aa = ", aa, " --"; endif;
-    --< Step 2.2 >--
-    J := I + aa;
-    --< Step 2.3 >--
-    G := ReducedGBasis_KAX_plus(J); -- G <-- RGB_J;
-    --< Step 2.4 >-- -- g in K[A] -------
-    gg_list := [g in G | IsCoprime(LT(g), ProdX)];
-    gg_RadGens := ideal(RingOf(I), [radical_plus(g) | g in gg_list ]);
-    if IsVERBOSE($.VL_list) then println "gg_RadGens = ", gg_RadGens; endif;
-    --< Step 2.5 >----------------------------------------------------------------
-    if not(IsEmptyDiffVanishing_plus(aa, gg_RadGens)) then
-      --< Step 2.5.1 >--
-      if IsVERBOSE($.VL_base) then println "  -- V(aa)\\V(gg) non empty"; endif;
-      append(ref CGS, record[Is0:=aa,
-			     IsNot0:=[ideal(g) | g in gg_list],
-			     GB:=[one(K_AX)]]); // CGS1
-      --< Step 2.5.2 >--
-// 2026 removed:     if ContainsNone(gg_RadGens, VanishingToDo) then
-      if ContainsNone(ideal(gg_list), VanishingToDo) then
-	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
-	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains none (appended)"; endif;	
-	append(ref VanishingToDo, gg_RadGens);
-      else
-	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains some (removed)"; endif;	
-      endif;
-    --< Step 2.6 >----------------------------------------------------------------
-    else
-      if gg_list<>[] and ideal(gg_list) <> gg_RadGens and ContainsNone(ideal(gg_list), VanishingToDo) then
-	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
-	append(ref VanishingToDo, gg_RadGens);
-	continue; // 2026: added this if
-      endif;      
-      --< Step 2.6.1 >--
-      MB := MBLPP_X_plus(G, ProdX);
-      if IsVERBOSE($.VL_list) then println "MB = ", MB; endif;
-      t0 := CpuTime();
-      --< Step 2.6.2 >--
-      G_MB := [ g in G | not(IsCoprime(LT(g), ProdX))
-	       and LPP_X(g, ProdX) isin MB ];
-      --< Step 2.6.3 >--
-      LC_MB := LC_Gpj(MB, G_MB, ProdX); -- [ RadGensIdeal(cc_t) | t in MB ]
-      LC_MB := [cc_t in LC_MB | not(1 isin gens(cc_t))]; -- not(IsOne(J)) -- MOLTO COSTOSO per P3P
-      ---->  LC_MB := MINIMALIZZA(LC_MB); -- non conviene: calcolo GB(J) poi inutile
-      TIMER := TIMER + CpuTime() - t0;
-      if IsVERBOSE($.VL_list) then println "LC_MB = ", LC_MB; endif;
-      --< Step 2.6.4 >--
-      append(ref CGS, record[Is0:=gg_RadGens, IsNot0:=LC_MB, GB:=G_MB]); // CGS2
-      --< Step 2.6.5 >--  -- start NewVanishing ------------
-      NoPrint := ReducedGBasis_KA_plus(gg_RadGens);  // to separate GB timing
-///      NewVanishing := MINIMALIZZA([ RadGensIdeal(cc_t) + gg_RadGens
-      NewVanishing := MINIMALIZZA([ cc_t + gg_RadGens
-				   | cc_t in LC_MB and not(IsContained_plus(cc_t, gg_RadGens)) ]);
-      if IsVERBOSE($.VL_list) then println "NewVanishing = ", NewVanishing; endif;
-      if NewVanishing<>[] and IsOne(NewVanishing[1]) then
-      if IsVERBOSE($.VL_base) then println " --skip (1)"; endif;
-	NewVanishing:=[];
-      endif;
-      --< Step 2.6.6 >--
-      foreach bb in NewVanishing do
-	//      NoPrint := ReducedGBasis_KA_plus(bb);  // GB computed in MINIMALIZZA
-	if ContainsNone(bb, VanishingToDo) then -- tengo ideali piu' piccoli
-	  if IsVERBOSE($.VL_list) then println "  keep "+sprint(bb); endif;	
-	  append(ref VanishingToDo, bb);
-	else
-	  if IsVERBOSE($.VL_list) then println "  delete "+sprint(bb), ""; endif;
-	  If IsVERBOSE($.VL_base) then println "    --contains some in VanishingToDo"; endif;
-	endif;
-      endforeach;
-    endif;    
-    if IsVERBOSE($.VL_base) then println "-- end iteration: ", len(VanishingToDo), " case(s) left "; endif;
-    if IsVERBOSE($.VL_list) then println "  --==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
-  endwhile;
-//  println "TIMER ",DecimalStr(TIMER,1);
-  return CGS;
-enddefine; -- CGSCoreIter2026
   
 --==================================================================
 --==  REC   ========================================================
@@ -819,21 +719,24 @@ define GB_X(L, X)
 enddefine; -- MinPolyZ
 
 
-define PrintSegments(CGS)
-  AllX := CGS.X;
+define PrintCases(CGS, AllX)
   if RingOf(CGS.I) <> RingOf(AllX[1]) then
     AllX := BringIn(RingOf(CGS.I), AllX);
   endif;
   K_AX := RingOf(AllX[1]);
 //  CGS := CGS_fromCore(CGSC, AllX);
-  foreach pippo in CGS.segments do
+  foreach pippo in CGS do
     println;
     print "for ";
-    println pippo.IsNot0, " not 0";
-    if not(IsZero(pippo.Is0)) then println "and ", gens(pippo.Is0), " = 0"; endif;
-    println "  GB is "; indent(GB_X(pippo.GB, AllX));
+//    if pippo.IsNot0<>[] then println pippo.IsNot0, " not 0"; endif;
+    if not(IsZero(pippo.IsNot0)) then
+      println pippo.IsNot0, " not 0";
+      if IsZero(pippo.Is0) then print "and "; endif;
+    endif;
+    if not(IsZero(pippo.Is0)) then println gens(pippo.Is0), " = 0"; endif;
+    println "  GB is ", GB_X(pippo.GB, AllX);
   endforeach;
-enddefine; -- PrintSegments
+enddefine; -- PrintCases
 
   
 define PrintCMinPoly(CGSC, AllX, Z)
@@ -986,13 +889,12 @@ define FindSpecializedGB(CGS, SubstIdeal, opt ideal2)
     endtry;
   endfor;
 enddefine; -- FindSpecializedGB
-
+  
 
 define CleanupCGS(ref CGS)
   CleanedSegments := [];
   foreach s in CGS.segments do
-    s.IsNot0 := MINIMALIZZA(s.IsNot0); // 2026 Anna
-//    s.IsNot0 := MakeSet(s.IsNot0);
+    s.IsNot0 := MakeSet(s.IsNot0);
     if s.IsNot0=[] or not(IsEmptyDiffVanishing_plus(s.Is0, product(s.IsNot0))) then
       append(ref CleanedSegments, s);
     endif;
