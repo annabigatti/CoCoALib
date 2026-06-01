@@ -449,7 +449,7 @@ namespace CoCoA
 //   }
 
 
-  const BigInt& SumBigInt::myTotal() const
+  const BigInt& SumBigInt::myResult() const
   {
 //???   std::lock_guard<std::mutex> lock(myMutex);
     if (IsZero(myNegativeSum))  return myPositiveSum;
@@ -466,6 +466,105 @@ namespace CoCoA
     if (!out)  return out;
     out << "SumBigInt(myNegativeSum=" << FloorLog2(S.myNegativeSum) << " bits, myPositiveSum=" << FloorLog2(S.myPositiveSum) << " bits)";
     return out;
+  }
+
+
+  //---------------------------------
+  // ProdBigInt mem fns
+
+    ProdBigInt& ProdBigInt::myMul(unsigned long n)   // NOT THREADSAFE!
+  {
+    if (IsZero(myFactors[0]))  return *this;
+    if (n == 0)  { myFactors[0] = 0; return *this; }
+    mpz_mul_ui(mpzref(myFactors[0]), mpzref(myFactors[0]), n); // myFactors[0] *= n;
+    myNormalize(0);
+    return *this;
+  }
+
+  ProdBigInt& ProdBigInt::myMul(long n)   // NOT THREADSAFE!
+  {
+    if (IsZero(myFactors[0]))  return *this;
+    if (n == 0)  { myFactors[0] = 0; return *this; }
+    mpz_mul_si(mpzref(myFactors[0]), mpzref(myFactors[0]), n); // myFactors[0] *= n;
+    myNormalize(0);
+    return *this;
+  }
+
+  ProdBigInt& ProdBigInt::operator*=(const BigInt& N)   // NOT THREADSAFE!
+  {
+    if (IsZero(myFactors[0]))  return *this;
+    if (IsZero(N))  { myFactors[0] = 0; return *this; }
+    const int i = myIndex(N);
+    if (i < len(myFactors))
+    {
+      myFactors[i] *= N;
+      myNormalize(i);
+      return *this;
+    }
+    myFactors.resize(i+1, BigInt(1));
+    myFactors[i] = N;
+    return *this;
+  }
+
+
+  const BigInt& ProdBigInt::myResult() const
+  {
+    if (IsZero(myFactors[0]))  return myFactors[0];
+//???   std::lock_guard<std::mutex> lock(myMutex);
+    BigInt prod(1);
+    for (BigInt& fac: myFactors)
+    {
+      prod *= fac;
+      fac = 1;
+    }
+    const int i = myIndex(prod);
+    if (i < len(myFactors))  myFactors[i] = prod;  // std::move ???
+    else myFactors.push_back(prod);
+    return myFactors[i];
+  }
+
+  unsigned int ProdBigInt::myIndex(const BigInt& N) const
+  {
+    // Assumes a factor of 4 between "bucket" sizes
+    CoCoA_ASSERT(!IsZero(N));
+    size_t sz = mpz_size(mpzref(N));
+    int i = 0;
+    while (sz >= 4)
+    {
+      sz /= 4;
+      ++i;
+    }
+    return i;
+  }
+
+  void ProdBigInt::myNormalize(int i) /*(morally) const*/
+  {
+    const unsigned int n = len(myFactors);
+    CoCoA_ASSERT(i < n);
+    for (unsigned int j=i; j < n-1; ++j)
+    {
+      if (myIndex(myFactors[j]) <= j)  return;
+      // Cascade
+      // if (mpz_size(mpzref(myFactors[j+1])) == 1)
+      // {
+      //  // avoid allocation & copying
+      //   swap(myFactors[j], myFactors[j+1]);
+      //   continue;
+      // }  
+      myFactors[j+1] *= myFactors[j];
+      myFactors[j] = 1;
+    }
+    if (myIndex(myFactors[n-1]) == n-1)  return;
+    myFactors.push_back(BigInt(1));
+    swap(myFactors[n-1], myFactors[n]);
+  }
+
+  std::ostream& operator<<(std::ostream& out, const ProdBigInt& P)
+  {
+    if (!out)  return out;
+    if (IsZero(P.myFactors[0]))
+      return out << "ProdBigInt(0)";
+    return out << "ProdBigInt(NumBuckets=" << len(P.myFactors) << ")";
   }
 
 

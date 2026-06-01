@@ -76,6 +76,7 @@ namespace CoCoA
   long SmallPower(const MachineInt& base, const MachineInt& exponent); ///< base^exponent (assuming it fits into a long)
 
 
+  //---------------------------------
   class SumBigInt
   {
   public:
@@ -100,7 +101,7 @@ namespace CoCoA
         return *this;
       }
 ///    void myAdd(const BigInt& N); // threadsafe version of op+=
-    const BigInt& myTotal() const;
+    const BigInt& myResult() const;
   private: // data members
 ///    std::mutex myMutex; // causes too much complication :-(
     mutable BigInt myPositiveSum;
@@ -108,8 +109,40 @@ namespace CoCoA
     friend std::ostream& operator<<(std::ostream& out, const SumBigInt& S);
   };
 
-  inline const BigInt& total(const SumBigInt& S)  { return S.myTotal(); }
+  inline const BigInt& result(const SumBigInt& S)  { return S.myResult(); }
   std::ostream& operator<<(std::ostream& out, const SumBigInt& S);
+
+
+  // ---------------------------------
+  class ProdBigInt
+  {
+  public:
+    ProdBigInt(): myFactors(1,BigInt(1)) { /* myFactors.reserve(10); */ };
+    ProdBigInt(const ProdBigInt&) = default;
+    ProdBigInt(ProdBigInt&&) = default;
+    ProdBigInt& operator=(const ProdBigInt&) = default;
+    ProdBigInt& operator=(ProdBigInt&&) = default;
+    ~ProdBigInt() = default;
+    ProdBigInt& operator*=(const MachineInt& n) // NOT THREADSAFE!
+      {
+        if (IsNegative(n))  return myMul(AsSignedLong(n));
+        else return myMul(AsUnsignedLong(n));
+      }
+    ProdBigInt& operator*=(const BigInt& N); // NOT THREADSAFE!
+    const BigInt& myResult() const;
+  private: // data members
+    mutable std::vector<BigInt> myFactors; // guaranteed to be non-empty; myFactors[0] == 0 iff prod is zero
+  private: // impl details
+    ProdBigInt& myMul(unsigned long n); // NOT THREADSAFE!
+    ProdBigInt& myMul(long n);          // NOT THREADSAFE!
+    void myNormalize(int i) /*(morally) const*/;
+    unsigned int myIndex(const BigInt& N) const;
+    friend std::ostream& operator<<(std::ostream& out, const ProdBigInt& P);
+  };
+
+  inline const BigInt& result(const ProdBigInt& S)  { return S.myResult(); }
+  std::ostream& operator<<(std::ostream& out, const ProdBigInt& P);
+
 
 
   // Efficient arithmetic procedures...

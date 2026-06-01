@@ -118,11 +118,11 @@ To sum many rationals use a ``SumBigRat`` object.
 This class is **not thread-safe.**
 
 Let ``n`` be an integer, ``q`` be a ``BigRat``, and ``SBR`` be a ``SumBigRat`` object.
-- ``SumBigRat()``   -- create a ``SumBigRat`` object with value 0
-- ``SBR += n``      -- accumulate ``n`` into the sum inside ``SBR``
-- ``SBR += q``      -- accumulate ``q`` into the sum inside ``SBR``
-- ``total(SBR)``    -- return the sum of the values accumulated
-- ``SBR.myTotal()`` -- same as ``total(SBR)``
+- ``SumBigRat()``    -- create a ``SumBigRat`` object with value 0
+- ``SBR += n``       -- accumulate ``n`` into the sum inside ``SBR``
+- ``SBR += q``       -- accumulate ``q`` into the sum inside ``SBR``
+- ``result(SBR)``    -- return the sum of the values accumulated; this operation may take some time!
+- ``SBR.myResult()`` -- same as ``result(SBR)``
 -
 
 Currently there is no ``operator-=``; should there be?
