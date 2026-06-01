@@ -40,7 +40,10 @@ Define About()
 EndDefine; -- About
 
 -- package variables
-
+-- GitHub has problems with this variable assignment
+--    (function defined in package)
+-- So I hard-wired it in  ReducedGBasis_KAX_plus
+  
 //  GB_function := ReducedGBasis;
 //  GB_function := GBasis;
 //  GB_function := ReducedGBasisByHomog;
