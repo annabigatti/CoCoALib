@@ -41,7 +41,7 @@ EndDefine; -- About
 
 -- package variables
 
-  GB_function := $NotBuiltin.ReducedGBasis;
+//  GB_function := ReducedGBasis;
 //  GB_function := GBasis;
 //  GB_function := ReducedGBasisByHomog;
   
@@ -173,7 +173,7 @@ enddefine; -- PrintLatexHeader
 define ReducedGBasis_KAX_plus(J)
   IsVERBOSE := IsVERBOSE_func("ReducedGBasis_KAX_plus");
   t0:=CpuTime();
-  RGB_J := $.GB_function(J);
+  RGB_J := ReducedGBasis(J); /////// GitHub problem //// $.GB_function(J);
   ///  RGB_J := ReducedGBasis(J);
 ///    RGB_J := GBasisByHomog(J);
 ///  RGB_J := GBasis(J); /// controllare se si puo': Kalkbrener K1997?
