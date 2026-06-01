@@ -1,0 +1,1007 @@
+package $CGS;  -- CGS implementation --
+
+export CGSRecNabe;
+export CGSIter;
+export CGSIter2026;
+export PrintCMinPoly;
+export PrintSegments;
+export CompareCGS;
+//export PulisciFinale;
+
+export ElimXElimZdrl;
+export ElimXElimZdrlA;
+export ElimXLex;
+export ElimXDRL;
+
+export PrintIter;
+export PrintNabe;
+export PrintExample;
+export PrintLatexHeader;
+
+export ComputeSpecializedGB;
+export SpecializeInXRing;
+export FindSpecializedGB;
+export CleanupCGS;
+  
+//export CGSRec;  // removed 18-11-2021
+//export CGSRecOpt; // removed 18-11-2021
+//export CGSIterACA; // removed 18-11-2021
+//export CGSIterOpt; // removed 18-11-2021
+//export CGS_fromCore;
+
+----------------------------------------------------------------------
+  PrintFormat := "latex";
+//  PrintFormat := "txt";
+----------------------------------------------------------------------
+
+Define About()
+  PrintLn "    Authors  : Anna M. Bigatti, Elisa Palezzato, Michele Torielli";
+  PrintLn "    Version  : CoCoA-5.3.3";
+  PrintLn "    Date     : August-Nov 2021";
+EndDefine; -- About
+
+-- package variables
+
+  GB_function := ReducedGBasis;
+//  GB_function := GBasis;
+//  GB_function := ReducedGBasisByHomog;
+  
+VL_time := 40;
+VL_base := 42;
+VL_list := 50;
+VL_GB   := 60;
+VL_debug   := 70;
+
+time_t0 := 0;
+count_extra := 0;
+time_extra := 0;
+count_ProdRad := 0;
+time_ProdRad := 0;
+count_radical := 0;
+time_radical := 0;
+count_sqfr := 0;
+time_sqfr := 0;
+count_GB_AX := 0;
+time_GB_AX := 0;
+count_GB_A := 0;
+time_GB_A := 0;
+count_IsContained := 0;
+time_IsContained := 0;
+count_IsEmptyDiffVanishing := 0;
+time_IsEmptyDiffVanishing := 0;
+count_MBLPP_X := 0;
+time_MBLPP_X := 0;
+
+
+-- global counter/timers --
+
+define ResetGlobals()
+  $.time_t0 := CpuTime();
+  $.count_extra := 0;
+  $.time_extra := 0;
+  $.count_ProdRad := 0;
+  $.time_ProdRad := 0;
+  $.count_radical := 0;
+  $.time_radical := 0;
+  $.count_sqfr := 0;
+  $.time_sqfr := 0;
+  $.count_GB_AX := 0;
+  $.time_GB_AX := 0;
+  $.count_GB_A := 0;
+  $.time_GB_A := 0;
+  $.count_IsContained := 0;
+  $.time_IsContained := 0;
+  $.count_IsEmptyDiffVanishing := 0;
+  $.time_IsEmptyDiffVanishing := 0;
+  $.count_MBLPP_X := 0;
+  $.time_MBLPP_X := 0;
+enddefine; -- ResetGlobals
+
+//-------- printing timings/data ----------------------------------------
+define FmtCount(str, X, NumSpaces)
+  if $.PrintFormat = "txt" then
+    if X=0 then return str +format("- ", NumSpaces) +" "; endif;
+    return str +format(X, NumSpaces) +" ";
+  endif;
+  // else "latex"
+  if X=0 then return " & " + format("- ", NumSpaces) +" "; endif;
+  return " & " + format(X, NumSpaces) +" ";    
+enddefine; -- FmtTime
+  
+define FmtTime(X, NumSpaces)
+  if $.PrintFormat = "txt" then
+    if X=0 then return format("- |", NumSpaces); endif;
+    return format(DecimalStr(X,1), NumSpaces) +"s|";
+  endif;
+  // else "latex"
+  if X=0 then return " & " + format("- ", NumSpaces); endif;
+  return " & " + format(DecimalStr(X,1), NumSpaces) +"s";
+enddefine; -- FmtTime
+  
+define PrintGlobals(fn)
+  if VerbosityLevel()>=$.VL_time then
+    if $.PrintFormat = "txt"      then    print "--",fn,"|";
+    else    print fn;
+    endif;
+    print FmtCount("GB A,X",  $.count_GB_AX, 2), FmtTime($.time_GB_AX,4);
+    print FmtCount("GB A",  $.count_GB_A, 2), FmtTime($.time_GB_A,4);
+    print FmtCount("IsCont",$.count_IsContained,3), FmtTime($.time_IsContained,4);
+    print FmtCount("ieDV",$.count_IsEmptyDiffVanishing,3), FmtTime($.time_IsEmptyDiffVanishing,4);
+    print FmtCount("ProdRad", $.count_ProdRad,2), FmtTime($.time_ProdRad,4);
+    print FmtCount("MB",$.count_MBLPP_X,3), FmtTime($.time_MBLPP_X,4);
+//    print FmtCount("xtr", $.count_extra,2), FmtTime($.time_extra,3);
+    print FmtCount("sqfr", $.count_sqfr,3), FmtTime($.time_sqfr,4);
+//    print FmtCount("rad", $.count_radical,4), FmtTime($.time_radical,4);
+  endif;
+enddefine; -- PrintGlobals
+
+
+define PrintLatexHeader()
+  H := div(TimeOfDay(),100);
+  println date(), " h ", div(H,100), ":", sum(["0"|i in 1..(1-FloorLog10(mod(H,100)))], ""), mod(H,100);
+  println "-- {\\scriptsize comment}";
+  println "\\noindent";
+//  println "\\begin{tabular}{|l|rr|rr|rr|rr|rr|rr||rr|}";
+  println "\\begin{tabular}{|l|r@{\\;\\;}r|r@{\\;\\;}r|r@{\\;\\;}r|r@{\\;\\;}r|r@{\\;\\;}r|r@{\\;\\;}r|r@{\\;\\;}r||r@{\\;\\;}r|}";
+  println "\\hline";
+  print "& \\multicolumn{2}{|c|}{GB in} ";
+  print "& \\multicolumn{2}{|c|}{GB in} ";
+  print "& \\multicolumn{2}{|c|}{check} ";
+  print "& \\multicolumn{2}{|c|}{check ${=}\\emptyset$} ";
+  println "& \\multicolumn{2}{|c|}{} ";
+//    print FmtCount("xtr", $.count_extra,2), FmtTime($.time_extra,3);
+  print "& \\multicolumn{2}{|c|}{} ";
+//    print FmtCount("rad", $.count_radical,4), FmtTime($.time_radical,4);
+  print "& \\multicolumn{2}{|c||}{} ";
+  print "&  &  ";
+  println "\\\\";
+  print "& \\multicolumn{2}{|c|}{$K[A,X]$} ";
+  print "& \\multicolumn{2}{|c|}{$K[A]$} ";
+  print "& \\multicolumn{2}{|c|}{$\\mathfrak a\\subseteq \\mathfrak b$} ";
+  print "& \\multicolumn{2}{|c|}{$\\Bbb V(\\mathfrak a)\\backslash \\Bbb V(\\mathfrak b)$} ";
+  println "& \\multicolumn{2}{|c|}{ProdRad} ";
+//    print FmtCount("xtr", $.count_extra,2), FmtTime($.time_extra,3);
+  print "& \\multicolumn{2}{|c|}{MB} ";
+//    print FmtCount("rad", $.count_radical,4), FmtTime($.time_radical,4);
+  print "& \\multicolumn{2}{|c||}{sqfr} ";
+  print "& \\# & time ";
+  println "\\\\\\hline";
+enddefine; -- PrintLatexHeader
+
+//-- more about printing timings/data: ----------------------------------------
+//-- "plus" means tracking for time and counts --------------------------------
+  
+define ReducedGBasis_KAX_plus(J)
+  IsVERBOSE := IsVERBOSE_func("ReducedGBasis_KAX_plus");
+  t0:=CpuTime();
+  RGB_J := $.GB_function(J);
+  ///  RGB_J := ReducedGBasis(J);
+///    RGB_J := GBasisByHomog(J);
+///  RGB_J := GBasis(J); /// controllare se si puo': Kalkbrener K1997?
+  $.time_GB_AX := $.time_GB_AX + CpuTime() - t0;
+  incr(ref $.count_GB_AX);
+  if IsVERBOSE($.VL_base) then println "-- GB done in K[A,X] ", TimeFrom(t0), "s"; endif;
+  if IsVERBOSE($.VL_GB) then println "GB = ", RGB_J; endif;
+  return RGB_J;
+enddefine; -- ReducedGBasis_KAX_plus
+
+
+define ReducedGBasis_KA_plus(J)
+  if HasGBasis(J) then return ReducedGBasis(J); endif;
+  IsVERBOSE := IsVERBOSE_func("ReducedGBasis_KA_plus");
+  t0:=CpuTime();
+  RGB_J := ReducedGBasis(J);
+///  RGB_J := GBasis(J); /// controllare se si puo': Kalkbrener K1997?
+  $.time_GB_A := $.time_GB_A + CpuTime() - t0;
+  incr(ref $.count_GB_A);
+  if IsVERBOSE($.VL_base) then println "-- GB done in K[A]"; endif;
+  if IsVERBOSE($.VL_GB) then println "GB = ", RGB_J; endif;
+  return RGB_J;
+enddefine; -- ReducedGBasis_KA_plus
+
+
+define IsEmptyDiffVanishing_plus(I, J)
+  NoPrint := ReducedGBasis_KA_plus(I);
+  t0:=CpuTime();
+  b := IsEmptyDiffVanishing(I, J);
+  $.time_IsEmptyDiffVanishing := $.time_IsEmptyDiffVanishing + CpuTime() - t0;
+  incr(ref $.count_IsEmptyDiffVanishing);
+  return b;
+enddefine; -- IsEmptyDiffVanishing_plus
+
+
+define IsContained_plus(I, J)
+  t0:=CpuTime();
+  b := IsContained(I, J);
+  $.time_IsContained := $.time_IsContained + CpuTime() - t0;
+  incr(ref $.count_IsContained);
+  return b;
+enddefine; -- IsEmptyDiffVanishing_plus
+
+
+define radical_plus(I)
+  t0:=CpuTime();
+  if type(I)=IDEAL then
+    radI := radical(I);
+    $.time_radical := $.time_radical + CpuTime() - t0;
+    incr(ref $.count_radical);
+    return radI;
+  endif;
+  r := radical(I);
+  $.time_sqfr := $.time_sqfr + CpuTime() - t0;
+  incr(ref $.count_sqfr);
+  return r;
+enddefine; -- radical_plus
+
+
+define MBLPP_X_plus(G, ProdX)
+  t0:=CpuTime();
+  L := MBLPP_X(G, ProdX);
+  $.time_MBLPP_X := $.time_MBLPP_X + CpuTime() - t0;
+  incr(ref $.count_MBLPP_X);
+  return L;
+enddefine; -- MBLPP_X_plus
+
+
+define ProdRad_plus(I, J)
+  t0:=CpuTime();
+  IJ := ProdRad(I,J);
+  $.time_ProdRad := $.time_ProdRad + CpuTime() - t0;
+  incr(ref $.count_ProdRad);
+  return IJ;
+enddefine; -- ProdRad_plus
+
+  
+define PrintIter(t0, L)
+  if $.PrintFormat = "txt" then
+    println "-- iter: ",  FmtTime(CpuTime()-t0,4), " ", len(L.segments);
+  else // "latex"
+    println " & ", len(L.segments), FmtTime(CpuTime()-t0,4), "\\\\\\hline";
+  endif;
+enddefine; -- PrintIter
+
+define PrintNabe(t0, L)
+  if $.PrintFormat = "txt" then
+    println "-- nabe: ",  FmtTime(CpuTime()-t0,4), " ", len(L.segments);
+  else // "latex"
+    println " & ", len(L.segments), FmtTime(CpuTime()-t0,4), "\\\\\\hline";
+  endif;
+enddefine; -- PrintIter
+
+define PrintExample(name, opt str)
+  if not(IsDefined(str)) then str := ""; endif;
+  line := sum(NewList(65-len(name),"-"));
+  H := div(TimeOfDay(),100);
+  if $.PrintFormat = "txt" then
+    println "-- ", name, line," [", div(H,100), ":", mod(H,100), "] ", str,str,str,str,str;
+  else // "latex"
+    println "\\multicolumn{17}{|l|}{\\textbf{",name,"}} \\\\\\hline";
+  endif;
+enddefine; -- PrintIter
+
+//-- end -- about printing timings/data: -----------------------------
+
+----------------------------------------------------------------------
+
+define LC_X(g, ProdX)
+  t0 := CpuTime();
+  LT_X := LPP_X(g, ProdX);
+  XX := sum([m in monomials(g)  |  IsDivisible(m,LT_X)])/LT_X;
+//  $.time_extra := $.time_extra + CpuTime() -t0;   incr(ref $.count_extra);
+  return XX;
+enddefine; -- LC_X
+
+
+define LPP_X(g, ProdX)
+  t0 := CpuTime();
+  XX := gcd(LT(g), ProdX^deg(LT(g)));
+//  $.time_extra := $.time_extra + CpuTime() -t0;   incr(ref $.count_extra);
+  return XX;
+enddefine; -- LPP_X
+
+
+define CheckElimOrdering(K_AX, X)
+  ProdA := product(indets(K_AX))/product(X);
+  foreach x in X do
+    if x < ProdA^100 then error("non elim ordering for "+sprint(x)); endif;
+  endforeach;
+  -- make proper check! <<<--------------------
+enddefine; -- CheckElimOrdering
+
+
+define ElimXElimZdrlA(NumParams, NumX)  -- [params, X] + elim Z := last(X)
+  M := mat([
+	    ConcatLists([NewList(NumParams, 0), NewList(NumX-1, 1), [0]]),
+	    ConcatLists([NewList(NumParams, 0), NewList(NumX-1, 0), [1]]),
+	    ConcatLists([NewList(NumParams, 1), NewList(NumX, 0)])  ]);
+  return MakeTermOrdMat(M);
+enddefine; -- ElimMatElimZdrl
+
+
+define ElimXElimZdrl(NumParams, NumX)  -- [params, X] + elim Z := last(X)
+  M := mat([
+	    ConcatLists([NewList(NumX-1, 1), [0]]),
+	    ConcatLists([NewList(NumX-1, 0), [1]])  ]);
+  OrdX := MakeTermOrdMat(M);
+  OrdParams := StdDegRevLexMat(NumParams);
+  return BlockMat2x2(ZeroMat(RingZZ(),NumX,NumParams),  OrdX,
+		     OrdParams,  ZeroMat(RingZZ(),NumParams,NumX));
+enddefine; -- ElimMatElimZdrl
+
+
+define ElimXLex(NumParams, NumX)  -- [params, X] + elim last(X)
+  OrdX := LexMat(NumX);
+  OrdParams := StdDegRevLexMat(NumParams);
+  return BlockMat2x2(ZeroMat(RingZZ(),NumX,NumParams),  OrdX,
+		     OrdParams,  ZeroMat(RingZZ(),NumParams,NumX));
+enddefine; -- ElimXLex
+
+
+define ElimXDRL(NumParams, NumX)  -- [params, X] + elim last(X)
+  OrdX := StdDegRevLexMat(NumX);
+  OrdParams := StdDegRevLexMat(NumParams);
+  return BlockMat2x2(ZeroMat(RingZZ(),NumX,NumParams),  OrdX,
+		     OrdParams,  ZeroMat(RingZZ(),NumParams,NumX));
+enddefine; -- ElimXDRL
+
+
+--==============================================================================
+--==    ITER    ================================================================
+--==============================================================================
+
+define CGSIter(I,X, opt OrdMat)
+  ResetGlobals();
+  K_AX := RingOf(I); -- K[A,X];
+  if IsDefined(OrdMat) then
+    P := NewPolyRing(CoeffRing(K_AX), IndetSymbols(K_AX), OrdMat, 0);
+    phi := PolyAlgebraHom(K_AX, P, indets(P));
+    result := record[X := phi(X), I := ideal(phi(gens(I)))];
+    result.segments := CGSCoreIter2026(result.I, result.X);
+  else
+    CheckElimOrdering(K_AX, X);
+    result := record[X := X, I := I];
+    result.segments := CGSCoreIter2026(result.I, result.X);
+  endif;
+  PrintGlobals("iter");
+  return result;
+enddefine; -- CGSIter
+  
+
+--==== auxiliary ====-
+define ContainsNone(I, ListOfIdeals)
+  noprint := ReducedGBasis_KA_plus(I);
+  foreach J in ListOfIdeals do
+    if IsContained_plus(J, I) then return false; endif;
+  endforeach;
+  return true;
+enddefine; -- ContainsNone
+
+-- define different(J, ListOfIdeals)
+--   foreach I in ListOfIdeals do
+--     if I= J then return false; endif;
+--   endforeach;
+--   return true;
+-- enddefine; -- ContainsNone
+
+
+-- define ByDimAndMult(I1, I2)
+--   P := RingOf(I1);
+--   d1 := dim(P/LT(I1));
+--   d2 := dim(P/LT(I2));
+--   if d1 = d2 then return multiplicity(P/LT(I1)) < multiplicity(P/LT(I2)); endif;
+--   return d1 > d2;
+-- enddefine; -- ByDimAndMult
+
+
+
+define HasLowerDimOrContains(J1, J2)
+  if IsOne(J1) then return true; endif;
+  if IsOne(J2) then return false; endif;  
+  if dim(RingOf(J1)/J1) = dim(RingOf(J2)/J2) then
+    return IsContained_plus(J2,J1);
+  endif;
+  return dim(RingOf(J1)/J1) < dim(RingOf(J2)/J2);
+enddefine; -- HasLowerDimOrContains
+
+  
+define HasLowerDim(J1, J2)
+  -- if IsOne(J1) then println "impossible 1????"; return true; endif; 
+  -- if IsOne(J2) then println "impossible 2????"; return false; endif;  
+  -- if dim(RingOf(J1)/J1) = dim(RingOf(J2)/J2) then
+  --   if  IsContained_plus(J2,J1) then    println "impossible 3????"; endif;
+  --   return IsContained_plus(J2,J1);
+  -- endif;
+  return dim(RingOf(J1)/J1) < dim(RingOf(J2)/J2);
+enddefine; -- HasLowerDim
+
+  
+define ChooseVanishing(ref ToDo, ref done)
+//  IsVERBOSE := IsVERBOSE_func("ChooseVanishing");
+  // All ideals have GB  (except starting ideal(0))
+  t0:=CpuTime();
+// meglio con o senza?
+//  SortBy(ref ToDo, $.HasLowerDimOrContains);  -- *** SortByDimension 2021-10-15 ***
+  SortBy(ref ToDo, $.HasLowerDim);  -- *** SortByDimension 2023-08-29 ***
+//  println "ToDo = ", ToDo;
+  aa := last(ToDo);
+  remove(ref ToDo, len(ToDo));
+  append(ref done, aa);
+//  if IsVERBOSE($.VL_list) then println "--->  aa = ", aa; endif;
+//  $.time_extra := $.time_extra + CpuTime() - t0;
+//  incr(ref $.count_extra);
+  return aa;
+enddefine; -- ChooseVanishing
+
+
+define MBLPP_X(G, ProdX)
+//  println "LPP_X(g, ProdX) = ", interreduced([LPP_X(g, ProdX) | g in G]);
+  X := ([LPP_X(g, ProdX) | g in G and not(IsCoprime(LPP(g), ProdX))]);
+  return interreduced(X);
+enddefine; -- MBLPP_X
+
+
+define LC_Gpj(MB, G, ProdX)
+//  MB := MBLPP_X_plus(G, ProdX);
+  L := [ ideal([radical_plus(LC_X(g, ProdX)) | g in G and LPP_X(g, ProdX) = pp]) | pp in MB];
+//  L := [ -- prova 2021-11-19 senza radical --> terribile
+  return L;
+  //  return [ I in L | not(IsOne(I)) ];
+enddefine; -- LC_Gpj
+
+  
+define VERBOSE(level, fn, obj1, obj2)
+  if VerbosityLevel()>=level then println fn, obj1, obj2; endif;
+enddefine; -- VERBOSE
+  
+--==== auxiliary end ====-  
+
+/// H := radical(product(LCg_notKA, one(K_AX))); --> square-free MOLTO costoso!
+
+define MINIMALIZZA(L) -- L lista di ideal in K[A]
+  foreach Ia in L do
+    noprint := ReducedGBasis_KA_plus(Ia);
+  endforeach;
+  Lsort := SortedBy(MakeSet(L), $.HasLowerDimOrContains);
+  Lmin := [];
+  for i := len(Lsort) to 1 step -1 do
+    if ContainsNone(Lsort[i], Lmin) then
+      append(ref Lmin, Lsort[i]);
+    endif;
+  endfor;
+  return Lmin;
+enddefine; -- MINIMALIZZA
+
+
+define RadGensIdeal(I)
+  return ideal(RingOf(I), [radical_plus(g) | g in gens(I)]);
+enddefine; -- RadGensI
+  
+--====  core iterative  ====--
+  
+define CGSCoreIter(I,X) // after Nabeshima
+  IsVERBOSE := IsVERBOSE_func("CGSCoreIter");
+  TIMER := 0;
+  K_AX := RingOf(I); -- K[A,X];
+  ProdX := product(X);
+  -- initialization ----------------
+  VanishingToDo := [ideal(K_AX, [])];
+  ZeroCasesDone := [];
+  CGS := [];
+  -- main loop ----------------------
+  while not(IsEmpty(VanishingToDo)) do
+    --< Step 2.1 >--
+    aa := ChooseVanishing(ref VanishingToDo, ref ZeroCasesDone);
+    if IsVERBOSE($.VL_base) then println "-- iteration with aa = ", aa, " --"; endif;
+    --< Step 2.2 >--
+    J := I + aa;
+    --< Step 2.3 >--
+    G := ReducedGBasis_KAX_plus(J); -- G <-- RGB_J;
+    --< Step 2.4 >-- -- g in K[A] -------
+    RadGens := [radical_plus(g) | g in G and IsCoprime(LT(g), ProdX)];
+    gg_RadGens := ideal(RingOf(I), RadGens);
+    if IsVERBOSE($.VL_list) then println "gg_RadGens = ", gg_RadGens; endif;
+    --< Step 2.5 >----------------------------------------------------------------
+    if not(IsEmptyDiffVanishing_plus(aa, gg_RadGens)) then
+      --< Step 2.5.1 >--
+      if IsVERBOSE($.VL_base) then println "  -- V(aa)\\V(gg) non empty"; endif;
+      append(ref CGS, record[Is0:=aa,
+			     IsNot0:=[ideal(g) | g in RadGens],
+			     GB:=[one(K_AX)]]); // CGS1
+      --< Step 2.5.2 >--
+      if ContainsNone(gg_RadGens, VanishingToDo) then
+	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains none (appended)"; endif;	
+	append(ref VanishingToDo, gg_RadGens);
+      else
+	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains some (removed)"; endif;	
+      endif;
+    --< Step 2.6 >----------------------------------------------------------------
+    else
+      --< Step 2.6.1 >--
+      MB := MBLPP_X_plus(G, ProdX);
+      if IsVERBOSE($.VL_list) then println "MB = ", MB; endif;
+      t0 := CpuTime();
+      --< Step 2.6.2 >--
+      G_MB := [ g in G | not(IsCoprime(LT(g), ProdX))
+	       and LPP_X(g, ProdX) isin MB ];
+      --< Step 2.6.3 >--
+      LC_MB := LC_Gpj(MB, G_MB, ProdX); -- [ RadGensIdeal(cc_t) | t in MB ]
+      LC_MB := [cc_t in LC_MB | not(1 isin gens(cc_t))]; -- not(IsOne(J)) -- MOLTO COSTOSO per P3P
+      ---->  LC_MB := MINIMALIZZA(LC_MB); -- non conviene: calcolo GB(J) poi inutile
+      TIMER := TIMER + CpuTime() - t0;
+      if IsVERBOSE($.VL_list) then println "LC_MB = ", LC_MB; endif;
+      --< Step 2.6.4 >--
+      append(ref CGS, record[Is0:=gg_RadGens, IsNot0:=LC_MB, GB:=G_MB]); // CGS2
+      --< Step 2.6.5 >--  -- start NewVanishing ------------
+      NoPrint := ReducedGBasis_KA_plus(gg_RadGens);  // to separate GB timing
+///      NewVanishing := MINIMALIZZA([ RadGensIdeal(cc_t) + gg_RadGens
+      NewVanishing := MINIMALIZZA([ cc_t + gg_RadGens
+				   | cc_t in LC_MB and not(IsContained_plus(cc_t, gg_RadGens)) ]);
+      if IsVERBOSE($.VL_list) then println "NewVanishing = ", NewVanishing; endif;
+      if NewVanishing<>[] and IsOne(NewVanishing[1]) then
+      if IsVERBOSE($.VL_base) then println " --skip (1)"; endif;
+	NewVanishing:=[];
+      endif;
+      --< Step 2.6.6 >--
+      foreach bb in NewVanishing do
+	//      NoPrint := ReducedGBasis_KA_plus(bb);  // GB computed in MINIMALIZZA
+	if ContainsNone(bb, VanishingToDo) then -- tengo ideali piu' piccoli
+	  if IsVERBOSE($.VL_list) then println "  keep "+sprint(bb); endif;	
+	  append(ref VanishingToDo, bb);
+	else
+	  if IsVERBOSE($.VL_list) then println "  delete "+sprint(bb), ""; endif;
+	  If IsVERBOSE($.VL_base) then println "    --contains some in VanishingToDo"; endif;
+	endif;
+      endforeach;
+    endif;    
+    if IsVERBOSE($.VL_base) then println "-- end iteration: ", len(VanishingToDo), " case(s) left "; endif;
+    if IsVERBOSE($.VL_list) then println "  --==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
+  endwhile;
+//  println "TIMER ",DecimalStr(TIMER,1);
+  return CGS;
+enddefine; -- CGSCoreIter
+
+  
+--=================================================--
+--==   modify only below, not the original above ==--
+--====  core iterative 2026  ====--
+  
+define CGSCoreIter2026(I,X) // after Nabeshima
+  IsVERBOSE := IsVERBOSE_func("CGSCoreIter2026");
+  TIMER := 0;
+  K_AX := RingOf(I); -- K[A,X];
+  ProdX := product(X);
+  -- initialization ----------------
+  VanishingToDo := [ideal(K_AX, [])];
+  ZeroCasesDone := [];
+  CGS := [];
+  -- main loop ----------------------
+  while not(IsEmpty(VanishingToDo)) do
+    --< Step 2.1 >--
+    aa := ChooseVanishing(ref VanishingToDo, ref ZeroCasesDone);
+    if IsVERBOSE($.VL_base) then println "-- iteration with aa = ", aa, " --"; endif;
+    --< Step 2.2 >--
+    J := I + aa;
+    --< Step 2.3 >--
+    G := ReducedGBasis_KAX_plus(J); -- G <-- RGB_J;
+    --< Step 2.4 >-- -- g in K[A] -------
+    gg_list := [g in G | IsCoprime(LT(g), ProdX)];
+    gg_RadGens := ideal(RingOf(I), [radical_plus(g) | g in gg_list ]);
+    if IsVERBOSE($.VL_list) then println "gg_RadGens = ", gg_RadGens; endif;
+    --< Step 2.5 >----------------------------------------------------------------
+    if not(IsEmptyDiffVanishing_plus(aa, gg_RadGens)) then
+      --< Step 2.5.1 >--
+      if IsVERBOSE($.VL_base) then println "  -- V(aa)\\V(gg) non empty"; endif;
+      append(ref CGS, record[Is0:=aa,
+			     IsNot0:=[ideal(g) | g in gg_list],
+			     GB:=[one(K_AX)]]); // CGS1
+      --< Step 2.5.2 >--
+// 2026 removed:     if ContainsNone(gg_RadGens, VanishingToDo) then
+      if ContainsNone(ideal(gg_list), VanishingToDo) then
+	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
+	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains none (appended)"; endif;	
+	append(ref VanishingToDo, gg_RadGens);
+      else
+	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains some (removed)"; endif;	
+      endif;
+    --< Step 2.6 >----------------------------------------------------------------
+    else
+      if gg_list<>[] and ideal(gg_list) <> gg_RadGens and ContainsNone(ideal(gg_list), VanishingToDo) then
+	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
+	append(ref VanishingToDo, gg_RadGens);
+	continue; // 2026: added this if
+      endif;      
+      --< Step 2.6.1 >--
+      MB := MBLPP_X_plus(G, ProdX);
+      if IsVERBOSE($.VL_list) then println "MB = ", MB; endif;
+      t0 := CpuTime();
+      --< Step 2.6.2 >--
+      G_MB := [ g in G | not(IsCoprime(LT(g), ProdX))
+	       and LPP_X(g, ProdX) isin MB ];
+      --< Step 2.6.3 >--
+      LC_MB := LC_Gpj(MB, G_MB, ProdX); -- [ RadGensIdeal(cc_t) | t in MB ]
+      LC_MB := [cc_t in LC_MB | not(1 isin gens(cc_t))]; -- not(IsOne(J)) -- MOLTO COSTOSO per P3P
+      ---->  LC_MB := MINIMALIZZA(LC_MB); -- non conviene: calcolo GB(J) poi inutile
+      TIMER := TIMER + CpuTime() - t0;
+      if IsVERBOSE($.VL_list) then println "LC_MB = ", LC_MB; endif;
+      --< Step 2.6.4 >--
+      append(ref CGS, record[Is0:=gg_RadGens, IsNot0:=LC_MB, GB:=G_MB]); // CGS2
+      --< Step 2.6.5 >--  -- start NewVanishing ------------
+      NoPrint := ReducedGBasis_KA_plus(gg_RadGens);  // to separate GB timing
+///      NewVanishing := MINIMALIZZA([ RadGensIdeal(cc_t) + gg_RadGens
+      NewVanishing := MINIMALIZZA([ cc_t + gg_RadGens
+				   | cc_t in LC_MB and not(IsContained_plus(cc_t, gg_RadGens)) ]);
+      if IsVERBOSE($.VL_list) then println "NewVanishing = ", NewVanishing; endif;
+      if NewVanishing<>[] and IsOne(NewVanishing[1]) then
+      if IsVERBOSE($.VL_base) then println " --skip (1)"; endif;
+	NewVanishing:=[];
+      endif;
+      --< Step 2.6.6 >--
+      foreach bb in NewVanishing do
+	//      NoPrint := ReducedGBasis_KA_plus(bb);  // GB computed in MINIMALIZZA
+	if ContainsNone(bb, VanishingToDo) then -- tengo ideali piu' piccoli
+	  if IsVERBOSE($.VL_list) then println "  keep "+sprint(bb); endif;	
+	  append(ref VanishingToDo, bb);
+	else
+	  if IsVERBOSE($.VL_list) then println "  delete "+sprint(bb), ""; endif;
+	  If IsVERBOSE($.VL_base) then println "    --contains some in VanishingToDo"; endif;
+	endif;
+      endforeach;
+    endif;    
+    if IsVERBOSE($.VL_base) then println "-- end iteration: ", len(VanishingToDo), " case(s) left "; endif;
+    if IsVERBOSE($.VL_list) then println "  --==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
+  endwhile;
+//  println "TIMER ",DecimalStr(TIMER,1);
+  return CGS;
+enddefine; -- CGSCoreIter2026
+  
+--==================================================================
+--==  REC   ========================================================
+--==================================================================
+
+define CGSRecNabe(I,X, opt OrdMat)
+  ResetGlobals();  
+  -- I:ideal in K[A,X], X:list of variables
+  K_AX := RingOf(I); -- K[A,X];
+  if IsDefined(OrdMat) then
+    P := NewPolyRing(CoeffRing(K_AX), IndetSymbols(K_AX), OrdMat, 0);
+    phi := PolyAlgebraHom(K_AX, P, indets(P));
+    result := record[X := phi(X), I := ideal(phi(gens(I)))];
+    result.segments := CGSCoreNabe(ideal(P, []), ideal(one(P)),
+				   result.I, product(result.X), 0);
+  else
+    CheckElimOrdering(K_AX, X);
+    result := record[X := X, I := I];
+    result.segments := CGSCoreNabe(ideal(K_AX,[]), ideal(one(K_AX)), result.I, product(result.X), 0);
+  endif;
+  PrintGlobals("N   ");
+  return result;
+enddefine; -- CGSRecNabe
+
+
+  --== auxiliary ==--
+
+define SprintRec(RecDepth)
+  S := " ";
+  for i:=1 to RecDepth do S := S+ "  "; endfor;
+  return S + "rec " + sprint(RecDepth) + " on case(s)  ";
+enddefine; -- SprintRec
+
+
+define IsEmptyDiffVanishing(I, J)
+  IsVERBOSE := IsVERBOSE_func("IsEmptyDiffVanishing");
+  if IsVERBOSE($.VL_debug) then println "input J = ",J, "   I = ",I; endif;
+  foreach f in gens(J) do
+////    println " ----> GBasis(I) =", GBasis(I), "  f=", f;
+    if IsVERBOSE($.VL_debug) then println "  case f = ", f, "   I = ",I; endif;
+//    if f isin I then continue; endif;  // 2023-12-05/2021-11-24 added this check in IsInRadical
+    -- if IsVERBOSE($.VL_base) and f isin I then println " f is in I"; endif;
+    -- if IsVERBOSE($.VL_base) and IsZeroDim(I) then println " I is 0-dim"; endif;
+    if not(IsInRadical(f, I)) then return false; endif;
+  endforeach;
+  if IsVERBOSE($.VL_debug) then println "    --------> is empty"; endif;
+  return true;
+enddefine; -- IsEmptyDiffVanishing
+
+
+-- anna: improve here NZ*I
+define ProdRad(I,J)
+  -- count := 0;
+--   foreach f in gens(I) do
+--     foreach g in gens(J) do
+-- //      if f=g then incr(ref count);endif;
+--       if f=g then print "="; endif;
+--     endforeach;
+--   endforeach;
+  -- println count;
+  return I*J;
+//  return ideal(RingOf(I), []);
+enddefine; -- ProdRad
+
+
+define RoughCheck(Z, NZ, L)
+  foreach I in L do
+    Pr := ProdRad_plus(NZ,I);
+    // Pr := ideal(RingOf(I), [radical_plus(f) | f in gens(Pr)]);
+    // ^ good for some, very bad for some (N)
+    t := CpuTime();
+//    b := IsEmptyDiffVanishing_plus(Z, intersect(NZ, I)); -- before 2021-11-19
+    b := IsEmptyDiffVanishing_plus(Z, Pr);  -- 2021-11-19
+    if b then return 0; endif;
+  endforeach;
+  return 1;
+enddefine; -- RoughCheck
+
+
+--========  CORE NABESHIMA  ========--
+
+define CGSCoreNabe(Z, NZ, I, ProdX, RecDepth) -- I ideal in K[A,X], X list of variables
+IsVERBOSE := IsVERBOSE_func("CGSCoreNabe");
+  if IsVERBOSE($.VL_list) then println "-- recursion with Z = ", Z, " --"; endif;
+  if IsVERBOSE($.VL_list) then println "--               NZ = ", NZ, " --"; endif;
+  t := CpuTime();
+  b := IsEmptyDiffVanishing_plus(Z, NZ);
+  if b and IsVERBOSE($.VL_base) then println "-- IsEmptyDiffVanishing is true"; endif;
+  if b then return []; endif;  --> return
+  G := ReducedGBasis_KAX_plus(I+Z);
+////  if IsOne(I) then  -- in Iter facciamo un controllo diverso!! controlla (2021-10-6)
+  -- if IsOne(G[1]) then  /// 2022-01-14    perche' IsOne(I)??? incluso in caso dopo
+  --   if IsVERBOSE($.VL_base) then println "  --ideal(1) RecDepth=", RecDepth; endif;
+  --   return [record[Is0:=Z, IsNot0:=NZ, GB:=G]];  --> return
+  -- endif;
+  --< [iter-Step 2.4] >-- -- g in K[A] -------
+  RadGens := [radical_plus(g) | g in G and IsCoprime(LT(g), ProdX)];
+  gg_RadGens := ideal(RingOf(I), RadGens);
+  if IsVERBOSE($.VL_list) then println "RadGens = ", RadGens; endif;
+  PGB := [];
+//  Int_ginKA_NZ := ideal(RingOf(I), [rad(g) | g in gens(gg * NZ)]); -- before 2021-11-19
+  Int_ginKA_NZ := ProdRad_plus(gg_RadGens, NZ); -- 2021-11-19
+  b := IsEmptyDiffVanishing_plus(Z, Int_ginKA_NZ);
+  if not(b) then
+    PGB := [
+	    record[Is0:=Z,
+		   IsNot0:=concat([ideal(g)|g in RadGens],[NZ]),
+		   GB:=[one(RingOf(I))]] ];
+  endif;
+  b := IsEmptyDiffVanishing_plus(gg_RadGens, NZ);
+  if IsVERBOSE($.VL_base) then println "IsEmptyDiffVanishing(gg_RadGens, NZ) = ", b; endif;
+  if b then return PGB; endif;  --> return: recursion stopped by IsEmptyDiffVanishing
+  --< [iter-Step 2.6] >--------------------------------------------------------------
+  MB := MBLPP_X_plus(G, ProdX);
+  if IsVERBOSE($.VL_list) then println "MB = ", MB; endif;
+  G_MB := [ g in G | not(IsCoprime(LT(g), ProdX))
+	   and (LPP_X(g, ProdX) isin MB) ];
+  LC_MB := LC_Gpj(MB, G_MB, ProdX); -- [ cc_t | t in MB ]
+  LC_MB := [cc_t in LC_MB | not(1 isin gens(cc_t))]; -- not(IsOne(J)) -- MOLTO COSTOSO per P3P
+  if IsVERBOSE($.VL_list) then println SprintRec(RecDepth)+"LC_MB = ", LC_MB; endif;
+//  if false and IsOne(NZ) then NZ_set:=[];  -------------- cancellato
+  if IsOne(gens(NZ)[1]) then NZ_set:=[];  -------------- cancellato
+  else NZ_set:=[NZ]; endif;
+//=== DISABLED ====> //
+  if RoughCheck(Z, NZ, LC_MB)=1 then
+//  if true then
+    append(ref PGB, record[Is0:=gg_RadGens,
+//			   IsNot0:=IntersectionList(concat([NZ], LC_MB)),
+//			   IsNot0:=product(concat([NZ], LC_MB)),
+///   commented 2024-02	   IsNot0:=concat(NZ_set, [II in LC_MB | not(IsOne(II))]),
+///   commented 2024-03	   IsNot0:=concat(NZ_set, [II in LC_MB | not(1 IsIn gens(II))]),
+			   IsNot0:=concat(NZ_set, LC_MB),
+			   GB:=G_MB]);
+  else
+    if IsVERBOSE($.VL_base) then println "RoughCheck -- skip GBasis", ""; endif;
+  endif;
+  newNZ := NZ;
+  foreach cc_t in LC_MB do
+////    rg_cc_t := RadGensIdeal(cc_t);
+    PGB := concat(PGB, CGSCoreNabe(Z+cc_t, newNZ, I, ProdX, RecDepth+1));
+//    newNZ := ideal(RingOf(I), [ rad(g) | g in gens(newNZ * J)]); -- before 2021-11-19
+    newNZ := ProdRad_plus(newNZ, cc_t); -- 2021-11-19   // square-free molto costoso
+  endforeach;
+  return PGB;
+enddefine; -- CGSCoreNabe
+
+
+
+--==================================================================
+--== print & compare ===============================================
+--==================================================================
+
+define MinPolyZ(L, Params, Z)
+  ProdNotZ := product(Params)/Z;
+  PolyInZ := [ f in L | gcd(LT(f), ProdNotZ)=1 and gcd(LT(f), Z)=Z ];
+  if PolyInZ = [] then return []; endif;
+  MinDegZ := min([ deg(LT(f), Z) | f in PolyInZ]);
+  return [ f in PolyInZ | deg(LT(f), Z) = MinDegZ ];
+enddefine; -- MinPolyZ
+  
+
+define GB_X(L, X)
+  ProdX := product(X);
+  return [ f in L | gcd(LT(f), ProdX)<>1 ];
+enddefine; -- MinPolyZ
+
+
+define PrintSegments(CGS)
+  AllX := CGS.X;
+  if RingOf(CGS.I) <> RingOf(AllX[1]) then
+    AllX := BringIn(RingOf(CGS.I), AllX);
+  endif;
+  K_AX := RingOf(AllX[1]);
+//  CGS := CGS_fromCore(CGSC, AllX);
+  foreach pippo in CGS.segments do
+    println;
+    print "for ";
+    println pippo.IsNot0, " not 0";
+    if not(IsZero(pippo.Is0)) then println "and ", gens(pippo.Is0), " = 0"; endif;
+    println "  GB is "; indent(GB_X(pippo.GB, AllX));
+  endforeach;
+enddefine; -- PrintSegments
+
+  
+define PrintCMinPoly(CGSC, AllX, Z)
+  if RingOf(CGSC[1].GB[1]) <> RingOf(AllX[1]) then
+    AllX := BringIn(RingOf(CGSC[1].GB[1]), AllX);
+  endif;
+  Z := last(AllX);
+  -- make partial check -->
+  if not(Z=min(AllX)) then error(sprint(Z)+" is not min of "+sprint(AllX)); endif;
+  K_AX := RingOf(Z);
+  if not(IsIndet(Z)) or not(Z isin AllX) then error("wrong indets"); endif;
+  CGS := Pulisci(CGSC);
+  foreach pippo in CGS do
+    println;
+    print "for ";
+    println "not 0  ", pippo.IsNot0;
+    if IsZero(pippo.Is0) then print "and "; endif;
+//    if pippo.IsNot0<>[] then print "not 0 ", pippo.IsNot0, "  and "; endif;
+    println " = 0  ", pippo.Is0;
+    println "  minpoly is in ", MinPolyZ(pippo.GB, AllX, Z);
+  endforeach;
+enddefine; -- PrintCMinPoly
+
+
+define SysIsIn(SYS, systems)
+  D := RingOf(SYS.Is0);
+  COD := RingOf(systems[1].Is0);
+  phi := PolyAlgebraHom(D, COD, indets(COD));
+  sys := record[IsNot0 := phi(SYS.IsNot0), Is0 := ideal(COD,phi(gens(SYS.Is0))), GB := phi(SYS.GB) ];
+  foreach s in systems do
+    if EqSet(sys.IsNot0, s.IsNot0) and sys.Is0 = s.Is0 and EqSet(sys.GB, s.GB) then
+      return true;
+    endif;
+    endforeach;
+    return false;
+enddefine; -- SysIsIn
+
+  
+define CaseIsIn(C, cases)
+  D := RingOf(C.Is0);
+  COD := RingOf(cases[1].Is0);
+  phi := PolyAlgebraHom(D, COD, indets(COD));
+  c := record[IsNot0 := phi(C.IsNot0),
+	      Is0  := ideal(COD, phi(gens(C.Is0))) ];
+  foreach s in cases do
+    if EqSet(c.IsNot0, s.IsNot0) and c.Is0 = s.Is0  then
+      return true;
+    endif;
+  endforeach;
+  return false;
+enddefine; -- CaseIsIn
+
+  
+define CompareCGS(Systems1, Systems2)  
+  Cases2 := [ record[IsNot0 := s.IsNot0, Is0 := s.Is0] | s in Systems2];
+  return
+  record[
+	 NotInSyss1 := [ record[IsNot0 := s.IsNot0, Is0 := s.Is0]
+			| s in Systems2 and not(SysIsIn(s,Systems1)) ],
+	 NotInSyss2 := [ record[IsNot0 := s.IsNot0, Is0 := s.Is0]
+			| s in Systems1 and not(SysIsIn(s,Systems2)) ],
+	 NotInSyss2Colon := [ record[IsNot0 := s.IsNot0, Is0 := s.Is0]
+			     | s in Systems1	 and
+			     (s.IsNot0<>[] and
+			      not(CaseIsIn(record[IsNot0 := s.IsNot0, Is0 := colon(s.Is0, ideal(product(s.IsNot0)))], Cases2))) ]
+	 ];
+enddefine; -- CompareCGS
+
+
+define PulisciFinale(CGS)
+  ResetGlobals();
+  P := RingOf(CGS.I);
+  K := CoeffRing(P);
+  NewCGS := [];
+  foreach X in CGS.segments do
+    Is0 := radical_plus(X.Is0);
+    IsNot0 := MakeSet([ radical_plus(I+X.Is0) | I in X.IsNot0]);
+    GB := X.GB;
+    -- if not(IsZero(Is0)) then
+    --   if GB[1]<>1 then      print     RingOf(GB[1]), "  "; endif;
+    --   println      RingOf(gens(Is0)[1]);
+    --   GB:= ReducedGBasis(ideal(P,GB)+Is0);
+    -- endif;
+    if IsNot0=[] or not(IsEmptyDiffVanishing_plus(Is0, product(IsNot0))) then
+      append(ref NewCGS, record[Is0 := Is0, IsNot0 := IsNot0, GB := GB]);
+    endif;
+  endforeach;
+  PrintGlobals("-- ");
+  return NewCGS;
+enddefine; -- PulisciFinale
+
+
+define ComputeSpecializedGB(I, OrdMat, ZeroCase)
+  K_AX := RingOf(I); -- K[A,X];
+  P := NewPolyRing(CoeffRing(K_AX), IndetSymbols(K_AX), OrdMat, 0);
+  phi := PolyAlgebraHom(K_AX, P, indets(P));
+  K_A := RingOf(ZeroCase); -- K[A,<X>];
+  psi := PolyAlgebraHom(K_A, P, indets(P));
+  I_P := ideal(phi(gens(I))) + ideal(psi(gens(ZeroCase)));
+  ///+ ideal(P,[ phi(s[1]-s[2]) | s in SubstList]);
+  return GBasis(I_P);
+enddefine; -- ComputeSpecializedGB
+  
+  
+-- define SpecializeInXRing(L, OrdMat, ZeroCase, SubstList)
+--   K_AX := RingOf(L[1]); -- K[A,X];
+--   P := NewPolyRing(CoeffRing(K_AX), IndetSymbols(K_AX), OrdMat, 0);
+--   phi := PolyAlgebraHom(K_AX, P, indets(P));
+--   J := ideal(phi(gens(ZeroCase))) + ideal(P,[ phi(s[1]-s[2]) | s in SubstList]);
+--   L := [ NF(f, J) | f in phi(L)];
+--   return L;
+-- enddefine; -- SpecializeInXRing
+  
+define monic0(f)
+  if f=0 then return f; else return monic(f); endif;
+enddefine; -- monic0
+  
+define SpecializeInXRing(CGS, index, SubstIdeal, ideal2)
+  segment := CGS.segments[index];
+  P := RingOf(segment.Is0); -- K[A,X];
+  phi := PolyAlgebraHom(RingOf(SubstIdeal), P, indets(P));
+  SI_P := ideal(phi(gens(SubstIdeal)));
+  phi := PolyAlgebraHom(RingOf(ideal2), P, indets(P));
+  ideal2_P := ideal(phi(gens(ideal2)));
+  J0 := segment.Is0 + SI_P + ideal2_P;
+  if IsOne(J0) then
+    error("inconsistent: " + sprint(GBasis(J0))+ "=0");
+  endif;
+  foreach s in segment.IsNot0 do
+    if IsEmptyDiffVanishing_plus(J0, s) then
+      error("inconsistent: " + sprint(GBasis(J0))+ "=0 and " +sprint(s) +"<>0");
+    endif;
+  endforeach;
+  L := [ monic0(NF(f, J0)) | f in segment.GB ];
+  return L;
+enddefine; -- SpecializeInXRing
+
+
+define FindSpecializedGB(CGS, SubstIdeal, opt ideal2)
+  if not(IsDefined(ideal2)) then
+    ideal2 := ideal(zero(RingOf(CGS.I)));
+  endif;
+  for i := 1 to len(CGS.segments) do
+    print "segment ", i, ":  ";
+    try      
+      SIR := SpecializeInXRing(CGS, i, SubstIdeal, ideal2);
+      indent(SIR);
+    UponError E Do
+      println GetErrMesg(E);
+    endtry;
+  endfor;
+enddefine; -- FindSpecializedGB
+
+
+define CleanupCGS(ref CGS)
+  CleanedSegments := [];
+  foreach s in CGS.segments do
+    s.IsNot0 := MINIMALIZZA(s.IsNot0); // 2026 Anna
+//    s.IsNot0 := MakeSet(s.IsNot0);
+    if s.IsNot0=[] or not(IsEmptyDiffVanishing_plus(s.Is0, product(s.IsNot0))) then
+      append(ref CleanedSegments, s);
+    endif;
+  endforeach;
+  CGS.segments := CleanedSegments;
+enddefine; -- CleanupCGS
+  
+  
+endpackage;
+
+
