@@ -468,7 +468,7 @@ namespace CoCoA
         {
           const long d = expPP[indet];////exponent(PP(itf), indet);
           if (d < expD[indet]) { scale = 0; break; }
-          scale *= RangeFactorial(d-expD[indet]+1, d);
+          scale *= FactorialRange(d-expD[indet]+1, d);
         }
       if (IsZero(scale)) continue;
       RingElem m(monomial(P, scale*coeff(itf), PP(itf)/myLPP(rawx)));
