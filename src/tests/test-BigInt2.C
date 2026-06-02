@@ -31,7 +31,7 @@ using std::endl;
 namespace CoCoA
 {
 
-  // test factorial, binomial, fibonacci, RoundDiv
+  // test factorial, FactorialRange, binomial, fibonacci, RoundDiv
   void program()
   {
     GlobalManager CoCoAFoundations(UseGMPAllocator); // for speed specify GMPAllocator (in case the default changes)
@@ -44,6 +44,16 @@ namespace CoCoA
     {
       CoCoA_ASSERT_ALWAYS(factorial(i) == factorial(BigInt(i)));
       CoCoA_ASSERT_ALWAYS(i*factorial(i-1) == factorial(i));
+    }
+
+    // FactorialRange function
+    for (int i=1; i <= Nmax; ++i)
+    {
+      CoCoA_ASSERT_ALWAYS(IsZero(FactorialRange(0,i)));
+      CoCoA_ASSERT_ALWAYS(IsZero(FactorialRange(-1,i)));
+      CoCoA_ASSERT_ALWAYS(IsZero(FactorialRange(-i,0)));
+      for (int j=1; j <= i; ++j)
+        CoCoA_ASSERT_ALWAYS(FactorialRange(j,i) == factorial(i)/factorial(j-1));
     }
 
     // binomial function

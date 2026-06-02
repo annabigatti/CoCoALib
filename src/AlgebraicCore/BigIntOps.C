@@ -20,6 +20,7 @@
 #include "CoCoA/config.H"
 #include "CoCoA/convert.H"
 #include "CoCoA/error.H"
+#include "CoCoA/interrupt.H"
 #include "CoCoA/long32or64.H"
 #include "CoCoA/utils.H"
 #include "CoCoA/utils-gmp.H"
@@ -1083,47 +1084,148 @@ namespace CoCoA
   }
 
 
-  // This fn comes out a long horrible mess because I cannot return a
-  // machine int as a BigInt.  There must be a design error somewhere.
-  BigInt RangeFactorial(const MachineInt& lo, const MachineInt& hi)
+// -------------------------------------------------------
+  // FactorialRange
+
+
+  namespace // anonymous
   {
-    BigInt ans;
-    // If zero is in the range, result is zero
-    if ((IsZero(lo) || IsNegative(lo)) && !IsNegative(hi)) return ans;
-    ans = 1;
-    // First some checks for empty products.
-    if (IsNegative(hi) && !IsNegative(lo)) return ans;
-    // We now know that hi and lo have the same sign.
-    // Two more checks for empty products.
-    if (IsNegative(lo) && AsSignedLong(lo) > AsSignedLong(hi)) return ans;
-    if (!IsNegative(lo) && AsUnsignedLong(lo) > AsUnsignedLong(hi)) return ans;
-    // We now know that the product is not empty & does not span 0.
-    unsigned long l = uabs(lo);
-    unsigned long h = uabs(hi);
-    if (IsNegative(hi))
+
+    // Product of lo, lo+1, ..., hi-1, hi  (both extrema included)
+    // KISS version -- disappointingly slower than the recursive version (but why?)
+    /*[[maybe_unused]]*/ BigInt FactorialRange_KISS(unsigned long lo, unsigned long hi)
     {
-      std::swap(l, h);
-      if (((h^l)&1) == 0) negate(ans);
+      CoCoA_ASSERT(lo > 2);
+      CoCoA_ASSERT(lo < hi);
+      ProdBigInt ans(lo);
+      for (unsigned long i=lo+1; i <= hi; ++i)
+        ans *= i;
+      return ans.myResult();
     }
 
-    if (h-l > 15)
+    // 2026-06-01:  Old recursive code I found "lying around".
+    // Seems to be faster than KISS version!
+    BigInt FactorialRange_REC(unsigned long lo, unsigned long hi)
     {
-      const unsigned long mid = l + (h-l)/2; // equiv to (l+h)/2 but avoids overflow
-      // const BigInt FirstHalf = RangeFactorial(l,mid);
-      // CheckForInterrupt("RangeFactorial");
-      // const BigInt SecondHalf = RangeFactorial(1+mid,h);
-      // CheckForInterrupt("RangeFactorial");
-      // return FirstHalf*SecondHalf;
-      return RangeFactorial(l,mid) * RangeFactorial(1+mid,h);
+      CoCoA_ASSERT(lo > 2);
+      CoCoA_ASSERT(lo < hi);
+      if (hi-lo > 15)
+      {
+        const unsigned long mid = lo + (hi-lo)/2; // equiv to (l+h)/2 but avoids overflow
+        return FactorialRange_REC(lo, mid) * FactorialRange_REC(1+mid, hi);
+      }
+      BigInt ans(1);
+      for (; lo <= hi; ++lo)
+        ans *= lo;
+      return ans;
     }
-    // From here on 0 < l < h.
-    for (; l <= h; ++l)
+
+    BigInt FactorialRange_ulong(unsigned long lo, unsigned long hi)
     {
-      ans *= l;
-//      mpz_mul_ui(mpzref(ans), mpzref(ans), l);
+      // Handle some simple cases then delegate the rest.
+      if (lo == 0)  return BigInt(0); // range contains zero
+      if (hi < lo)  return BigInt(1); // empty range -- or give error?
+      if (lo == hi)  return BigInt(lo); // singleton
+      if (lo < 3)  return factorial(hi);
+      if (hi > 60 &&  lo < 0.25*hi)  // empirically best factor is between 0.25 and 0.3
+        return DivExact(factorial(hi), factorial(lo-1));
+      if ((LogFactorial(hi)-LogFactorial(lo-1))/std::log(2) > OVERFLOW_BITS)
+        CoCoA_THROW_ERROR1(ERR::ArgTooBig);
+      return FactorialRange_REC(lo, hi);
     }
-    return ans;
+
+    // Function below commented out because of disappointing performance.
+      
+    // // Product of lo, lo+1, ..., hi-1, hi  (both extrema included)
+    // // "smart" version -- not much faster than the KISS version
+    // BigInt FactorialRange_ulong2(unsigned long lo, unsigned long hi)
+    // {
+    //   if (lo == 0)  return BigInt(0); // range contains zero
+    //   if (hi < lo)  return BigInt(1); // empty range -- or give error?
+    //   if (lo == hi)  return BigInt(lo); // singleton
+    //   static const vector<unsigned long> tbl{std::numeric_limits<unsigned long>::max(),4294967295,2642244,65534,7129,1622,562,252};// for 64-bitter
+    //   int BlockSize = len(tbl);
+    //   while (lo > tbl[BlockSize-1])  { --BlockSize; }
+    //   ProdBigInt prod;
+    //   unsigned long j = lo;
+    //   while (j <= hi)
+    //   {
+    //     unsigned long stop = (BlockSize == 1) ? hi : BlockSize*(std::min(hi, tbl[BlockSize-1])/BlockSize);
+    //     while (j <= stop)
+    //     {
+    //       unsigned long SmallFac = 1;
+    //       switch (BlockSize)
+    //       {
+    //       default:  CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
+    //       case 8: SmallFac *= j++;
+    //       case 7: SmallFac *= j++;
+    //       case 6: SmallFac *= j++;
+    //       case 5: SmallFac *= j++;
+    //       case 4: SmallFac *= j++;
+    //       case 3: SmallFac *= j++;
+    //       case 2: SmallFac *= j++;
+    //       case 1: SmallFac *= j++;
+    //       }
+    //       prod *= SmallFac;
+    //     }
+    //     CoCoA_ASSERT(j <= hi+1);
+    //     if (j > hi)  break;
+    //     --BlockSize;
+    //   }
+    //   return prod.myResult();
+    // }
+
+  } // end of namespace anonymous
+
+  
+  BigInt FactorialRange(const MachineInt& lo, const MachineInt& hi)
+  {
+    // Overflow check is delegated to FactorialRange_ulong
+    const bool neg_lo = IsNegative(lo);
+    const bool neg_hi = IsNegative(hi);
+    if (!neg_lo && !neg_hi)  // both non-neg
+      return FactorialRange_ulong(AsUnsignedLong(lo), AsUnsignedLong(hi));
+    if (neg_lo && neg_hi)    // both neg
+    {
+      const unsigned long H = uabs(lo); // deliberately invert roles
+      const unsigned long L = uabs(hi); //
+      BigInt ans = FactorialRange_ulong(L, H);
+      if (IsEven(H-L))  // H-L cannot over-/under-flow
+        return -ans;
+      return ans;
+    }
+    // Exactly one of lo and hi is negative
+    if (neg_hi)  return BigInt(1); // empty prod
+    return BigInt(0);  // range contains 0
   }
+
+
+  BigInt FactorialRange(const BigInt& lo, const BigInt& hi)
+  {
+    if (hi < lo)  return BigInt(1);  // empty range
+    if (lo <= 0 && hi >= 0)  return BigInt(0); // range contains 0
+    if (lo == hi)  return lo;  // singleton
+    {
+      // if lo & hi are both small use the MachineInt version - makes little difference
+      long l,h;
+      if (IsConvertible(l,lo) && IsConvertible(h,hi))  return FactorialRange(l,h);
+    }
+    // Tedious rough check for overflow
+    unsigned long diff;
+    if (!IsConvertible(diff,hi-lo) ||
+        diff > OVERFLOW_BITS ||
+        (1+diff)*(FloorLog2(lo+hi)-1) > OVERFLOW_BITS)  // crude est. of log of product
+      CoCoA_THROW_ERROR1(ERR::ArgTooBig);
+    ProdBigInt ans;
+    for (BigInt j=lo; j <= hi; ++j)
+    {
+      CheckForInterrupt("FactorialRange");
+      ans *= j;
+    }
+    return ans.myResult();
+  }
+
+
 
 
   namespace // anonymous
