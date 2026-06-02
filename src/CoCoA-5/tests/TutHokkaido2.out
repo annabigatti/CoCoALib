@@ -29,7 +29,7 @@ NOTE: if RINGELEM (or MODULEELEM) is in an IDEAL (or MODULE), a
 --============( end IsIn )=============--
 --> See also:
  ? GenRepr
---> To see all 10 matches for "isin":
+--> To see all 11 matches for "isin":
  ?? isin
 false
 true
