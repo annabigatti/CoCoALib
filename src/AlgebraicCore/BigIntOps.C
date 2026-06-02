@@ -473,7 +473,7 @@ namespace CoCoA
   //---------------------------------
   // ProdBigInt mem fns
 
-    ProdBigInt& ProdBigInt::myMul(unsigned long n)   // NOT THREADSAFE!
+  ProdBigInt& ProdBigInt::myMul(unsigned long n)   // NOT THREADSAFE!
   {
     if (IsZero(myFactors[0]))  return *this;
     if (n == 0)  { myFactors[0] = 0; return *this; }
@@ -1097,8 +1097,8 @@ namespace CoCoA
     {
       CoCoA_ASSERT(lo > 2);
       CoCoA_ASSERT(lo < hi);
-      ProdBigInt ans(lo);
-      for (unsigned long i=lo+1; i <= hi; ++i)
+      ProdBigInt ans;
+      for (unsigned long i=lo; i <= hi; ++i)
         ans *= i;
       return ans.myResult();
     }
