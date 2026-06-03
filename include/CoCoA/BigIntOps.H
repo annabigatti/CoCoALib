@@ -256,7 +256,9 @@ namespace CoCoA
   long FloorLogBase(const BigInt& N,     const MachineInt& base);
   long FloorLogBase(const BigInt& N,     const BigInt& base);
 
-  BigInt RangeFactorial(const MachineInt& lo, const MachineInt& hi); // computes lo*(lo+1)*(lo+2)*...*hi
+///  BigInt RangeFactorial(const MachineInt& lo, const MachineInt& hi);
+  BigInt FactorialRange(const MachineInt& lo, const MachineInt& hi);  // computes lo*(lo+1)*(lo+2)*...*hi
+  BigInt FactorialRange(const BigInt& lo, const BigInt& hi);
   BigInt factorial(const BigInt& N);
   BigInt factorial(const MachineInt& n);
   double LogFactorial(const MachineInt& n);

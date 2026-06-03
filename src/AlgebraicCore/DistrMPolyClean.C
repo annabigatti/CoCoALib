@@ -986,7 +986,7 @@ namespace CoCoA
 //         long d = PPM->myExponent(raw(f_term->myPP), indet);
 // //clog<<"log is "<<d<<" wrt var "<<indet<<std::endl;
 //         if (d < expv[indet]) { scale = 0; break; }
-//         scale *= RangeFactorial(d-expv[indet]+1, d);
+//         scale *= FactorialRange(d-expv[indet]+1, d);
 //       }
 // //if(IsZero(scale))clog<<"skipping term\n";
 //       if (IsZero(scale)) continue;
