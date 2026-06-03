@@ -27,13 +27,13 @@ mktempdir()
 echounderline()
 {
   echo "$*"
-  echo "$*" | tr "\040-\377" "[-*]"
+  echo "$*" | tr "\040-\377" "[-]"
 }
 
 echobox()
 {
   mesg=">>>>  $*  <<<<"
-  dashes=`echo "$mesg" | tr "\040-\377" "[-*]"`
+  dashes=`echo "$mesg" | tr "\040-\377" "[-]"`
   echo "$dashes"
   echo "$mesg"
   echo "$dashes"
@@ -42,7 +42,7 @@ echobox()
 echoerror()
 {
   mesg=">>>>>  $*  <<<<<"
-  equals=`echo "$mesg" | tr "\040-\377" "[=*]"`
+  equals=`echo "$mesg" | tr "\040-\377" "[=]"`
   echo "$equals"
   echo "$mesg"
   echo "$equals"

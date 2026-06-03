@@ -33,7 +33,7 @@ fi
 echobox()
 {
   mesg=">>>>  $*  <<<<"
-  dashes=`echo "$mesg" | tr "\040-\377" "[-*]"`
+  dashes=`echo "$mesg" | tr "\040-\377" "[-]"`
   echo "$dashes"
   echo "$mesg"
   echo "$dashes"
