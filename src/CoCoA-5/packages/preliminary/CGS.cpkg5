@@ -35,14 +35,17 @@ export CleanupCGS;
 
 Define About()
   PrintLn "    Authors  : Anna M. Bigatti, Elisa Palezzato, Michele Torielli";
+  PrintLn "    Version  : CoCoA-5.4.1";
+  PrintLn "    Date     : Jun 2026";
   PrintLn "    Version  : CoCoA-5.3.3";
-  PrintLn "    Date     : August-Nov 2021";
+  PrintLn "    Date     : Aug-Nov 2021";
 EndDefine; -- About
 
 -- package variables
 -- GitHub has problems with this variable assignment
 --    (function defined in package)
 -- So I hard-wired it in  ReducedGBasis_KAX_plus
+-- maybe because this is loaded before NotBuiltin? ("pr.." < or > "No..")
   
 //  GB_function := ReducedGBasis;
 //  GB_function := GBasis;
@@ -108,8 +111,9 @@ define FmtCount(str, X, NumSpaces)
   // else "latex"
   if X=0 then return " & " + format("- ", NumSpaces) +" "; endif;
   return " & " + format(X, NumSpaces) +" ";    
-enddefine; -- FmtTime
-  
+enddefine; -- FmtCount
+
+
 define FmtTime(X, NumSpaces)
   if $.PrintFormat = "txt" then
     if X=0 then return format("- |", NumSpaces); endif;
@@ -119,7 +123,8 @@ define FmtTime(X, NumSpaces)
   if X=0 then return " & " + format("- ", NumSpaces); endif;
   return " & " + format(DecimalStr(X,1), NumSpaces) +"s";
 enddefine; -- FmtTime
-  
+
+
 define PrintGlobals(fn)
   if VerbosityLevel()>=$.VL_time then
     if $.PrintFormat = "txt"      then    print "--",fn,"|";
@@ -218,7 +223,7 @@ define IsContained_plus(I, J)
   $.time_IsContained := $.time_IsContained + CpuTime() - t0;
   incr(ref $.count_IsContained);
   return b;
-enddefine; -- IsEmptyDiffVanishing_plus
+enddefine; -- IsContained_plus
 
 
 define radical_plus(I)
@@ -262,13 +267,15 @@ define PrintIter(t0, L)
   endif;
 enddefine; -- PrintIter
 
+
 define PrintNabe(t0, L)
   if $.PrintFormat = "txt" then
     println "-- nabe: ",  FmtTime(CpuTime()-t0,4), " ", len(L.segments);
   else // "latex"
     println " & ", len(L.segments), FmtTime(CpuTime()-t0,4), "\\\\\\hline";
   endif;
-enddefine; -- PrintIter
+enddefine; -- PrintNabe
+
 
 define PrintExample(name, opt str)
   if not(IsDefined(str)) then str := ""; endif;
@@ -279,7 +286,8 @@ define PrintExample(name, opt str)
   else // "latex"
     println "\\multicolumn{17}{|l|}{\\textbf{",name,"}} \\\\\\hline";
   endif;
-enddefine; -- PrintIter
+enddefine; -- PrintExample
+
 
 //-- end -- about printing timings/data: -----------------------------
 
@@ -305,6 +313,7 @@ enddefine; -- LPP_X
 define CheckElimOrdering(K_AX, X)
   ProdA := product(indets(K_AX))/product(X);
   foreach x in X do
+    -- cheat check! <<<--------------------
     if x < ProdA^100 then error("non elim ordering for "+sprint(x)); endif;
   endforeach;
   -- make proper check! <<<--------------------
@@ -399,10 +408,12 @@ enddefine; -- ContainsNone
 define HasLowerDimOrContains(J1, J2)
   if IsOne(J1) then return true; endif;
   if IsOne(J2) then return false; endif;  
-  if dim(RingOf(J1)/J1) = dim(RingOf(J2)/J2) then
+  dim1 := dim(RingOf(J1)/J1);
+  dim2 := dim(RingOf(J2)/J2);
+  if dim1 = dim2 then
     return IsContained_plus(J2,J1);
   endif;
-  return dim(RingOf(J1)/J1) < dim(RingOf(J2)/J2);
+  return dim1 < dim2;
 enddefine; -- HasLowerDimOrContains
 
   
@@ -476,8 +487,9 @@ enddefine; -- MINIMALIZZA
 
 define RadGensIdeal(I)
   return ideal(RingOf(I), [radical_plus(g) | g in gens(I)]);
-enddefine; -- RadGensI
+enddefine; -- RadGensIdeal
   
+
 --====  core iterative  ====--
   
 define CGSCoreIter(I,X) // after Nabeshima
@@ -819,7 +831,7 @@ enddefine; -- MinPolyZ
 define GB_X(L, X)
   ProdX := product(X);
   return [ f in L | gcd(LT(f), ProdX)<>1 ];
-enddefine; -- MinPolyZ
+enddefine; -- GB_X
 
 
 define PrintSegments(CGS)
