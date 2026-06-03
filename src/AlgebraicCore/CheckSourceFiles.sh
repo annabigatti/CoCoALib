@@ -7,7 +7,7 @@ then
 fi
 
 OLD_SRCS="$*"
-IGNORE_SRCS="leak_checker.C debug_new.C"
+IGNORE_SRCS="leak_checker.C  debug_new.C"
 
 TMPFILE1=.old_srcs
 TMPFILE2=.new_srcs
@@ -24,19 +24,19 @@ do
 done
 sort "$TMPFILE2" > "$TMPFILE1"
 
-/bin/ls -d ./*.C | cut -b 3- > "$TMPFILE2"
+/bin/ls ./*.C  |  cut -b 3-  |  sort  > "$TMPFILE2"
 
-cmp "$TMPFILE1" "$TMPFILE2" > /dev/null
-if [ $? = 0 ]
+
+if  cmp  "$TMPFILE1"  "$TMPFILE2" > /dev/null
 then
-  /bin/rm "$TMPFILE1" "$TMPFILE2"
+  /bin/rm  "$TMPFILE1"  "$TMPFILE2"
   exit 0
 fi
 
 
-NEW_SRCS=`diff "$TMPFILE2" "$TMPFILE1" | grep "^<" | tr -d "<"`
-LOST_SRCS=`diff "$TMPFILE2" "$TMPFILE1" | grep "^>" | tr -d ">"`
-/bin/rm -f $TMPFILE1 $TMPFILE2
+NEW_SRCS=$(diff "$TMPFILE2" "$TMPFILE1"   |  grep "^<"  |  tr -d "<")
+LOST_SRCS=$(diff "$TMPFILE2" "$TMPFILE1"  |  grep "^>"  |  tr -d ">")
+/bin/rm -f "$TMPFILE1"  "$TMPFILE2"
 
 echo "ERROR:"                                                          >/dev/stderr
 if [ -n "$LOST_SRCS" ]
@@ -63,7 +63,7 @@ then
   echo "ADVICE: If you want to add these files to the CoCoALib sources"       >/dev/stderr
   echo "ADVICE: you must edit CoCoALib/src/AlgebraicCore/Makefile, and"       >/dev/stderr
   echo "ADVICE: add the new name(s) to the variable SRCS; you will"           >/dev/stderr
-  echo "ADVICE: find it on line 15."                                          >/dev/stderr
+  echo "ADVICE: find it on line 16."                                          >/dev/stderr
   echo "ADVICE: Otherwise move the files elsewhere (to examples directory?)"  >/dev/stderr
 fi
 
