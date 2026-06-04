@@ -10,18 +10,18 @@ then
   echo "ERROR: $0 requires 0 or 1 arg."                                 >/dev/stderr
   exit 1
 fi
-if [ $# = 1 -a "X$1" != "X--check" ]
+if [ $# = 1 ] && [ "X$1" != "X--check" ]
 then
   echo "ERROR: $0 expected arg \"--check\" but found \"$1\""            >/dev/stderr
   exit 2
 fi
 
 # Check we're in the CoCoALib/include/CoCoA/ directory.  Give error if not.
-CWD=`pwd`
-LAST=`basename "$CWD"`
-TMP=`dirname "$CWD"`
-LAST_BUT_ONE=`basename "$TMP"`
-if [ "$LAST" != "CoCoA" -o "$LAST_BUT_ONE" != "include" ]
+CWD=$(pwd)
+LAST=$(basename "$CWD")
+TMP=$(dirname "$CWD")
+LAST_BUT_ONE=$(basename "$TMP")
+if [ "$LAST" != "CoCoA" ] || [ "$LAST_BUT_ONE" != "include" ]
 then
   echo                                                                         >/dev/stderr
   echo "ERROR: $0 should be run only in the directory CoCoALib/include/CoCoA/" >/dev/stderr
@@ -33,7 +33,7 @@ fi
 echobox()
 {
   mesg=">>>>  $*  <<<<"
-  dashes=`echo "$mesg" | tr "\040-\377" "[-]"`
+  dashes=$(echo "$mesg" | tr "\040-\377" "-")
   echo "$dashes"
   echo "$mesg"
   echo "$dashes"
@@ -61,7 +61,7 @@ then
   ID="$UID@$HOSTNAME-$$"
   echo "$ID" > "$MUTEX"
   sleep 1
-  CHECK_ID=`cat "$MUTEX" 2>&1`
+  CHECK_ID=$(cat "$MUTEX" 2>&1)
   if [ "$CHECK_ID" != "$ID" ]
   then
     exit 0
@@ -86,7 +86,7 @@ fi
 /bin/ls -d ./*.H | grep -v -F "$UNIFIED_HDR" | grep -v -F "obsolescent.H" | grep -v -F "PREPROCESSOR_DEFNS.H" | cut -b 3- | sort > .curr-hdrs
 /usr/bin/cmp -s  .prev-hdrs  .curr-hdrs
 HDRS_CHANGED=$?
-if [ $HDRS_CHANGED = 0 -a "$UNIFIED_HDR" -nt ../../configuration/version ]
+if [ $HDRS_CHANGED = 0 ] && [ "$UNIFIED_HDR" -nt ../../configuration/version ]
 then
   # Unified header is up-to-date, so exit with code 0.
   /bin/rm  .prev-hdrs  .curr-hdrs
@@ -95,14 +95,14 @@ then
 fi
 
 # Put names of header files in a shell variable for later use
-COCOALIBHDRS=`/bin/cat .curr-hdrs`
+COCOALIBHDRS=$(/bin/cat .curr-hdrs)
 
 # Note which headers are new/lost for a possible error mesg.
-NEW_HDRS=`diff  .prev-hdrs  .curr-hdrs | grep  "^>" | tr -d ">"`
-LOST_HDRS=`diff  .prev-hdrs  .curr-hdrs | grep  "^<" | tr -d "<"`
+NEW_HDRS=$(diff  .prev-hdrs  .curr-hdrs  |  grep  "^>"  |  tr -d ">")
+LOST_HDRS=$(diff  .prev-hdrs  .curr-hdrs |  grep  "^<"  |  tr -d "<")
 /bin/rm  .prev-hdrs  .curr-hdrs
 
-if [ "$DO_CHECK" = "yes" -a "$UNIFIED_HDR" -nt ../../configuration/version ]
+if [ "$DO_CHECK" = "yes" ] && [ "$UNIFIED_HDR" -nt ../../configuration/version ]
 then
   echo                                             >/dev/stderr
   echo "ERROR:  ============================"      >/dev/stderr
@@ -178,7 +178,7 @@ fi
 # Create preamble at start of unified header file.
 # WARNING: the Makefile in the top CoCoALib directory looks for the version number using
 #          a string search -- be careful if you change the format produced here!
-TODAY=`date "+%Y%m%d+%T"`
+TODAY=$(date "+%Y%m%d+%T")
 echo "#ifndef CoCoA_library_H"                                        >> "$TMP_FILE"
 echo "#define CoCoA_library_H"                                        >> "$TMP_FILE"
 echo                                                                  >> "$TMP_FILE"
