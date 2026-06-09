@@ -201,8 +201,8 @@ define ReducedGBasis_KA_plus(J)
 ///  RGB_J := GBasis(J); /// controllare se si puo': Kalkbrener K1997?
   $.time_GB_A := $.time_GB_A + CpuTime() - t0;
   incr(ref $.count_GB_A);
-  if IsVERBOSE($.VL_base) then println "-- GB done in K[A]"; endif;
-  if IsVERBOSE($.VL_GB) then println "GB = ", RGB_J; endif;
+  if IsVERBOSE($.VL_base) then println "-- GB_A done in K[A]"; endif;
+  if IsVERBOSE($.VL_GB) then println "GB_A = ", RGB_J; endif;
   return RGB_J;
 enddefine; -- ReducedGBasis_KA_plus
 
@@ -491,6 +491,7 @@ enddefine; -- RadGensIdeal
   
 
 --====  core iterative  ====--
+--==  do NOT modify the original ==--
   
 define CGSCoreIter(I,X) // after Nabeshima
   IsVERBOSE := IsVERBOSE_func("CGSCoreIter");
@@ -584,15 +585,15 @@ define CGSCoreIter2026(I,X) // after Nabeshima
   TIMER := 0;
   K_AX := RingOf(I); -- K[A,X];
   ProdX := product(X);
-  -- initialization ----------------
+  -- initialization --2026--------------
   VanishingToDo := [ideal(K_AX, [])];
   ZeroCasesDone := [];
   CGS := [];
-  -- main loop ----------------------
+  -- main loop --2026--------------------
   while not(IsEmpty(VanishingToDo)) do
     --< Step 2.1 >--
     aa := ChooseVanishing(ref VanishingToDo, ref ZeroCasesDone);
-    if IsVERBOSE($.VL_base) then println "-- iteration with aa = ", aa, " --"; endif;
+    if IsVERBOSE($.VL_base) then println "-- iteration with aa = ", aa, " --------"; endif;
     --< Step 2.2 >--
     J := I + aa;
     --< Step 2.3 >--
@@ -600,33 +601,37 @@ define CGSCoreIter2026(I,X) // after Nabeshima
     --< Step 2.4 >-- -- g in K[A] -------
     gg_list := [g in G | IsCoprime(LT(g), ProdX)];
     gg_RadGens := ideal(RingOf(I), [radical_plus(g) | g in gg_list ]);
+    // 2026 -- se diversi, metto in VanishingToDo?
     if IsVERBOSE($.VL_list) then println "gg_RadGens = ", gg_RadGens; endif;
-    --< Step 2.5 >----------------------------------------------------------------
+    --< Step 2.5 >--2026--------------------------------------------------------------
     if not(IsEmptyDiffVanishing_plus(aa, gg_RadGens)) then
       --< Step 2.5.1 >--
       if IsVERBOSE($.VL_base) then println "  -- V(aa)\\V(gg) non empty"; endif;
       append(ref CGS, record[Is0:=aa,
-			     IsNot0:=[ideal(g) | g in gg_list],
+//			     IsNot0:=[ideal(g) | g in gg_list],
+			     IsNot0:=[gg_RadGens], // 2026 - credo, ma sono confusa
 			     GB:=[one(K_AX)]]); // CGS1
       --< Step 2.5.2 >--
 // 2026 removed:     if ContainsNone(gg_RadGens, VanishingToDo) then
       if ContainsNone(ideal(gg_list), VanishingToDo) then
-	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
-	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains none (appended)"; endif;	
+	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains none (append gg to VanishingToDo)"; endif;	
 	append(ref VanishingToDo, gg_RadGens);
+	if IsVERBOSE($.VL_list) then println "--==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
       else
 	if IsVERBOSE($.VL_base) then println "  --new gg_RadGens contains some (removed)"; endif;	
       endif;
-    --< Step 2.6 >----------------------------------------------------------------
+    --< Step 2.6 >--2026--------------------------------------------------------------
     else
       if gg_list<>[] and ideal(gg_list) <> gg_RadGens and ContainsNone(ideal(gg_list), VanishingToDo) then
 	if IsVERBOSE($.VL_list) then println "  gg_list = ", gg_list, "\n  gg_RadGens = ", gg_RadGens; endif;
+	if IsVERBOSE($.VL_base) then println " (append gg to VanishingToDo)"; endif;
 	append(ref VanishingToDo, gg_RadGens);
+	if IsVERBOSE($.VL_list) then println "--==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
 	continue; // 2026: added this if
       endif;      
       --< Step 2.6.1 >--
       MB := MBLPP_X_plus(G, ProdX);
-      if IsVERBOSE($.VL_list) then println "MB = ", MB; endif;
+      if IsVERBOSE($.VL_list) then println "        MB = ", MB; endif;
       t0 := CpuTime();
       --< Step 2.6.2 >--
       G_MB := [ g in G | not(IsCoprime(LT(g), ProdX))
@@ -636,7 +641,7 @@ define CGSCoreIter2026(I,X) // after Nabeshima
       LC_MB := [cc_t in LC_MB | not(1 isin gens(cc_t))]; -- not(IsOne(J)) -- MOLTO COSTOSO per P3P
       ---->  LC_MB := MINIMALIZZA(LC_MB); -- non conviene: calcolo GB(J) poi inutile
       TIMER := TIMER + CpuTime() - t0;
-      if IsVERBOSE($.VL_list) then println "LC_MB = ", LC_MB; endif;
+      if IsVERBOSE($.VL_list) then println "     LC_MB = ", LC_MB; endif;
       --< Step 2.6.4 >--
       append(ref CGS, record[Is0:=gg_RadGens, IsNot0:=LC_MB, GB:=G_MB]); // CGS2
       --< Step 2.6.5 >--  -- start NewVanishing ------------
@@ -651,9 +656,10 @@ define CGSCoreIter2026(I,X) // after Nabeshima
       endif;
       --< Step 2.6.6 >--
       foreach bb in NewVanishing do
-	//      NoPrint := ReducedGBasis_KA_plus(bb);  // GB computed in MINIMALIZZA
+	// GB of bb computed in MINIMALIZZA
 	if ContainsNone(bb, VanishingToDo) then -- tengo ideali piu' piccoli
 	  if IsVERBOSE($.VL_list) then println "  keep "+sprint(bb); endif;	
+	  if IsVERBOSE($.VL_base) then println "  (append bb to VanishingToDo)"; endif;	
 	  append(ref VanishingToDo, bb);
 	else
 	  if IsVERBOSE($.VL_list) then println "  delete "+sprint(bb), ""; endif;
@@ -662,7 +668,7 @@ define CGSCoreIter2026(I,X) // after Nabeshima
       endforeach;
     endif;    
     if IsVERBOSE($.VL_base) then println "-- end iteration: ", len(VanishingToDo), " case(s) left "; endif;
-    if IsVERBOSE($.VL_list) then println "  --==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
+    if IsVERBOSE($.VL_list) then println "\n--==> VanishingToDo = --vvvv--"; indent(VanishingToDo); endif;
   endwhile;
 //  println "TIMER ",DecimalStr(TIMER,1);
   return CGS;
@@ -703,7 +709,7 @@ enddefine; -- SprintRec
 
 define IsEmptyDiffVanishing(I, J)
   IsVERBOSE := IsVERBOSE_func("IsEmptyDiffVanishing");
-  if IsVERBOSE($.VL_debug) then println "input J = ",J, "   I = ",I; endif;
+  if IsVERBOSE($.VL_debug) then println "input J_nz = ",J, "   I_z = ",I; endif;
   foreach f in gens(J) do
 ////    println " ----> GBasis(I) =", GBasis(I), "  f=", f;
     if IsVERBOSE($.VL_debug) then println "  case f = ", f, "   I = ",I; endif;
@@ -763,9 +769,9 @@ IsVERBOSE := IsVERBOSE_func("CGSCoreNabe");
   --   return [record[Is0:=Z, IsNot0:=NZ, GB:=G]];  --> return
   -- endif;
   --< [iter-Step 2.4] >-- -- g in K[A] -------
-  RadGens := [radical_plus(g) | g in G and IsCoprime(LT(g), ProdX)];
-  gg_RadGens := ideal(RingOf(I), RadGens);
-  if IsVERBOSE($.VL_list) then println "RadGens = ", RadGens; endif;
+  RadGensKA := [radical_plus(g) | g in G and IsCoprime(LT(g), ProdX)];
+  gg_RadGens := ideal(RingOf(I), RadGensKA);
+  if IsVERBOSE($.VL_list) then println "RadGensKA = ", RadGensKA; endif;
   PGB := [];
 //  Int_ginKA_NZ := ideal(RingOf(I), [rad(g) | g in gens(gg * NZ)]); -- before 2021-11-19
   Int_ginKA_NZ := ProdRad_plus(gg_RadGens, NZ); -- 2021-11-19
@@ -773,7 +779,7 @@ IsVERBOSE := IsVERBOSE_func("CGSCoreNabe");
   if not(b) then
     PGB := [
 	    record[Is0:=Z,
-		   IsNot0:=concat([ideal(g)|g in RadGens],[NZ]),
+		   IsNot0:=concat([ideal(g)|g in RadGensKA],[NZ]),
 		   GB:=[one(RingOf(I))]] ];
   endif;
   b := IsEmptyDiffVanishing_plus(gg_RadGens, NZ);
@@ -829,8 +835,9 @@ enddefine; -- MinPolyZ
   
 
 define GB_X(L, X)
-  ProdX := product(X);
-  return [ f in L | gcd(LT(f), ProdX)<>1 ];
+  return L;  -- prova!!! 2026
+  //  ProdX := product(X);
+//  return [ f in L | gcd(LT(f), ProdX)<>1 ];
 enddefine; -- GB_X
 
 
