@@ -49,10 +49,40 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
   //---------------------------------------------------------
 
+  // bool ReductorData::myBorelUpdate(ConstRefPPMonoidElem pp, const Reductors& theReductors)
+  // {
+  //   if (myCount < 100) return false;
+
+  //   GPoly* f = myGPolyPtr;
+  //   const PPMonoid thePPM(PPM(*f));
+  //   const long BorelIndetIndex = NumIndets(owner(*f))-1;
+  //   PPMonoidElem quot(thePPM);
+
+  //   //    thePPM->myDiv(raw(quot), raw(pp), raw(PP(myLPPForDivwMask)));
+  //   thePPM->myDiv(raw(quot), raw(pp), raw(PP(LPPForDivwMask(*f))));
+  //   if (quot != IndetPower(thePPM, BorelIndetIndex, exponent(quot, BorelIndetIndex)))
+  //     return false;
+
+  //   f->MultiplyByPP(quot);
+  //   //    myLPPForDivwMask.myAssign(pp);
+  //   IamBorelUpdated = true;
+  //   f->myReduceTail(theReductors);
+  //   return true;
+  // }
+
+
   inline GPoly* FindReducer(const PPWithMask& pm,
                             const long comp,
                             const Reductors& theReductors)
   {
+    // for (ReductorData& R: theReductors.myBorelReductors)
+    //   //      if ( comp == R.myComponent && IsDivisibleFast(pm, R.myLPPForDivwMask))  AMB 2024-06-13
+    //   if ( comp == component(*(R.myGPolyPtr)) && IsDivisibleFast(pm, LPPForDivwMask(*(R.myGPolyPtr))))
+    //     if (R.IamBorelUpdated || R.myBorelUpdate(PP(pm), theReductors) )
+    //     {
+    //       ++(R.myCount);
+    //       return R.myGPolyPtr;
+    //     }
     for (const ReductorData& R: theReductors.myReductors)
     {
       //      if (comp == R.myComponent && IsDivisibleFast(pm, R.myLPPForDivwMask) && !R.IamNotToBeUsed())  AMB 2024-06-13
@@ -69,7 +99,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   GPoly* FindReducer(const GPoly& g, const Reductors& theReductors)
   {
     if ( IsZero(g) ) return nullptr;
-    GRingInfo GRI(theReductors.myGRingInfo()); // ANNA mini GRingInfo (myCompt_work)
+    GRingInfo GRI(theReductors.myGRingInfo());
     return FindReducer(LPPForDivwMask(g), GRI.myCompt_work(LPPForDiv(g)), theReductors);
   }
 
@@ -79,7 +109,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   inline GPoly* FindReducer(const ReductionCog& F, const Reductors& theReductors)
   {
     if ( IsActiveZero(F) ) return nullptr;
-    GRingInfo GRI(theReductors.myGRingInfo());  // ANNA mini GRingInfo (myPPM, myDivMaskRule, myCompt_work)
+    GRingInfo GRI(theReductors.myGRingInfo());
     //    const PPWithMask pm(ActiveLPP(F), GRI.myDivMaskRule());
     PPWithMask pm(GRI.myPPM(), GRI.myDivMaskRule());
     pm = exponents(ActiveLPP(F));
@@ -107,7 +137,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
   void ReduceActiveLM(ReductionCog& F, SugarDegree& s, const Reductors& v)
   {
-    GPoly* g;  // ANNA mini GRingInfo (myCheckForTimeout)
+    GPoly* g;
     while ( (g = FindReducer(F, v)) != nullptr )
     {
       //      std::cout << "ReduceActiveLM s: *g is " << *g << std::endl;
@@ -152,7 +182,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   void reduce(ReductionCog& F, SugarDegree& s, const GPoly& g)
   {
     if ( IsActiveZero(F) || ActiveLPP(F) < LPPForOrd(g) ) return;
-    const GRingInfo& GRI(g.myGRingInfo());   // ANNA mini GRingInfo (myPPM, myDivMaskRule, myCompt_work)
+    const GRingInfo& GRI(g.myGRingInfo());
     const PPWithMask& PMg(LPPForDivwMask(g));
     const long Componentg = GRI.myCompt_work(PP(PMg));
     //    PPWithMask PMF(ActiveLPP(F), GRI.myDivMaskRule());
@@ -178,7 +208,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   void reduce(ReductionCog& F, const GPoly& g)
-  {   // ANNA mini GRingInfo (myP_work)
+  {
     // SugarDegree s(sugar(g)); // not used --> use WSugarConst
     SugarDegree s(NewWSugarConst(zero(g.myGRingInfo().myP_work())));
     reduce(F, s, g);
@@ -192,7 +222,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
   //ANNA where should these go???
   ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI)
-  {   // ANNA mini GRingInfo (myP_work, myCoeffRingType)
+  {
     if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
       return NewRedCogPolyField(GRI.myP_work());
     else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
@@ -203,7 +233,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI)
-  {   // ANNA mini GRingInfo (myP_work, myCoeffRingType)
+  {
     if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
       return NewRedCogGeobucketField(GRI.myP_work());
     else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
