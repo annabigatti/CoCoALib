@@ -41,48 +41,21 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
   //-------- headers ----------------------------------------
 
-  // ANNA: where should these go???
-  void reduce(ReductionCog& F, const Reductors& v);
-  void reduce(ReductionCog& F, const GPoly& g);
-  ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI);
-  ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI);
+  namespace{ // anonymous -----------------------------------
 
+    void reduce(ReductionCog& F, const Reductors& v);
+    void reduce(ReductionCog& F, const GPoly& g);
+    ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI);
+    ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI);
+
+  } // namespace{ // anonymous ------------------------------
+  
   //---------------------------------------------------------
-
-  // bool ReductorData::myBorelUpdate(ConstRefPPMonoidElem pp, const Reductors& theReductors)
-  // {
-  //   if (myCount < 100) return false;
-
-  //   GPoly* f = myGPolyPtr;
-  //   const PPMonoid thePPM(PPM(*f));
-  //   const long BorelIndetIndex = NumIndets(owner(*f))-1;
-  //   PPMonoidElem quot(thePPM);
-
-  //   //    thePPM->myDiv(raw(quot), raw(pp), raw(PP(myLPPForDivwMask)));
-  //   thePPM->myDiv(raw(quot), raw(pp), raw(PP(LPPForDivwMask(*f))));
-  //   if (quot != IndetPower(thePPM, BorelIndetIndex, exponent(quot, BorelIndetIndex)))
-  //     return false;
-
-  //   f->MultiplyByPP(quot);
-  //   //    myLPPForDivwMask.myAssign(pp);
-  //   IamBorelUpdated = true;
-  //   f->myReduceTail(theReductors);
-  //   return true;
-  // }
-
 
   inline GPoly* FindReducer(const PPWithMask& pm,
                             const long comp,
                             const Reductors& theReductors)
   {
-    // for (ReductorData& R: theReductors.myBorelReductors)
-    //   //      if ( comp == R.myComponent && IsDivisibleFast(pm, R.myLPPForDivwMask))  AMB 2024-06-13
-    //   if ( comp == component(*(R.myGPolyPtr)) && IsDivisibleFast(pm, LPPForDivwMask(*(R.myGPolyPtr))))
-    //     if (R.IamBorelUpdated || R.myBorelUpdate(PP(pm), theReductors) )
-    //     {
-    //       ++(R.myCount);
-    //       return R.myGPolyPtr;
-    //     }
     for (const ReductorData& R: theReductors.myReductors)
     {
       //      if (comp == R.myComponent && IsDivisibleFast(pm, R.myLPPForDivwMask) && !R.IamNotToBeUsed())  AMB 2024-06-13
@@ -99,7 +72,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   GPoly* FindReducer(const GPoly& g, const Reductors& theReductors)
   {
     if ( IsZero(g) ) return nullptr;
-    GRingInfo GRI(theReductors.myGRingInfo());
+    GRingInfo GRI(theReductors.myGRingInfo()); // ANNA mini GRingInfo (myCompt_work)
     return FindReducer(LPPForDivwMask(g), GRI.myCompt_work(LPPForDiv(g)), theReductors);
   }
 
@@ -109,7 +82,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
   inline GPoly* FindReducer(const ReductionCog& F, const Reductors& theReductors)
   {
     if ( IsActiveZero(F) ) return nullptr;
-    GRingInfo GRI(theReductors.myGRingInfo());
+    GRingInfo GRI(theReductors.myGRingInfo());  // ANNA mini GRingInfo (myPPM, myDivMaskRule, myCompt_work)
     //    const PPWithMask pm(ActiveLPP(F), GRI.myDivMaskRule());
     PPWithMask pm(GRI.myPPM(), GRI.myDivMaskRule());
     pm = exponents(ActiveLPP(F));
@@ -143,7 +116,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
       //      std::cout << "ReduceActiveLM s: *g is " << *g << std::endl;
       CoCoA_ASSERT( !IsZero(*g));
       CheckForInterrupt("ReduceActiveLM");
-      v.myGRingInfo().myCheckForTimeout("ReduceActiveLM");
+      v.myCheckForTimeout("ReduceActiveLM");
       //      std::cout << "ReduceActiveLM before s->myUpdate" << std::endl;
       s->myUpdate(F, *g);
       //      std::cout << "ReduceActiveLM after s->myUpdate" << std::endl;
@@ -151,6 +124,8 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
     }//while
   }//ReduceActiveLM
 
+
+  namespace{ // anonymous -----------------------------------------------------
 
   void reduce(ReductionCog& F, const Reductors& v)
   {
@@ -179,10 +154,11 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
     }
   }
 
+
   void reduce(ReductionCog& F, SugarDegree& s, const GPoly& g)
   {
     if ( IsActiveZero(F) || ActiveLPP(F) < LPPForOrd(g) ) return;
-    const GRingInfo& GRI(g.myGRingInfo());
+    const GRingInfo& GRI(g.myGRingInfo());   // ANNA mini GRingInfo (myPPM, myDivMaskRule, myCompt_work)
     const PPWithMask& PMg(LPPForDivwMask(g));
     const long Componentg = GRI.myCompt_work(PP(PMg));
     //    PPWithMask PMF(ActiveLPP(F), GRI.myDivMaskRule());
@@ -208,48 +184,53 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   void reduce(ReductionCog& F, const GPoly& g)
-  {
+  {   // ANNA mini GRingInfo (myP_work)
     // SugarDegree s(sugar(g)); // not used --> use WSugarConst
+    //    SugarDegree s(NewWSugarConst(zero(g.myGRingInfo().myP_work())));
     SugarDegree s(NewWSugarConst(zero(g.myGRingInfo().myP_work())));
     reduce(F, s, g);
   }
 
+  //---- ReductionCog code end ---------
 
-  //---- ReductionCog code end ----------------------------------------------
 
+  //-------- ChooseReductionCog... -----
 
-  //-------- ChooseReductionCog... ----------------------------------------
-
-  //ANNA where should these go???
-  ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI)
-  {
-    if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
-      return NewRedCogPolyField(GRI.myP_work());
-    else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
-      return NewRedCogPolyGCD(GRI.myP_work());
+  //  ReductionCog ChooseReductionCogPoly(const GRingInfo& GRI)
+  ReductionCog ChooseReductionCogPoly(const SparsePolyRing& P, CoeffEncoding::type CfEnc)
+  {   // ANNA mini GRingInfo (myP_work, myCoeffRingType)
+    if ( CfEnc == CoeffEncoding::Field )
+      return NewRedCogPolyField(P);
+    else if ( CfEnc == CoeffEncoding::FrFldOfGCDDomain )
+      return NewRedCogPolyGCD(P);
     else CoCoA_THROW_ERROR1(ERR::ShouldNeverGetHere);
     return ReductionCog(nullptr);  // just to keep the compiler quiet
   }
 
 
-  ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI)
-  {
-    if ( GRI.myCoeffRingType() == CoeffEncoding::Field )
-      return NewRedCogGeobucketField(GRI.myP_work());
-    else if ( GRI.myCoeffRingType() == CoeffEncoding::FrFldOfGCDDomain )
-      return NewRedCogGeobucketGCD(GRI.myP_work());
+  //  ReductionCog ChooseReductionCogGeobucket(const GRingInfo& GRI)
+  ReductionCog ChooseReductionCogGeobucket(const SparsePolyRing& P, CoeffEncoding::type CfEnc)
+  {   // ANNA mini GRingInfo (myP_work, myCoeffRingType)
+    if ( CfEnc == CoeffEncoding::Field )
+      return NewRedCogGeobucketField(P);
+    else if ( CfEnc == CoeffEncoding::FrFldOfGCDDomain )
+      return NewRedCogGeobucketGCD(P);
     else CoCoA_THROW_ERROR1("Don't know what to do with these coefficients");
     return ReductionCog(nullptr);  // just to keep the compiler quiet
   }
+
+  } // namespace{ // anonymous -----------------------------------
+
 
 
   //-------- GPoly member functions ----------------------------------------
 
   void GPoly::myPolySetSPoly(const GPoly& f, const GPoly& g)
-  {
+  {   // ANNA mini GRingInfo (myP_work)
+    const SparsePolyRing P = f.myGRingInfo().myP_work();
     myPolyValue = poly(f);
-    (f.myGRingInfo().myP_work())->myMulByPP(raw(myPolyValue), raw(colon(LPPForOrd(g), LPPForOrd(f))));
-    ReductionCog F = ChooseReductionCogPoly(myGRingInfo());
+    P->myMulByPP(raw(myPolyValue), raw(colon(LPPForOrd(g), LPPForOrd(f))));
+    ReductionCog F = ChooseReductionCogPoly(P, f.myGRingInfo().myCoeffRingType());
     F->myAssignReset(myPolyValue, f.myNumTerms);
     F->myReduce(poly(g), NumTerms(g));
     F->myRelease(myPolyValue);
@@ -258,11 +239,12 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   void GPoly::myReduceTail(const GPoly& g)
-  {
+  {   // ANNA mini GRingInfo (for ChooseReductionCogPoly)
     CoCoA_ASSERT( !IsZero(*this) );
     if ( LPPForOrd(*this) < LPPForOrd(g) ) return;
+    const SparsePolyRing P = myGRingInfo().myP_work();
     // geobucket because reduce(F, g) might make many reductions by g
-    ReductionCog F = ChooseReductionCogGeobucket(myGRingInfo());
+    ReductionCog F = ChooseReductionCogGeobucket(P, g.myGRingInfo().myCoeffRingType());
     F->myAssignReset(myPolyValue, myNumTerms);
     F->myMoveToNextLM();
     reduce(F, g);
@@ -272,9 +254,10 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   void GPoly::myReduceTail(const Reductors& theReductors)
-  {
+  {   // ANNA mini GRingInfo (for ChooseReductionCogPoly)
     CoCoA_ASSERT( !IsZero(*this) );
-    ReductionCog F = ChooseReductionCogGeobucket(myGRingInfo());
+    const SparsePolyRing P = myGRingInfo().myP_work();
+    ReductionCog F = ChooseReductionCogGeobucket(P, myGRingInfo().myCoeffRingType());
     F->myAssignReset(myPolyValue, myNumTerms);
     F->myMoveToNextLM();
     reduce(F, mySugar, theReductors);
@@ -284,9 +267,10 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
 
   void GPoly::myReduce(const Reductors& theReductors)
-  {
+  {   // ANNA mini GRingInfo (myCoeffRingType, myP_work, for ChooseReductionCogPoly)
     if ( IsZero(*this) ) return;
-    ReductionCog F = ChooseReductionCogGeobucket(myGRingInfo());
+    const SparsePolyRing P = myGRingInfo().myP_work();
+    ReductionCog F = ChooseReductionCogGeobucket(P, myGRingInfo().myCoeffRingType());
     //    std::cout << "myreduce1: F is " << F << std::endl;
     F->myAssignReset(myPolyValue, myNumTerms); // myPolyValue gets 0
     //    std::cout << "myreduce2: F is " << F << std::endl;
@@ -300,7 +284,7 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
     if ( !IsZero(*this) && !IsOne(myLCValue) ) // makes myPolyValue monic
       if ( myGRingInfo().myCoeffRingType()==CoeffEncoding::Field )
-        myGRingInfo().myP_work()->myDivByCoeff(raw(myPolyValue), raw(myLCValue));
+        P->myDivByCoeff(raw(myPolyValue), raw(myLCValue));
     // if CoeffEncoding::Field myRelease does NOT make poly monic
     // if CoeffEncoding::FrFldOfGCDDomain myRelease makes poly content free
   }

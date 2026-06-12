@@ -68,10 +68,12 @@ public:
     
     GReductor(const GRingInfo&,
               const PolyList&,
+              const CpuTimeLimit& CheckForTimeout,
               const BuchbergerOpTypeFlag theBuchbergerOpType=HomogeneousAlg,
               const GBCriteria criteria=GBCriteria(GBCriteria::AllSet));
     GReductor(const GRingInfo&,
               const GPolyList&,
+              const CpuTimeLimit& CheckForTimeout,
               const BuchbergerOpTypeFlag theBuchbergerOpType=HomogeneousAlg,
               const GBCriteria criteria=GBCriteria(GBCriteria::AllSet));
     GReductor(const GReductor&);// copy ctor not working, to be fixed

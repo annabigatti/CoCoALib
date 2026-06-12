@@ -140,8 +140,7 @@ namespace CoCoA
   GRingInfo::GRingInfo(const SparsePolyRing& P,
                        const bool IsHomog,
                        const bool IsSatAlg,
-                       const DivMaskRule& DivMaskR,
-                       const CpuTimeLimit& CheckForTimeout):
+                       const DivMaskRule& DivMaskR):
     myPworkValue(P),
     myPorigValue(P),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P)), ordering(PPM(P)))),
@@ -150,12 +149,10 @@ namespace CoCoA
     myWorkToOrigHomValue(IdentityHom(P)),
     myOrigToWorkHomValue(IdentityHom(P)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(false),
-    myTimeoutChecker(CheckForTimeout)
+    IamModuleValue(false)
   {
     myCtorAux(P, IsHomog, IsSatAlg);
-    myTimeoutChecker.myReset(IterationVariability::high);
-  }// ctor GRingInfo
+  }
 
 
   GRingInfo::GRingInfo(const SparsePolyRing& P_work,
@@ -164,8 +161,7 @@ namespace CoCoA
                        const FreeModule& theOutputFM,
                        const bool IsHomog,
                        const bool IsSatAlg,
-                       const DivMaskRule& DivMaskR,
-                       const CpuTimeLimit& CheckForTimeout):
+                       const DivMaskRule& DivMaskR):
     myPworkValue(P_work),
     myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
@@ -174,8 +170,7 @@ namespace CoCoA
     myWorkToOrigHomValue(PwToPo(myPworkValue, myPorigValue)),
     myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
-    myTimeoutChecker(CheckForTimeout)
+    IamModuleValue(true)    //    IamModuleValue(P_work!=P_orig),
   {
     // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
     // std::vector<RingElem> Y; // NOT used!
@@ -189,8 +184,7 @@ namespace CoCoA
     for (long i=0; i < NumCompts(myFreeModuleValue); ++i)
       myEYValue.push_back(myE(i) * myY(Sh[i]));
     myCtorAux(P_work, IsHomog, IsSatAlg);
-    myTimeoutChecker.myReset(IterationVariability::high);
-  }// ctor GRingInfo
+  }
   
 
   GRingInfo::GRingInfo(const SparsePolyRing& P_work,
@@ -198,8 +192,7 @@ namespace CoCoA
                        const FreeModule& theOutputFM,
                        const bool IsHomog,
                        const bool IsSatAlg,
-                       const DivMaskRule& DivMaskR,
-                       const CpuTimeLimit& CheckForTimeout):
+                       const DivMaskRule& DivMaskR):
     myPworkValue(P_work),
     myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
@@ -208,13 +201,12 @@ namespace CoCoA
     myWorkToOrigHomValue(PwToPo(myPworkValue, myPorigValue)),
     myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
-    IamModuleValue(true),    //    IamModuleValue(P_work!=P_orig),
-    myTimeoutChecker(CheckForTimeout)
+    IamModuleValue(true)    //    IamModuleValue(P_work!=P_orig),
+    //    myTimeoutChecker(CheckForTimeout)
   {
     // if (!IsField(CoeffRing(P_orig))) CoCoA_THROW_ERROR1(ERR::ReqField);
     myCtorAux(P_work, IsHomog, IsSatAlg);
-    myTimeoutChecker.myReset(IterationVariability::high);
-  }// ctor GRingInfo
+  }
 
 
   GRingInfo::GRingInfo(const SparsePolyRing& P_work,
@@ -222,8 +214,7 @@ namespace CoCoA
                        const bool IsHomog,
                        //const bool IsForModule,
                        const bool IsSatAlg,
-                       const DivMaskRule& DivMaskR,
-                       const CpuTimeLimit& CheckForTimeout):
+                       const DivMaskRule& DivMaskR):
     myPworkValue(P_work),
     myPorigValue(P_orig),
     myPPMValue(NewPPMonoidEv(symbols(PPM(P_work)), ordering(PPM(P_work)))),
@@ -233,14 +224,13 @@ namespace CoCoA
     myOrigToWorkHomValue(PoToPw(myPworkValue, myPorigValue)),
     myDivMaskRuleValue(DivMaskR),
     //    IamModuleValue(IsForModule),
-    IamModuleValue(P_work!=P_orig), // Move outside ctor to GRing_Mx
-    myTimeoutChecker(CheckForTimeout)
+    IamModuleValue(P_work!=P_orig) // Move outside ctor to GRing_Mx
+    //    myTimeoutChecker(CheckForTimeout)
   {
     //    if (!IsField(CoeffRing(P_orig)))
     //      CoCoA_THROW_ERROR1(ERR::ReqField);
     myCtorAux(P_work, IsHomog, IsSatAlg);
-    myTimeoutChecker.myReset(IterationVariability::high);
-  }// ctor GRingInfo
+  }
 
   // GRingInfo ctors
   // ----------------------------------------------------------------------
@@ -348,20 +338,17 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 // pseudo-ctors for GRingInfo -------------------------------
 
   GRingInfo GRing_IinP(const SparsePolyRing& P,
-                       const bool IsHomogIn,
-                       const CpuTimeLimit& CheckForTimeout)
+                       const bool IsHomogIn)
   {
     return GRingInfo(P, IsHomogIn,
-                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
-                     CheckForTimeout);
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers());
   }
 
 
   GRingInfo GRing_IinRx(const SparsePolyRing& Rx,
-                        const bool IsHomogIn,
-                        const CpuTimeLimit& CheckForTimeout)
+                        const bool IsHomogIn)
   {
-    GRingInfo GRI(GRing_IinP(Rx, IsHomogIn, CheckForTimeout));
+    GRingInfo GRI(GRing_IinP(Rx, IsHomogIn));
     GRI.mySetCoeffRingType(CoeffEncoding::FrFldOfGCDDomain);
     return GRI;
   }
@@ -369,35 +356,29 @@ bool AreCompatible(const GRingInfo& GRI1,const GRingInfo& GRI2)
 
   GRingInfo GRing_M0(const SparsePolyRing& P_work,
                      const SparsePolyRing& P_orig,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout)
+                     const bool IsHomogIn)
   {
     return GRingInfo(P_work, P_orig, IsHomogIn,
-                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
-                     CheckForTimeout);
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers());
   }
 
 
   GRingInfo GRing_M1(const SparsePolyRing& P_work,
                      const FreeModule& FM,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout)
+                     const bool IsHomogIn)
   {
     return GRingInfo(P_work, RingOf(FM), FM, IsHomogIn,
-                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
-                     CheckForTimeout);
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers());
   }
 
 
   GRingInfo GRing_M2(const SparsePolyRing& P_work,
                      const FreeModule& FM_in,
                      const FreeModule& FM_out,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout)
+                     const bool IsHomogIn)
   {
     return GRingInfo(P_work, RingOf(FM_out), FM_in, FM_out, IsHomogIn,
-                     false /*IsSatAlg*/, NewDivMaskEvenPowers(),
-                     CheckForTimeout);
+                     false /*IsSatAlg*/, NewDivMaskEvenPowers());
   }
 
 

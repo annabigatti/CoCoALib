@@ -965,10 +965,10 @@ namespace CoCoA
     CoCoA_ASSERT(myGBasisValue.empty());
     bool IsHomog=false;
     bool IsSatAlg=false;
-    GRingInfo GRI(myP, IsHomog, IsSatAlg, NewDivMaskEvenPowers(), CheckForTimeout);
+    GRingInfo GRI(myP, IsHomog, IsSatAlg, NewDivMaskEvenPowers());
     GBCriteria criteria(GBCriteria::DontUseCoprime, GBCriteria::UseGM,
                         GBCriteria::UseBack, GBCriteria::DontUseDiv);
-    GReductor GR(GRI, myGens(), GReductor::AffineAlg, criteria);
+    GReductor GR(GRI, myGens(), CheckForTimeout, GReductor::AffineAlg, criteria);
     GR.myDoGBasis();
     myGBasisValue = GR.myExportGBasis();
     IhaveGBasisValue = true;

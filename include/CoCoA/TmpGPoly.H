@@ -221,7 +221,7 @@ typedef std::list<GPoly> GPolyList;
   class Reductors{
 
   public:
-    Reductors(const GRingInfo& P);
+    Reductors(const GRingInfo& P, const CpuTimeLimit& CheckForTimeout);
     ~Reductors(){};
     void myInsert(GPoly*, const long count=0);
 
@@ -232,6 +232,7 @@ typedef std::list<GPoly> GPolyList;
     void myReduceTails(const GPoly&);
     void OrderedInterreduce(const GPoly&);
     void SuperInterreduce(const GPoly&);
+    void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
 
     friend const PPMonoid& PPM(const Reductors&);
     friend void interreduce(Reductors&, GPoly);
@@ -251,6 +252,7 @@ typedef std::list<GPoly> GPolyList;
     // ptrs to myPolys
     std::vector<ReductorData> myReductors;
     const GRingInfo& myGRingInfoValue;
+    CpuTimeLimit myTimeoutChecker;
     //@}
 
   };// End class Reductors

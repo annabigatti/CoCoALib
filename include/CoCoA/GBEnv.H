@@ -58,8 +58,7 @@ public:
   GRingInfo(const SparsePolyRing& theNewSPR,
             const bool HomogeneousInput,
             const bool SaturatingAlgorithm,
-            const DivMaskRule&,
-            const CpuTimeLimit& CheckForTimeout);       // when you have polynomials only ie GB
+            const DivMaskRule&);       // when you have polynomials only ie GB
 
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
@@ -67,23 +66,20 @@ public:
             const FreeModule& theOutputFM,
             const bool HomogeneousInput,
             const bool SaturatingAlgorithm,
-            const DivMaskRule&,
-            const CpuTimeLimit& CheckForTimeout);       // when you have modules from theFM
+            const DivMaskRule&);       // when you have modules from theFM
 
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
             const FreeModule& theOutputFM,
             const bool HomogeneousInput,
             const bool SaturatingAlgorithm,
-            const DivMaskRule&,
-            const CpuTimeLimit& CheckForTimeout);      // when you have module op on polynomials result vectorlist
+            const DivMaskRule&);      // when you have module op on polynomials result vectorlist
 
   GRingInfo(const SparsePolyRing& theNewSPR,
             const SparsePolyRing& theOldSPR,
             const bool HomogeneousInput,
             const bool SaturatingAlgorithm,
-            const DivMaskRule&,
-            const CpuTimeLimit& CheckForTimeout);      // when you have module op on polynomials result polylist
+            const DivMaskRule&);      // when you have module op on polynomials result polylist
   ~GRingInfo(){};
   void myCtorAux(const SparsePolyRing& theNewSPR,
                  const bool HomogeneousInput,
@@ -129,8 +125,6 @@ public:
   //void MySetComputationInputAndGradingType // NOT USED
   ComputationInputAndGradingType myInputAndGrading() const {return myInputAndGradingValue;}
 
-  //--for internal computation---- (reduce/GReductor)
-  void myCheckForTimeout(const char* const FnName) const { myTimeoutChecker(FnName); } 
 
 private:
   long myModuleIndetIndex() const;
@@ -150,35 +144,29 @@ private: // member fields
   CoeffEncoding::type myCoeffRingTypeValue;
   ComputationInputAndGradingType myInputAndGradingValue;
   bool myGradingPosPlusValue;
-  CpuTimeLimit myTimeoutChecker;
 // FM and the two ring hom. Do we want a separate Module2RingEmbedding class?
 };// end class GRingInfo
 
   // pseudo-ctors GRing for ideals
   GRingInfo GRing_IinP(const SparsePolyRing& P,
-                       const bool IsHomogIn,
-                       const CpuTimeLimit& CheckForTimeout);
+                       const bool IsHomogIn);
 
   GRingInfo GRing_IinRx(const SparsePolyRing& Rx,
-                        const bool IsHomogIn,
-                        const CpuTimeLimit& CheckForTimeout);
+                        const bool IsHomogIn);
 
   // pseudo-ctors GRing for submodules
   GRingInfo GRing_M0(const SparsePolyRing& P_work,
                      const SparsePolyRing& P_orig,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout);
+                     const bool IsHomogIn);
 
   GRingInfo GRing_M1(const SparsePolyRing& P_work,
                      const FreeModule& FM,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout);
+                     const bool IsHomogIn);
 
   GRingInfo GRing_M2(const SparsePolyRing& P_work,
                      const FreeModule& FM_in,
                      const FreeModule& FM_out,
-                     const bool IsHomogIn,
-                     const CpuTimeLimit& CheckForTimeout);
+                     const bool IsHomogIn);
 
 }
 

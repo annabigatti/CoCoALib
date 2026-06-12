@@ -359,9 +359,13 @@ void GPoly::myUpdateLenLPPLCDegComp()
 //********* Reductors *****************************************************
 
 
-  Reductors::Reductors(const GRingInfo& P):
-      myGRingInfoValue(P)
-  { myReductors.reserve(10000); }
+  Reductors::Reductors(const GRingInfo& P, const CpuTimeLimit& CheckForTimeout):
+    myGRingInfoValue(P),
+    myTimeoutChecker(CheckForTimeout)
+  {
+    myReductors.reserve(10000);
+    myTimeoutChecker.myReset(IterationVariability::high);
+  }
 
 
   const PPMonoid& PPM(const Reductors& red)
