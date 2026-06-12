@@ -89,10 +89,11 @@ namespace CoCoA
 
   GReductor::GReductor(const GRingInfo& theGRI,
                        const std::vector<RingElem>& F,
+                       const CpuTimeLimit& CheckForTimeout,
                        const BuchbergerOpTypeFlag theBuchbergerOpType,
                        const GBCriteria criteria):
       myGRingInfoValue(theGRI),
-      myTrueReductors(theGRI),
+      myTrueReductors(theGRI, CheckForTimeout),
       mySPoly(theGRI),
       myOldDeg(GradingDim(theGRI.myP_work())),
       myIncomingWDeg(GradingDim(theGRI.myP_work())),
@@ -113,10 +114,11 @@ namespace CoCoA
   // zeros and/or not be sorted. Take care.
   GReductor::GReductor(const GRingInfo& theGRI,
                        const GPolyList& TheInputGPolys,
+                       const CpuTimeLimit& CheckForTimeout,
                        const BuchbergerOpTypeFlag theBuchbergerOpType,
                        const GBCriteria criteria):
       myGRingInfoValue(theGRI),
-      myTrueReductors(theGRI),
+      myTrueReductors(theGRI, CheckForTimeout),
       mySPoly(theGRI),
       myOldDeg(GradingDim(theGRI.myP_work())),
       myIncomingWDeg(GradingDim(theGRI.myP_work())),
@@ -658,7 +660,7 @@ namespace CoCoA
         for (auto it=myGB.begin(); it!=myGB.end(); /*++it*/)
         {
           CheckForInterrupt(FnName);
-          myGRingInfo().myCheckForTimeout(FnName);
+          myTrueReductors.myCheckForTimeout(FnName);
           std::vector<ReductorData>::iterator it1=myTrueReductors.myFind(*it);
           it1->mySetIamNotToBeUsed(true);
           if (FindReducer(**it, myTrueReductors) != nullptr)  // surely -->0

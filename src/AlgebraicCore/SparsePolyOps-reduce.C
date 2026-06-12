@@ -110,13 +110,13 @@ degree HereForProfilingOnlyWDeg(ConstRefPPMonoidElem cofactor1)
 
   void ReduceActiveLM(ReductionCog& F, SugarDegree& s, const Reductors& v)
   {
-    GPoly* g;  // ANNA mini GRingInfo (myCheckForTimeout)
+    GPoly* g;
     while ( (g = FindReducer(F, v)) != nullptr )
     {
       //      std::cout << "ReduceActiveLM s: *g is " << *g << std::endl;
       CoCoA_ASSERT( !IsZero(*g));
       CheckForInterrupt("ReduceActiveLM");
-      v.myGRingInfo().myCheckForTimeout("ReduceActiveLM");
+      v.myCheckForTimeout("ReduceActiveLM");
       //      std::cout << "ReduceActiveLM before s->myUpdate" << std::endl;
       s->myUpdate(F, *g);
       //      std::cout << "ReduceActiveLM after s->myUpdate" << std::endl;
