@@ -171,7 +171,7 @@ do
     ( --with-libreadline=* )
        READLINE_LIB=`echo "$option" | cut -f 2- -d=` ;;
 
-    ( --with-libcddgmp=system )
+    ( --with-libcddgmp=system )  # for GFAN
        # Not sure this works (JAA, 2022-04-10)
        CDD_LIB=`$SCRIPT_DIR/find-lib-in-std-dirs.sh libcddgmp 2> "$ERR_MESGS"`
        if [ $? -ne 0 ]
@@ -191,11 +191,17 @@ do
        fi
        CDD_SYSTEM=yes ;;
 
-    ( --with-libcddgmp=~* )
+    ( --with-libcddgmp=~* ) # for GFAN
        CDD_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
 
-    ( --with-libcddgmp=* )
+    ( --with-libcddgmp=* )  # for GFAN
        CDD_LIB=`echo "$option" | cut -f 2- -d=` ;;
+
+    ( --with-libflint=~* )  # for MSOLVE
+       FLINT_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
+
+    ( --with-libflint=* )   # for MSOLVE
+       FLINT_LIB=`echo "$option" | cut -f 2- -d=` ;;
 
     ( --with-libfrobby=~* )
        FROBBY_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
@@ -223,6 +229,24 @@ do
 
     ( --with-libmathsat* )
        MATHSAT_LIB=`echo "$option" | cut -f 2- -d=` ;;
+
+    ( --with-libmpfr=~* )  # for MSOLVE
+       MPFR_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
+
+    ( --with-libmpfr=* )   # for MSOLVE
+       MPFR_LIB=`echo "$option" | cut -f 2- -d=` ;;
+
+    ( --with-libmsolve=~* )
+       MSOLVE_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
+
+    ( --with-libmsolve* )
+       MSOLVE_LIB=`echo "$option" | cut -f 2- -d=` ;;
+
+    ( --with-libneogb=~* )  # for MSOLVE
+       NEOGB_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
+
+    ( --with-libneogb=* )   # for MSOLVE
+       NEOGB_LIB=`echo "$option" | cut -f 2- -d=` ;;
 
     ( --with-libnormaliz=~* )
        NORMALIZ_LIB="$HOME`echo "$option" | cut -f 2- -d~`" ;;
@@ -279,6 +303,8 @@ do
        echo -e "\nOptional_libraries:"
        echo -e "  --with-libcddgmp=ARG\tspecify location of the file libcddgmp.a"
        echo -e "\t\t\t[default is no libcddgmp.a]"
+       echo -e "  --with-libflint=ARG\tspecify location of the file libflint.a"
+       echo -e "\t\t\t[default is no libflint.a]"
        echo -e "  --with-libfrobby=ARG\tspecify location of the file libfrobby.a"
        echo -e "\t\t\t[default is no libfrobby]"
        echo -e "  --with-libgfan=ARG\tspecify location of the file libgfan.a"
@@ -287,6 +313,12 @@ do
        echo -e "\t\t\t[default is no libgsl]"
        echo -e "  --with-libmathsat=ARG\tspecify location of the file libmathsat.a"
        echo -e "\t\t\t[default is no libmathsat]"
+       echo -e "  --with-libmpfr=ARG\tspecify location of the file libmpfr.a"
+       echo -e "\t\t\t[default is no libmpfr]"
+       echo -e "  --with-libmsolve=ARG\tspecify location of the file libmsolve.a"
+       echo -e "\t\t\t[default is no libmsolve]"
+       echo -e "  --with-libneogb=ARG\tspecify location of the file libneogb.a"
+       echo -e "\t\t\t[default is no libneogb.a]"
        echo -e "  --with-libnormaliz=ARG\tspecify location of the file libnormaliz.a"
        echo -e "\t\t\t[default is no libnormaliz]"
 
@@ -752,7 +784,7 @@ COCOA5_CXX_DEFINES="$READLINE_FLAG"
 
 
 ##################################################################
-# external library: CDD (GMP)
+# external library: CDD (GMP) -- for GFAN
 ##################################################################
 if [ -n "$CDD_LIB" ]
 then 
@@ -792,6 +824,50 @@ then
   /bin/ln -s "$CDD_INC_DIR"  "$EXTLIB_DIR/include/cdd"
 else
   HAVE_CDD=no
+fi
+
+
+##################################################################
+# external library: FLINT    -- for MSOLVE
+##################################################################
+if [ -n "$FLINT_LIB" ]
+then 
+  # Check the file passed as FLINT library is at least a readable file.
+  if [ \! -f "$FLINT_LIB" -o \! -r "$FLINT_LIB" ]
+  then
+    echo "$0: ERROR: Specified FLINT library is not a readable file \"$FLINT_LIB\""  > /dev/stderr
+    exit 1
+  fi
+  # Check that the name is sane (need special handling for Microsoft)
+  BAD_BASENAME=no; [ "`basename \"$FLINT_LIB\" .a`" = "libflint" ] || [ "`basename \"$FLINT_LIB\" .dll.a`" = "libflint" ] || BAD_BASENAME=yes
+  if [ "$BAD_BASENAME" = "yes" ]
+  then
+      echo "$0: ERROR: Specified FLINT library should have basename 'libflint'"   > /dev/stderr
+      exit 1
+  fi
+  HAVE_FLINT=yes
+  # These lines should put absolute paths in LIB_DIR:
+  FLINT_LIB_NAME=$(basename "$FLINT_LIB")
+  FLINT_LIB_EXTN=$($SCRIPT_DIR/extn.sh "$FLINT_LIB_NAME")
+  FLINT_LIB_DIR=$(dirname "$FLINT_LIB")
+  FLINT_LIB_DIR=$(cd "$FLINT_LIB_DIR"; pwd)
+  # Absolute paths for LIB and INC_DIR:
+  FLINT_LIB="$FLINT_LIB_DIR/$FLINT_LIB_NAME"
+  FLINT_INC_DIR="$(dirname "$FLINT_LIB_DIR")/include"
+  if [ -d "$FLINT_INC_DIR/flint" ]
+  then
+      FLINT_INC_DIR="$FLINT_INC_DIR/flint"
+  fi
+  if [ \! -d "$FLINT_INC_DIR" -o \! -f "$FLINT_INC_DIR/flint.h" ]
+  then
+    echo "$0: ERROR: Did not find FLINT header files where expected, in dir: \"$FLINT_INC_DIR\""  > /dev/stderr
+    exit 1
+  fi
+  # Make symbolic links in  $EXTLIB_DIR/lib  and  $EXTLIB_DIR/include:
+  /bin/ln -s "$FLINT_LIB"      "$EXTLIB_DIR/lib/libflint-symlink.$FLINT_LIB_EXTN"
+  /bin/ln -s "$FLINT_INC_DIR"  "$EXTLIB_DIR/include/flint"
+else
+  HAVE_FLINT=no
 fi
 
 
@@ -949,6 +1025,152 @@ then
   /bin/ln -s "$MATHSAT_INC_DIR/mathsat.h"  "$EXTLIB_DIR/include/"
 else
   HAVE_MATHSAT=no
+fi
+
+##################################################################
+# external library: MPFR    -- for MSOLVE
+##################################################################
+if [ -n "$MPFR_LIB" ]
+then 
+  # Check the file passed as MPFR library is at least a readable file.
+  if [ \! -f "$MPFR_LIB" -o \! -r "$MPFR_LIB" ]
+  then
+    echo "$0: ERROR: Specified MPFR library is not a readable file \"$MPFR_LIB\""  > /dev/stderr
+    exit 1
+  fi
+  # Check that the name is sane (need special handling for Microsoft)
+  BAD_BASENAME=no; [ "`basename \"$MPFR_LIB\" .a`" = "libmpfr" ] || [ "`basename \"$MPFR_LIB\" .dll.a`" = "libmpfr" ] || BAD_BASENAME=yes
+  if [ "$BAD_BASENAME" = "yes" ]
+  then
+      echo "$0: ERROR: Specified MPFR library should have basename 'libmpfr'"   > /dev/stderr
+      exit 1
+  fi
+  HAVE_MPFR=yes
+  # These lines should put absolute paths in LIB_DIR:
+  MPFR_LIB_NAME=$(basename "$MPFR_LIB")
+  MPFR_LIB_EXTN=$($SCRIPT_DIR/extn.sh "$MPFR_LIB_NAME")
+  MPFR_LIB_DIR=$(dirname "$MPFR_LIB")
+  MPFR_LIB_DIR=$(cd "$MPFR_LIB_DIR"; pwd)
+  # Absolute paths for LIB and INC_DIR:
+  MPFR_LIB="$MPFR_LIB_DIR/$MPFR_LIB_NAME"
+  MPFR_INC_DIR="$(dirname "$MPFR_LIB_DIR")/include"
+  if [ -d "$MPFR_INC_DIR/mpfr" ]
+  then
+      MPFR_INC_DIR="$MPFR_INC_DIR/mpfr"
+  fi
+  if [ \! -d "$MPFR_INC_DIR" -o \! -f "$MPFR_INC_DIR/mpfr.h" ]
+  then
+    echo "$0: ERROR: Did not find MPFR header files where expected, in dir: \"$MPFR_INC_DIR\""  > /dev/stderr
+    exit 1
+  fi
+  # Make symbolic links in  $EXTLIB_DIR/lib  and  $EXTLIB_DIR/include:
+  /bin/ln -s "$MPFR_LIB"      "$EXTLIB_DIR/lib/libmpfr-symlink.$MPFR_LIB_EXTN"
+  /bin/ln -s "$MPFR_INC_DIR"  "$EXTLIB_DIR/include/mpfr"
+else
+  HAVE_MPFR=no
+fi
+
+
+##################################################################
+# external library: NEOGB    -- for MSOLVE
+##################################################################
+if [ -n "$NEOGB_LIB" ]
+then 
+  # Check the file passed as NEOGB library is at least a readable file.
+  if [ \! -f "$NEOGB_LIB" -o \! -r "$NEOGB_LIB" ]
+  then
+    echo "$0: ERROR: Specified NEOGB library is not a readable file \"$NEOGB_LIB\""  > /dev/stderr
+    exit 1
+  fi
+  # Check that the name is sane (need special handling for Microsoft)
+  BAD_BASENAME=no; [ "`basename \"$NEOGB_LIB\" .a`" = "libneogb" ] || [ "`basename \"$NEOGB_LIB\" .dll.a`" = "libneogb" ] || BAD_BASENAME=yes
+  if [ "$BAD_BASENAME" = "yes" ]
+  then
+      echo "$0: ERROR: Specified NEOGB library should have basename 'libneogb'"   > /dev/stderr
+      exit 1
+  fi
+  HAVE_NEOGB=yes
+  # These lines should put absolute paths in LIB_DIR:
+  NEOGB_LIB_NAME=$(basename "$NEOGB_LIB")
+  NEOGB_LIB_EXTN=$($SCRIPT_DIR/extn.sh "$NEOGB_LIB_NAME")
+  NEOGB_LIB_DIR=$(dirname "$NEOGB_LIB")
+  NEOGB_LIB_DIR=$(cd "$NEOGB_LIB_DIR"; pwd)
+  # Absolute paths for LIB and INC_DIR:
+  NEOGB_LIB="$NEOGB_LIB_DIR/$NEOGB_LIB_NAME"
+  NEOGB_INC_DIR="$(dirname "$NEOGB_LIB_DIR")/include/msolve"
+  if [ -d "$NEOGB_INC_DIR/neogb" ]
+  then
+      NEOGB_INC_DIR="$NEOGB_INC_DIR/neogb"
+  fi
+  if [ \! -d "$NEOGB_INC_DIR" -o \! -f "$NEOGB_INC_DIR/libneogb.h" ]
+  then
+    echo "$0: ERROR: Did not find NEOGB header files where expected, in dir: \"$NEOGB_INC_DIR\""  > /dev/stderr
+    exit 1
+  fi
+  # Make symbolic links in  $EXTLIB_DIR/lib  and  $EXTLIB_DIR/include:
+  /bin/ln -s "$NEOGB_LIB"      "$EXTLIB_DIR/lib/libneogb-symlink.$NEOGB_LIB_EXTN"
+  /bin/ln -s "$NEOGB_INC_DIR"  "$EXTLIB_DIR/include/neogb"
+else
+  HAVE_NEOGB=no
+fi
+
+
+##################################################################
+# external library: MSOLVE
+##################################################################
+if [ -n "$MSOLVE_LIB" ]
+then 
+  if [ "$HAVE_FLINT" = "no" ]
+  then
+    echo "$0: ERROR: MSOLVE library requires also \"libflint\""  > /dev/stderr
+    exit 1
+  fi
+  if [ "$HAVE_MPFR" = "no" ]
+  then
+    echo "$0: ERROR: MSOLVE library requires also \"libmpfr\""  > /dev/stderr
+    exit 1
+  fi
+  if [ "$HAVE_NEOGB" = "no" ]
+  then
+    echo "$0: ERROR: MSOLVE library requires also \"libneogb\""  > /dev/stderr
+    exit 1
+  fi
+  # Check the file passed as libmsolve is at least a readable file:
+  if [ \! -f "$MSOLVE_LIB" -o \! -r "$MSOLVE_LIB" ]
+  then
+    echo "$0: ERROR: Specified MSOLVE library is not a readable file \"$MSOLVE_LIB\""  > /dev/stderr
+    exit 1
+  fi
+  # if [ "$HAVE_GMPXX" = "no" ]  -- REMOVE
+  # then
+  #   echo "$0: ERROR: Msolve needs libgmpxx but your GMP installation does not have it."        > /dev/stderr
+  #   echo "$0: ERROR: Please specify a GMP installation with libgmpxx, or rebuild GMP"           > /dev/stderr
+  #   echo "$0: ERROR: specifying that you want the C++ library too (see GMP doc for details)."   > /dev/stderr
+  #   exit 1
+  # fi
+  
+  HAVE_MSOLVE=yes
+  # These lines should put absolute paths in LIB_DIR:
+  MSOLVE_LIB_NAME=$(basename "$MSOLVE_LIB")
+  MSOLVE_LIB_EXTN=$($SCRIPT_DIR/extn.sh "$MSOLVE_LIB")
+  MSOLVE_LIB_DIR=$(dirname "$MSOLVE_LIB")
+  MSOLVE_LIB_DIR=$(cd "$MSOLVE_LIB_DIR"; pwd)
+  # Absolute paths for LIB and INC_DIR:
+  MSOLVE_LIB="$MSOLVE_LIB_DIR"/"$MSOLVE_LIB_NAME"
+###  MSOLVE_INC_DIR="$MSOLVE_LIB_DIR/../src/msolve/api/"
+  MSOLVE_INC_DIR="$(dirname "$MSOLVE_LIB_DIR")/include/msolve/msolve"
+  if ! [ -f "$MSOLVE_INC_DIR/msolve.h" ]
+  then
+    echo "$0: ERROR: Did not find msolve.h in dir \"$MSOLVE_INC_DIR\""  > /dev/stderr
+    exit 1
+  fi
+  # Make symbolic links in  $EXTLIB_DIR/lib  and  $EXTLIB_DIR/include:
+  /bin/ln -s "$MSOLVE_LIB"                "$EXTLIB_DIR/lib/libmsolve-symlink.$MSOLVE_LIB_EXTN"
+  /bin/ln -s "$MSOLVE_INC_DIR/msolve.h"   "$EXTLIB_DIR/include/"
+  /bin/ln -s "$MSOLVE_INC_DIR/msolve-data.h"     "$EXTLIB_DIR/include/"
+  /bin/ln -s "$MSOLVE_INC_DIR/msolve-version.h"  "$EXTLIB_DIR/include/"
+else
+  HAVE_MSOLVE=no
 fi
 
 ##################################################################
@@ -1309,6 +1531,17 @@ echo                                                          >> "$CONFIG_TMP"
 
 echo "OPTIONAL external libraries for CoCoALib:"
 
+# FLINT -- for MSOLVE
+echo "# FLINT settings:"                                      >> "$CONFIG_TMP"
+echo "HAVE_FLINT=$HAVE_FLINT"                                 >> "$CONFIG_TMP"
+echo "HAVE_FLINT    = $HAVE_FLINT   $FLINT_LIB"
+if [ $HAVE_FLINT = "yes" ]
+then
+  echo "FLINT_LDLIBS=-lflint-symlink"                         >> "$CONFIG_TMP"
+  echo "FLINT_VERSION="                                       >> "$CONFIG_TMP"
+fi
+echo                                                          >> "$CONFIG_TMP"
+
 # FROBBY
 echo "# FROBBY settings:"                                     >> "$CONFIG_TMP"
 echo "HAVE_FROBBY=$HAVE_FROBBY"                               >> "$CONFIG_TMP"
@@ -1321,7 +1554,7 @@ then
 fi
 echo                                                          >> "$CONFIG_TMP"
 
-# CDD
+# CDD -- for GFAN
 echo "# CDD settings:"                                        >> "$CONFIG_TMP"
 echo "HAVE_CDD=$HAVE_CDD"                                     >> "$CONFIG_TMP"
 echo "HAVE_CDD      = $HAVE_CDD   $CDD_LIB"
@@ -1375,6 +1608,40 @@ then
 fi
 echo                                                          >> "$CONFIG_TMP"
 
+# MPFR -- for MSOLVE
+echo "# MPFR settings:"                                       >> "$CONFIG_TMP"
+echo "HAVE_MPFR=$HAVE_MPFR"                                   >> "$CONFIG_TMP"
+echo "HAVE_MPFR     = $HAVE_MPFR   $MPFR_LIB"
+if [ $HAVE_MPFR = "yes" ]
+then
+  echo "MPFR_LDLIBS=-lmpfr-symlink"                           >> "$CONFIG_TMP"
+  echo "MPFR_VERSION="                                        >> "$CONFIG_TMP"
+fi
+echo                                                          >> "$CONFIG_TMP"
+
+# MSOLVE
+echo "# Msolve settings:"                                     >> "$CONFIG_TMP"
+echo "HAVE_MSOLVE  =$HAVE_MSOLVE"                             >> "$CONFIG_TMP"
+echo "HAVE_MSOLVE   = $HAVE_MSOLVE   $MSOLVE_LIB"
+if [ $HAVE_MSOLVE = "yes" ]
+then
+  # Recall that GMPXX_LIB is the libgmpxx.a library
+  echo "MSOLVE_LDLIBS=-lmsolve-symlink"                       >> "$CONFIG_TMP"
+  echo "MSOLVE_VERSION="                                      >> "$CONFIG_TMP"
+fi
+echo                                                          >> "$CONFIG_TMP"
+
+# NEOGB -- for MSOLVE
+echo "# NEOGB settings:"                                      >> "$CONFIG_TMP"
+echo "HAVE_NEOGB=$HAVE_NEOGB"                                 >> "$CONFIG_TMP"
+echo "HAVE_NEOGB    = $HAVE_NEOGB   $NEOGB_LIB"
+if [ $HAVE_NEOGB = "yes" ]
+then
+  echo "NEOGB_LDLIBS=-lneogb-symlink"                         >> "$CONFIG_TMP"
+  echo "NEOGB_VERSION="                                       >> "$CONFIG_TMP"
+fi
+echo                                                          >> "$CONFIG_TMP"
+
 # NORMALIZ
 echo "# Normaliz settings:"                                   >> "$CONFIG_TMP"
 echo "HAVE_NORMALIZ=$HAVE_NORMALIZ"                           >> "$CONFIG_TMP"
@@ -1401,7 +1668,7 @@ echo                                                          >> "$CONFIG_TMP"
 echo
 
 ### List of libraries
-echo "LDLIBS=$LDFPIC \$(COCOA_LIB) -L\$(EXTLIBS)/lib  \$(FROBBY_LDLIBS)  \$(GFAN_LDLIBS)  \$(CDD_LDLIBS)  \$(GSL_LDLIBS)  \$(MATHSAT_LDLIBS)  \$(NORMALIZ_LDLIBS)  \$(NTL_LDLIBS)  \$(GMPXX_LDLIB)  \$(GMP_LDLIB)" >> "$CONFIG_TMP"
+echo "LDLIBS=$LDFPIC \$(COCOA_LIB) -L\$(EXTLIBS)/lib  \$(FROBBY_LDLIBS)  \$(GFAN_LDLIBS)  \$(CDD_LDLIBS)  \$(GSL_LDLIBS)  \$(MATHSAT_LDLIBS)   \$(MPFR_LDLIBS) \$(FLINT_LDLIBS) \$(NEOGB_LDLIBS) \$(MSOLVE_LDLIBS)  \$(NORMALIZ_LDLIBS)  \$(NTL_LDLIBS)  \$(GMPXX_LDLIB)  \$(GMP_LDLIB)" >> "$CONFIG_TMP"
 echo >> "$CONFIG_TMP"
 
 ### 2019-12-17 JAA comment out this ancient code block -- delete???
@@ -1537,10 +1804,15 @@ define_if()
 }
 
 echo "`define_if $THREADSAFE_HACK` CoCoA_THREADSAFE_HACK"           >> "$CPPDEFNS_H.part"
+### ExternalLibs ------------------------------------------------------------------------
 echo "`define_if $HAVE_NORMALIZ` CoCoA_WITH_NORMALIZ"               >> "$CPPDEFNS_H.part"
+echo "`define_if $HAVE_FLINT` CoCoA_WITH_FLINT"                     >> "$CPPDEFNS_H.part"
 echo "`define_if $HAVE_FROBBY` CoCoA_WITH_FROBBY"                   >> "$CPPDEFNS_H.part"
 echo "`define_if $HAVE_GFAN` CoCoA_WITH_GFAN"                       >> "$CPPDEFNS_H.part"
 echo "`define_if $HAVE_MATHSAT` CoCoA_WITH_MATHSAT"                 >> "$CPPDEFNS_H.part"
+echo "`define_if $HAVE_MPFR` CoCoA_WITH_MPFR"                       >> "$CPPDEFNS_H.part"
+echo "`define_if $HAVE_MSOLVE` CoCoA_WITH_MSOLVE"                   >> "$CPPDEFNS_H.part"
+echo "`define_if $HAVE_NEOGB` CoCoA_WITH_NEOGB"                     >> "$CPPDEFNS_H.part"
 echo "`define_if $HAVE_GSL` CoCoA_WITH_GSL"                         >> "$CPPDEFNS_H.part"
 
 #?????echo "`define_if $HAVE_BOOST` CoCoA_WITH_BOOST"                     >> "$CPPDEFNS_H.part"

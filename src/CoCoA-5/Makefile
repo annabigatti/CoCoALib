@@ -28,6 +28,7 @@ SRCS=AST.C  Lexer.C  Main.C  Interpreter.C  LineProviders.C  Parser.C \
      BuiltInFunctions-GFan.C \
      BuiltInFunctions-GSL.C \
      BuiltInFunctions-MathSAT.C \
+     BuiltInFunctions-MSolve.C \
      BuiltInFunctions-Normaliz.C \
      globals.C \
      OnlineHelp.C \

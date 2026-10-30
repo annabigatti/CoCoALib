@@ -25,6 +25,7 @@
 #include "CoCoA/ExternalLibs-GFan.H"
 #include "CoCoA/ExternalLibs-GSL.H"
 #include "CoCoA/ExternalLibs-MathSAT.H"
+#include "CoCoA/ExternalLibs-MSolve.H"
 #include "CoCoA/ExternalLibs-Normaliz.H"
 
 #include "CoCoA/ToString.H"
@@ -79,12 +80,15 @@ namespace CoCoA
     info.push_back(ExternalLibInfo("CDD","UNKNOWN libcddgmp","UNKNOWN" /* tested only with 094h*/,"https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html"));
     #endif
     #ifdef CoCoA_WITH_GSL
-    //    info.push_back(ExternalLibInfo("GSL","UNKNOWN libgsl","UNKNOWN" /* >= ?*/,"https://www.gnu.org/software/gsl/"));
+    //info.push_back(ExternalLibInfo("GSL","UNKNOWN libgsl","UNKNOWN" /* >= ?*/,"https://www.gnu.org/software/gsl/"));
     #endif
     #ifdef CoCoA_WITH_MATHSAT
     char* const MSAT_VERSION = msat_get_version();
-    info.push_back(ExternalLibInfo("MathSAT","UNKNOWN libmathsat",ToString(MSAT_VERSION) ,"http://mathsat.fbk.eu"));
+    info.push_back(ExternalLibInfo("MathSAT","UNKNOWN libmathsat",ToString(MSAT_VERSION),"http://mathsat.fbk.eu"));
     msat_free(MSAT_VERSION);
+    #endif
+    #ifdef CoCoA_WITH_MSOLVE
+    info.push_back(ExternalLibInfo("MSolve","UNKNOWN libmsolve",ToString(MSOLVE_VERSION_STR),"https://msolve.lip6.fr/"));
     #endif
     return info;
   }

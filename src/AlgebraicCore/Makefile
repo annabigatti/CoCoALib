@@ -11,6 +11,7 @@ FROBBY_FILES=ExternalLibs-Frobby.C
 GFAN_FILES=ExternalLibs-GFan.C
 GSL_FILES=ExternalLibs-GSL.C
 MATHSAT_FILES=ExternalLibs-MathSAT.C
+MSOLVE_FILES=ExternalLibs-MSolve.C
 NORMALIZ_FILES=ExternalLibs-Normaliz.C
 
 SRCS=time.C assert.C utils.C  utils-gmp.C  VectorOps.C  ProgressReporter.C  BuildInfo.C \
@@ -76,7 +77,7 @@ SRCS=time.C assert.C utils.C  utils-gmp.C  VectorOps.C  ProgressReporter.C  Buil
      BenchmarkToolkit.C \
      ExternalLibs.C \
      $(FROBBY_FILES) $(GFAN_FILES) $(GSL_FILES) \
-     $(MATHSAT_FILES) $(NORMALIZ_FILES)
+     $(MATHSAT_FILES) $(MSOLVE_FILES) $(NORMALIZ_FILES)
 
 # (see below) OBJS depend on $(COCOA_ROOT)/configuration/autoconf.mk
 OBJS=$(SRCS:.C=.o)
